@@ -1,0 +1,24 @@
+name: Mirroring to Epitech repository
+
+on: [ push ]
+
+env:
+  MIRROR_URL: "git@github.com:EpitechPromo2026/G-EIP-700-PAR-7-1-eip-reza.rahemtola.git"
+
+jobs:
+  push-to-mirror:
+    name: Push to Epitech repository
+    runs-on: ubuntu-latest
+    environment: Epitech repository
+    steps:
+      - name: Repository checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Cloning to mirror
+        uses: pixta-dev/repository-mirroring-action@v1
+        with:
+          target_repo_url:
+            ${{ env.MIRROR_URL }}
+          ssh_private_key:
+            ${{ secrets.SSH_EPITECH_MIRRORING_KEY }}
