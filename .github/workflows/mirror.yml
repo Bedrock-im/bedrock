@@ -1,6 +1,7 @@
 name: Mirroring to Epitech repository
 
-on: [ push ]
+on:
+  push:
 
 env:
   MIRROR_URL: "git@github.com:EpitechPromo2026/G-EIP-700-PAR-7-1-eip-reza.rahemtola.git"
