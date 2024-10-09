@@ -46,3 +46,23 @@ jobs:
         run: yarn install --frozen-lockfile
       - name: Run Prettier
         run: yarn format:check
+
+  build-front:
+    name: "Build: front"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./front
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: 'front/.nvmrc'
+          cache: yarn
+          cache-dependency-path: "front/yarn.lock"
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Build
+        run: yarn build
