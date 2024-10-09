@@ -1,5 +1,12 @@
-import type { Metadata } from "next";
+import { type Metadata } from "next";
 import localFont from "next/font/local";
+import { headers } from "next/headers";
+import { ReactNode } from "react";
+import { cookieToInitialState } from "wagmi";
+
+import { Providers } from "@/app/providers";
+import { config } from "@/config/wagmi";
+
 import "./globals.css";
 
 const geistSans = localFont({
@@ -21,11 +28,15 @@ export const metadata: Metadata = {
 export default function RootLayout({
 	children,
 }: Readonly<{
-	children: React.ReactNode;
+	children: ReactNode;
 }>) {
+	const initialState = cookieToInitialState(config, headers().get("cookie"));
+
 	return (
 		<html lang="en">
-			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
+			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+				<Providers initialState={initialState}>{children}</Providers>
+			</body>
 		</html>
 	);
 }

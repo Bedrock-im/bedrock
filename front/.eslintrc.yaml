@@ -1,0 +1,16 @@
+parserOptions:
+  ecmaVersion: latest
+  project: tsconfig.json
+
+extends:
+  - next/core-web-vitals
+  - next/typescript
+
+plugins:
+  - perfectionist
+
+rules:
+  no-plusplus: [ "error", { "allowForLoopAfterthoughts": true } ]
+  no-console: [ "warn", { allow: [ "error" ] } ]
+
+  perfectionist/sort-imports: [ "warn", { internalPattern: [ '@/**' ], } ]
