@@ -66,3 +66,23 @@ jobs:
         run: yarn install --immutable
       - name: Build
         run: yarn build
+
+  build-storybook:
+    name: "Build: Storybook"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./front
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: 'front/.nvmrc'
+          cache: yarn
+          cache-dependency-path: "front/yarn.lock"
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Build
+        run: yarn storybook:build
