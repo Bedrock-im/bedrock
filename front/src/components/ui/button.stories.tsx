@@ -8,6 +8,7 @@ const meta: Meta<ButtonProps> = {
 	args: {
 		size: "default",
 		children: "Button content",
+		className: "",
 	},
 	argTypes: {
 		variant: {
@@ -23,6 +24,10 @@ const meta: Meta<ButtonProps> = {
 		disabled: {
 			type: "boolean",
 			control: "boolean",
+		},
+		className: {
+			type: "string",
+			control: "text",
 		},
 	},
 };
