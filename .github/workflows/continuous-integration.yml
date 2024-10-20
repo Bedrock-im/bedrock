@@ -66,6 +66,8 @@ jobs:
         run: yarn install --immutable
       - name: Build
         run: yarn build
+        env:
+          NEXT_PUBLIC_PRIVY_APP_ID: ${{ secrets.FRONT_NEXT_PUBLIC_PRIVY_APP_ID }}
 
   build-storybook:
     name: "Build: Storybook"
