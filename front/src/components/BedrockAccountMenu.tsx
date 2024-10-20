@@ -87,10 +87,11 @@ export const BedrockAccountMenu = () => {
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem
-					onClick={() => {
+					onClick={async () => {
 						disconnect();
-						logout();
+						await logout();
 					}}
+					className="cursor-pointer"
 				>
 					<LogOut />
 					Log out
