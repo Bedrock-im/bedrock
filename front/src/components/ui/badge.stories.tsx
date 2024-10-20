@@ -1,33 +1,25 @@
 import { Meta, StoryObj } from "@storybook/react";
 
-import { Button, ButtonProps } from "@/components/ui/button";
+import { Badge, BadgeProps } from "@/components/ui/badge";
 
-const meta: Meta<ButtonProps> = {
-	component: Button,
-	title: "Button",
+const meta: Meta<BadgeProps> = {
+	component: Badge,
+	title: "Badge",
 	args: {
 		size: "default",
-		children: "Button content",
+		children: "Badge content",
 		className: "",
 	},
 	argTypes: {
 		variant: {
 			type: "string",
 			control: "select",
-			options: ["default", "outline", "secondary", "destructive", "ghost", "link"],
+			options: ["default", "outline", "secondary", "destructive"],
 		},
 		size: {
 			type: "string",
 			control: "select",
-			options: ["default", "sm", "lg", "icon"],
-		},
-		disabled: {
-			type: "boolean",
-			control: "boolean",
-		},
-		children: {
-			type: "string",
-			control: "text",
+			options: ["default", "sm", "lg"],
 		},
 		className: {
 			type: "string",
@@ -35,14 +27,14 @@ const meta: Meta<ButtonProps> = {
 		},
 	},
 };
-type Story = StoryObj<ButtonProps>;
+type Story = StoryObj<BadgeProps>;
 
-const Render = (args: Meta<ButtonProps>) => <Button {...args} />;
+const Render = (args: Meta<BadgeProps>) => <Badge {...args} />;
 
 export const Default: Story = {
 	args: {
 		variant: "default",
-		disabled: false,
+		size: "default",
 	},
 	parameters: {
 		backgrounds: {
@@ -55,7 +47,7 @@ export const Default: Story = {
 export const DarkMode: Story = {
 	args: {
 		variant: "default",
-		disabled: false,
+		size: "default",
 	},
 	parameters: {
 		backgrounds: {
