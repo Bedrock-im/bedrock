@@ -1,11 +1,8 @@
 import { type Metadata } from "next";
 import localFont from "next/font/local";
-import { headers } from "next/headers";
 import { ReactNode } from "react";
-import { cookieToInitialState } from "wagmi";
 
 import { Providers } from "@/app/providers";
-import { config } from "@/config/wagmi";
 
 import "./globals.css";
 
@@ -30,12 +27,10 @@ export default function RootLayout({
 }: Readonly<{
 	children: ReactNode;
 }>) {
-	const initialState = cookieToInitialState(config, headers().get("cookie"));
-
 	return (
 		<html lang="en">
 			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-				<Providers initialState={initialState}>{children}</Providers>
+				<Providers>{children}</Providers>
 			</body>
 		</html>
 	);
