@@ -5,6 +5,7 @@ import { ReactNode } from "react";
 import { Providers } from "@/app/providers";
 
 import "./globals.css";
+import { BedrockSidebar } from "@/components/BedrockSidebar";
 
 const geistSans = localFont({
 	src: "./fonts/GeistVF.woff",
@@ -30,7 +31,9 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-				<Providers>{children}</Providers>
+				<Providers>
+					<BedrockSidebar>{children}</BedrockSidebar>
+				</Providers>
 			</body>
 		</html>
 	);
