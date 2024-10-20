@@ -25,6 +25,10 @@ const meta: Meta<ButtonProps> = {
 			type: "boolean",
 			control: "boolean",
 		},
+		children: {
+			type: "string",
+			control: "text",
+		},
 		className: {
 			type: "string",
 			control: "text",
