@@ -1,13 +1,10 @@
-import { cookieStorage, createConfig, createStorage, http } from "wagmi";
+import { createConfig } from "@privy-io/wagmi";
+import { http } from "wagmi";
 import { mainnet } from "wagmi/chains";
 
-export const config = createConfig({
+export const wagmiConfig = createConfig({
 	chains: [mainnet],
 	transports: {
 		[mainnet.id]: http(),
 	},
-	ssr: true,
-	storage: createStorage({
-		storage: cookieStorage,
-	}),
 });
