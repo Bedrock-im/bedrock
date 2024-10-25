@@ -3,6 +3,7 @@ import { ETHAccount, getAccountFromProvider, importAccountFromPrivateKey } from 
 import { PrivateKey } from "eciesjs";
 import { SignMessageReturnType } from "viem";
 import web3 from "web3";
+import { z } from "zod";
 
 import env from "@/config/env";
 
@@ -45,33 +46,32 @@ export class AlephService {
 		accountClient: AuthenticatedAlephHttpClient,
 	) {
 		try {
-			// TODO: Add zod parsing
-			const securitySettings = (await accountClient.fetchAggregate(
-				account.address,
-				SECURITY_AGGREGATE_KEY,
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			)) as unknown as any;
+			const alephPermissionsSchema = z.object({
+				authorizations: z.array(
+					z.object({
+						address: z.string(),
+						chain: z.string().optional(),
+						channels: z.array(z.string()).optional(),
+						types: z.array(z.string()).optional(),
+						post_types: z.array(z.string()).optional(),
+						aggregate_keys: z.array(z.string()).optional(),
+					}),
+				),
+			});
 
-			type SecurityAuthorization = {
-				address: string;
-				chain?: string;
-				channels?: string;
-				types?: string;
-				post_types?: string;
-				aggregate_keys?: string;
-			};
+			const securitySettings = alephPermissionsSchema.parse(
+				await accountClient.fetchAggregate(account.address, SECURITY_AGGREGATE_KEY),
+			);
 
 			if (
 				!securitySettings.authorizations.find(
-					(authorization: SecurityAuthorization) =>
+					(authorization) =>
 						authorization.address === subAccount.address &&
 						authorization.types === undefined &&
 						authorization.channels?.includes(BEDROCK_GENERAL_CHANNEL),
 				)
 			) {
-				const oldAuthorizations = securitySettings.authorizations.filter(
-					(a: SecurityAuthorization) => a.address !== subAccount.address,
-				);
+				const oldAuthorizations = securitySettings.authorizations.filter((a) => a.address !== subAccount.address);
 
 				await accountClient.createAggregate({
 					key: SECURITY_AGGREGATE_KEY,
