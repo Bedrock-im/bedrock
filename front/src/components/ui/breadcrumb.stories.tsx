@@ -24,7 +24,7 @@ const meta: Meta = {
 };
 type Story = StoryObj;
 
-const Render = (args: Meta) => (
+const Render = (args: object) => (
 	<Breadcrumb {...args}>
 		<BreadcrumbList>
 			<BreadcrumbItem>

@@ -17,7 +17,7 @@ const meta: Meta = {
 };
 type Story = StoryObj;
 
-const Render = (args: Meta) => (
+const Render = (args: object) => (
 	<Card {...args}>
 		<CardHeader>
 			<CardTitle>Card Title</CardTitle>

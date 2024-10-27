@@ -29,7 +29,7 @@ const meta: Meta<BadgeProps> = {
 };
 type Story = StoryObj<BadgeProps>;
 
-const Render = (args: Meta<BadgeProps>) => <Badge {...args} />;
+const Render = (args: BadgeProps) => <Badge {...args} />;
 
 export const Default: Story = {
 	args: {
