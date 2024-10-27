@@ -1,11 +1,6 @@
 import { Meta, StoryObj } from "@storybook/react";
 
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProps,
-	TooltipTrigger
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProps, TooltipTrigger } from "@/components/ui/tooltip";
 
 const meta: Meta = {
 	component: Tooltip,
