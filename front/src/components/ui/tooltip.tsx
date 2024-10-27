@@ -1,22 +1,56 @@
 "use client";
 
-import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import {
+	Root,
+	Trigger,
+	Content,
+	Portal,
+	TooltipProps as RadixTooltipProps, Provider
+} from "@radix-ui/react-tooltip";
 import React from "react";
 
 import { cn } from "@/lib/utils";
 
-const TooltipProvider = TooltipPrimitive.Provider;
+export type TooltipProps = RadixTooltipProps & {
+	skipDelayDuration?: number;
+}
 
-const Tooltip = TooltipPrimitive.Root;
+const Tooltip = React.forwardRef<
+	React.ElementRef<typeof Root>,
+	TooltipProps
+>(({ delayDuration, skipDelayDuration, disableHoverableContent, ...props }) => (
+	<Provider
+		delayDuration={delayDuration}
+		skipDelayDuration={skipDelayDuration}
+		disableHoverableContent={disableHoverableContent}
+	>
+		<Root
+			delayDuration={delayDuration}
+			disableHoverableContent={disableHoverableContent}
+			{...props}
+		/>
+	</Provider>
+))
+Tooltip.displayName = Root.displayName;
 
-const TooltipTrigger = TooltipPrimitive.Trigger;
+const TooltipTrigger = React.forwardRef<
+	React.ElementRef<typeof Trigger>,
+	React.ComponentPropsWithoutRef<typeof Trigger>
+>(({ className, ...props }, ref) => (
+	<Trigger
+		className={cn("text-primary", className)}
+		ref={ref}
+		{...props}
+	/>
+));
+TooltipTrigger.displayName = Trigger.displayName;
 
 const TooltipContent = React.forwardRef<
-	React.ElementRef<typeof TooltipPrimitive.Content>,
-	React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
+	React.ElementRef<typeof Content>,
+	React.ComponentPropsWithoutRef<typeof Content>
 >(({ className, sideOffset = 4, ...props }, ref) => (
-	<TooltipPrimitive.Portal>
-		<TooltipPrimitive.Content
+	<Portal>
+		<Content
 			ref={ref}
 			sideOffset={sideOffset}
 			className={cn(
@@ -25,8 +59,8 @@ const TooltipContent = React.forwardRef<
 			)}
 			{...props}
 		/>
-	</TooltipPrimitive.Portal>
+	</Portal>
 ));
-TooltipContent.displayName = TooltipPrimitive.Content.displayName;
+TooltipContent.displayName = Content.displayName;
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+export { Tooltip, TooltipTrigger, TooltipContent };
