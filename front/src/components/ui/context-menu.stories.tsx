@@ -30,13 +30,14 @@ const meta: Meta = {
 	},
 };
 type Story = StoryObj;
+type DarkModeMeta = Meta & { dark?: boolean };
 
-const Render = (args: Meta) => (
+const Render = (args: DarkModeMeta) => (
 	<ContextMenu {...args}>
 		<ContextMenuTrigger className="flex h-[150px] w-[300px] items-center justify-center rounded-md border border-dashed border-primary text-sm text-primary">
 			Right click here
 		</ContextMenuTrigger>
-		<ContextMenuContent className="w-64">
+		<ContextMenuContent className={args.dark ? "dark" : ""}>
 			<ContextMenuItem inset>
 				Back
 				<ContextMenuShortcut>⌘[</ContextMenuShortcut>
@@ -101,7 +102,7 @@ export const DarkMode: Story = {
 	},
 	render: (args) => (
 		<div className="dark">
-			<Render {...args} />
+			<Render {...args} dark />
 		</div>
 	),
 };
