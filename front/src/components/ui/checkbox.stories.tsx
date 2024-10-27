@@ -22,7 +22,7 @@ const meta: Meta<CheckboxProps> = {
 };
 type Story = StoryObj<CheckboxProps>;
 
-const Render = (args: Meta<CheckboxProps>) => <Checkbox {...args} />;
+const Render = (args: CheckboxProps) => <Checkbox {...args} />;
 
 export const Default: Story = {
 	args: {

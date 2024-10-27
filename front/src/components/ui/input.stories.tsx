@@ -1,33 +1,23 @@
 import { Meta, StoryObj } from "@storybook/react";
 
-import { Button, ButtonProps } from "@/components/ui/button";
+import { Input, InputProps } from "@/components/ui/input";
 
-const meta: Meta<ButtonProps> = {
-	component: Button,
-	title: "Button",
+const meta: Meta<InputProps> = {
+	component: Input,
+	title: "Input",
 	args: {
-		size: "default",
-		children: "Button content",
+		value: "Text input",
+		disabled: false,
 		className: "",
 	},
 	argTypes: {
-		variant: {
+		value: {
 			type: "string",
-			control: "select",
-			options: ["default", "outline", "secondary", "destructive", "ghost", "link"],
-		},
-		size: {
-			type: "string",
-			control: "select",
-			options: ["default", "sm", "lg", "icon"],
+			control: "text",
 		},
 		disabled: {
 			type: "boolean",
 			control: "boolean",
-		},
-		children: {
-			type: "string",
-			control: "text",
 		},
 		className: {
 			type: "string",
@@ -35,14 +25,15 @@ const meta: Meta<ButtonProps> = {
 		},
 	},
 };
-type Story = StoryObj<ButtonProps>;
+type Story = StoryObj<InputProps>;
 
-const Render = (args: ButtonProps) => <Button {...args} />;
+const Render = (args: InputProps) => <Input {...args} />;
 
 export const Default: Story = {
 	args: {
-		variant: "default",
+		value: "Text input",
 		disabled: false,
+		className: "",
 	},
 	parameters: {
 		backgrounds: {
@@ -54,8 +45,9 @@ export const Default: Story = {
 
 export const DarkMode: Story = {
 	args: {
-		variant: "default",
+		value: "Text input",
 		disabled: false,
+		className: "",
 	},
 	parameters: {
 		backgrounds: {

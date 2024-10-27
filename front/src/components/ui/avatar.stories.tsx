@@ -27,7 +27,7 @@ const meta: Meta<AvatarProps> = {
 };
 type Story = StoryObj<AvatarProps>;
 
-const Render = (args: Meta<AvatarProps>) => <Avatar {...args} />;
+const Render = (args: AvatarProps) => <Avatar {...args} />;
 
 export const Default: Story = {
 	args: {
