@@ -1,48 +1,31 @@
 "use client";
 
-import {
-	Root,
-	Trigger,
-	Content,
-	Portal,
-	TooltipProps as RadixTooltipProps, Provider
-} from "@radix-ui/react-tooltip";
+import { Root, Trigger, Content, Portal, TooltipProps as RadixTooltipProps, Provider } from "@radix-ui/react-tooltip";
 import React from "react";
 
 import { cn } from "@/lib/utils";
 
 export type TooltipProps = RadixTooltipProps & {
 	skipDelayDuration?: number;
-}
+};
 
-const Tooltip = React.forwardRef<
-	React.ElementRef<typeof Root>,
-	TooltipProps
->(({ delayDuration, skipDelayDuration, disableHoverableContent, ...props }) => (
-	<Provider
-		delayDuration={delayDuration}
-		skipDelayDuration={skipDelayDuration}
-		disableHoverableContent={disableHoverableContent}
-	>
-		<Root
+const Tooltip = React.forwardRef<React.ElementRef<typeof Root>, TooltipProps>(
+	({ delayDuration, skipDelayDuration, disableHoverableContent, ...props }) => (
+		<Provider
 			delayDuration={delayDuration}
+			skipDelayDuration={skipDelayDuration}
 			disableHoverableContent={disableHoverableContent}
-			{...props}
-		/>
-	</Provider>
-))
+		>
+			<Root delayDuration={delayDuration} disableHoverableContent={disableHoverableContent} {...props} />
+		</Provider>
+	),
+);
 Tooltip.displayName = Root.displayName;
 
 const TooltipTrigger = React.forwardRef<
 	React.ElementRef<typeof Trigger>,
 	React.ComponentPropsWithoutRef<typeof Trigger>
->(({ className, ...props }, ref) => (
-	<Trigger
-		className={cn("text-primary", className)}
-		ref={ref}
-		{...props}
-	/>
-));
+>(({ className, ...props }, ref) => <Trigger className={cn("text-primary", className)} ref={ref} {...props} />);
 TooltipTrigger.displayName = Trigger.displayName;
 
 const TooltipContent = React.forwardRef<
