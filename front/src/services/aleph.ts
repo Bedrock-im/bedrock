@@ -1,5 +1,6 @@
 import { AuthenticatedAlephHttpClient } from "@aleph-sdk/client";
 import { ETHAccount, getAccountFromProvider, importAccountFromPrivateKey } from "@aleph-sdk/ethereum";
+import { ForgetMessage, ItemType, StoreMessage } from "@aleph-sdk/message";
 import { PrivateKey } from "eciesjs";
 import { SignMessageReturnType } from "viem";
 import web3 from "web3";
@@ -100,5 +101,21 @@ export class AlephService {
 				},
 			});
 		}
+	}
+
+	async uploadFile(file: File | Buffer): Promise<StoreMessage> {
+		return await this.subAccountClient.createStore({
+			fileObject: file,
+			storageEngine: ItemType.ipfs,
+			channel: BEDROCK_GENERAL_CHANNEL,
+		});
+	}
+
+	async downloadFile(ipfsHash: string): Promise<ArrayBuffer> {
+		return this.subAccountClient.downloadFile(ipfsHash);
+	}
+
+	async deleteFiles(itemHashes: string[]): Promise<ForgetMessage> {
+		return this.subAccountClient.forget({ hashes: itemHashes });
 	}
 }
