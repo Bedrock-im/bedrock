@@ -1,8 +1,8 @@
 "use client";
 
-import { useLogout } from "@privy-io/react-auth";
+import { useLogout, usePrivy } from "@privy-io/react-auth";
 import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Sparkles } from "lucide-react";
-import { useDisconnect } from "wagmi";
+import { useAccount, useDisconnect, useEnsAvatar, useEnsName } from "wagmi";
 
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -15,12 +15,24 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuButton } from "@/components/ui/sidebar";
+import { shrink_eth_address } from "@/utils/ethereum";
 
-const user = {
-	name: "shadcn",
-	email: "m@example.com",
-	// TODO: find an avatar image
-	avatar: "/avatars/shadcn.jpg",
+const BedrockAccountAvatar = () => {
+	const account = useAccount();
+	const { user: privyUser } = usePrivy();
+	const { data: ensName } = useEnsName({ address: account.address });
+	const { data: ensAvatar } = useEnsAvatar({ name: ensName ?? "" });
+
+	return (
+		<>
+			{/*TODO: add default avatar picture*/}
+			<Avatar className="h-8 w-8 rounded-lg" src={ensAvatar ?? undefined} alt="CN" />
+			<div className="grid flex-1 text-left text-sm leading-tight">
+				<span className="truncate font-semibold">{ensName ?? shrink_eth_address(account.address ?? "")}</span>
+				{privyUser?.email?.address && <span className="truncate text-xs">{privyUser?.email?.address}</span>}
+			</div>
+		</>
+	);
 };
 
 export const BedrockAccountMenu = () => {
@@ -34,11 +46,7 @@ export const BedrockAccountMenu = () => {
 					size="lg"
 					className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 				>
-					<Avatar className="h-8 w-8 rounded-lg" src={user.avatar} alt="CN" />
-					<div className="grid flex-1 text-left text-sm leading-tight">
-						<span className="truncate font-semibold">{user.name}</span>
-						<span className="truncate text-xs">{user.email}</span>
-					</div>
+					<BedrockAccountAvatar />
 					<ChevronsUpDown className="ml-auto size-4" />
 				</SidebarMenuButton>
 			</DropdownMenuTrigger>
@@ -50,11 +58,7 @@ export const BedrockAccountMenu = () => {
 			>
 				<DropdownMenuLabel className="p-0 font-normal">
 					<div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-						<Avatar className="h-8 w-8 rounded-lg" src={user.avatar} alt="CN" />
-						<div className="grid flex-1 text-left text-sm leading-tight">
-							<span className="truncate font-semibold">{user.name}</span>
-							<span className="truncate text-xs">{user.email}</span>
-						</div>
+						<BedrockAccountAvatar />
 					</div>
 				</DropdownMenuLabel>
 				<DropdownMenuSeparator />
