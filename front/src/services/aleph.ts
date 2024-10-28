@@ -86,7 +86,7 @@ export class AlephService {
 					},
 				});
 			}
-		} catch (error) {
+		} catch (_error) {
 			// Security aggregate does not exist or with invalid content, creating a new one
 			await accountClient.createAggregate({
 				key: SECURITY_AGGREGATE_KEY,

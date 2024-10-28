@@ -16,8 +16,11 @@ rules:
 
   "@typescript-eslint/no-unused-vars":
     - warn
-    - argsIgnorePattern: "^_"
+    - args: "all"
+      argsIgnorePattern: "^_"
       varsIgnorePattern: "^_"
-      args: "all"
+      caughtErrors: "all"
+      caughtErrorsIgnorePattern: "^_"
+
 
   perfectionist/sort-imports: [ "warn", { internalPattern: [ '@/**' ], } ]
