@@ -55,7 +55,6 @@ export default function Component() {
 				vy: (Math.random() - 0.5) * 0.5,
 			});
 		}
-		document.querySelector("#privy-dialog-backdrop")?.removeAttribute("onclick");
 
 		const animate = () => {
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -92,6 +91,7 @@ export default function Component() {
 		return () => {
 			window.removeEventListener("resize", resizeCanvas);
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	return (
