@@ -8,6 +8,7 @@ import { type ReactNode } from "react";
 import env from "@/config/env";
 import { privyConfig } from "@/config/privy";
 import { wagmiConfig } from "@/config/wagmi";
+import { Watchers } from "@/layouts/watchers";
 
 type ProvidersProps = {
 	children: ReactNode;
@@ -19,7 +20,9 @@ export function Providers({ children }: ProvidersProps) {
 	return (
 		<PrivyProvider appId={env.PRIVY_APP_ID} config={privyConfig}>
 			<QueryClientProvider client={queryClient}>
-				<WagmiProvider config={wagmiConfig}>{children}</WagmiProvider>
+				<WagmiProvider config={wagmiConfig}>
+					<Watchers>{children}</Watchers>
+				</WagmiProvider>
 			</QueryClientProvider>
 		</PrivyProvider>
 	);

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const envSchema = z.object({
 	PRIVY_APP_ID: z.string(),
-	ALEPH_API_URL: z.string().optional(),
+	ALEPH_API_URL: z.string().url().optional(),
 });
 
 const env = envSchema.parse({
