@@ -2,7 +2,7 @@ import { type Metadata } from "next";
 import localFont from "next/font/local";
 import { ReactNode } from "react";
 
-import { Providers } from "@/app/providers";
+import { Providers } from "@/layouts/providers";
 
 import "./globals.css";
 
