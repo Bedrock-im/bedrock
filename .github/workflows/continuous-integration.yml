@@ -47,6 +47,26 @@ jobs:
       - name: Run Prettier
         run: yarn format:check
 
+  jest-front:
+    name: "Unit tests: front"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./front
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: 'front/.nvmrc'
+          cache: yarn
+          cache-dependency-path: "front/yarn.lock"
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Run tests
+        run: yarn test
+
   build-front:
     name: "Build: front"
     runs-on: ubuntu-latest
