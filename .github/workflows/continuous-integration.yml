@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
       - name: Run ESLint
-        run: yarn lint
+        run: yarn lint:check
 
   prettier:
     name: "Prettier"
