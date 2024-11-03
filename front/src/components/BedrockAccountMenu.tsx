@@ -15,7 +15,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuButton } from "@/components/ui/sidebar";
-import { shrink_eth_address } from "@/utils/ethereum";
+import { shrinkEtAddress } from "@/utils/ethereum";
 
 const BedrockAccountAvatar = () => {
 	const account = useAccount();
@@ -28,7 +28,7 @@ const BedrockAccountAvatar = () => {
 			{/*TODO: add default avatar picture*/}
 			<Avatar className="h-8 w-8 rounded-lg" src={ensAvatar ?? undefined} alt="CN" />
 			<div className="grid flex-1 text-left text-sm leading-tight">
-				<span className="truncate font-semibold">{ensName ?? shrink_eth_address(account.address ?? "")}</span>
+				<span className="truncate font-semibold">{ensName ?? shrinkEtAddress(account.address ?? "")}</span>
 				{privyUser?.email?.address && <span className="truncate text-xs">{privyUser?.email?.address}</span>}
 			</div>
 		</>
