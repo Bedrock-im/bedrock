@@ -6,6 +6,14 @@ type AccountStoreState = {
 	alephService: AlephService | null;
 };
 
-export const useAccountStore = create<AccountStoreState>((set) => ({
+type AccountStoreActions = {
+	onDisconnect: () => void;
+};
+
+export const useAccountStore = create<AccountStoreState & AccountStoreActions>((set) => ({
 	alephService: null,
+
+	onDisconnect: () => {
+		set({ alephService: null });
+	},
 }));

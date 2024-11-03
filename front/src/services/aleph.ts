@@ -9,8 +9,9 @@ import { z } from "zod";
 import env from "@/config/env";
 
 // Aleph keys and channels settings
-const SECURITY_AGGREGATE_KEY = "security";
-const BEDROCK_GENERAL_CHANNEL = "bedrock";
+const SECURITY_AGGREGATE_KEY = "security"; // Reserved Aleph key (https://docs.aleph.im/protocol/permissions/#the-security-aggregate)
+export const BEDROCK_MESSAGE = "Bedrock.im"; // Fixed message, don't change it or every user will lose his data
+const ALEPH_GENERAL_CHANNEL = env.ALEPH_GENERAL_CHANNEL;
 
 export class AlephService {
 	constructor(
@@ -69,7 +70,7 @@ export class AlephService {
 					(authorization) =>
 						authorization.address === subAccount.address &&
 						authorization.types === undefined &&
-						authorization.channels?.includes(BEDROCK_GENERAL_CHANNEL),
+						authorization.channels?.includes(ALEPH_GENERAL_CHANNEL),
 				)
 			) {
 				const oldAuthorizations = securitySettings.authorizations.filter((a) => a.address !== subAccount.address);
@@ -81,7 +82,7 @@ export class AlephService {
 							...oldAuthorizations,
 							{
 								address: subAccount.address,
-								channels: [BEDROCK_GENERAL_CHANNEL],
+								channels: [ALEPH_GENERAL_CHANNEL],
 							},
 						],
 					},
@@ -95,7 +96,7 @@ export class AlephService {
 					authorizations: [
 						{
 							address: subAccount.address,
-							channels: [BEDROCK_GENERAL_CHANNEL],
+							channels: [ALEPH_GENERAL_CHANNEL],
 						},
 					],
 				},
@@ -107,7 +108,7 @@ export class AlephService {
 		return await this.subAccountClient.createStore({
 			fileObject: file,
 			storageEngine: ItemType.ipfs,
-			channel: BEDROCK_GENERAL_CHANNEL,
+			channel: ALEPH_GENERAL_CHANNEL,
 		});
 	}
 
