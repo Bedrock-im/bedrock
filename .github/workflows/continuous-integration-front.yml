@@ -1,46 +1,15 @@
-name: Continuous Integration
+name: Continuous Integration - Front
 
 on:
   pull_request:
     paths:
       - 'front/**'
+  push:
+    paths:
+      - 'front/**'
 
 
 jobs:
-  eslint:
-    name: "ESLint"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: yarn
-          cache-dependency-path: "yarn.lock"
-      - name: Install dependencies
-        run: yarn install --immutable
-      - name: Run ESLint
-        run: yarn lint:check
-
-  prettier:
-    name: "Prettier"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: yarn
-          cache-dependency-path: "yarn.lock"
-      - name: Install dependencies
-        run: yarn install --immutable
-      - name: Run Prettier
-        run: yarn format:check
-
   jest-front:
     name: "Unit tests: Front"
     runs-on: ubuntu-latest
