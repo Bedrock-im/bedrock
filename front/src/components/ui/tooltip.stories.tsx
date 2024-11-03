@@ -27,7 +27,7 @@ const Render = (args: TooltipProps) => (
 	</Tooltip>
 );
 
-export const Default: Story = {
+export const LightMode: Story = {
 	args: {
 		delayDuration: 0,
 	},

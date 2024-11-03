@@ -1,18 +1,20 @@
 import { Meta, StoryObj } from "@storybook/react";
 
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
 
 const meta: Meta = {
-	component: DropdownMenu,
-	title: "Dropdown Menu",
+	component: Dialog,
+	title: "Dialog",
 	args: {
 		className: "",
 	},
@@ -27,18 +29,22 @@ type Story = StoryObj;
 type DarkModeMeta = { dark?: boolean };
 
 const Render = (args: DarkModeMeta) => (
-	<DropdownMenu {...args}>
-		<DropdownMenuTrigger>
+	<Dialog>
+		<DialogTrigger>
 			<Button variant="outline">Open</Button>
-		</DropdownMenuTrigger>
-		<DropdownMenuContent className={args.dark ? "dark" : ""}>
-			<DropdownMenuLabel>My Account</DropdownMenuLabel>
-			<DropdownMenuSeparator />
-			<DropdownMenuItem>My files</DropdownMenuItem>
-			<DropdownMenuItem>Shared with me</DropdownMenuItem>
-			<DropdownMenuItem>Trash</DropdownMenuItem>
-		</DropdownMenuContent>
-	</DropdownMenu>
+		</DialogTrigger>
+		<DialogContent className={args.dark ? "dark" : ""}>
+			<DialogHeader>
+				<DialogTitle>Are you absolutely sure?</DialogTitle>
+				<DialogDescription>This action cannot be undone.</DialogDescription>
+			</DialogHeader>
+			<DialogFooter>
+				<DialogClose asChild>
+					<Button>Confirm</Button>
+				</DialogClose>
+			</DialogFooter>
+		</DialogContent>
+	</Dialog>
 );
 
 export const LightMode: Story = {

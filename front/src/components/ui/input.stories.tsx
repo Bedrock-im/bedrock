@@ -29,7 +29,7 @@ type Story = StoryObj<InputProps>;
 
 const Render = (args: InputProps) => <Input {...args} />;
 
-export const Default: Story = {
+export const LightMode: Story = {
 	args: {
 		value: "Text input",
 		disabled: false,

@@ -39,7 +39,7 @@ type Story = StoryObj<ButtonProps>;
 
 const Render = (args: ButtonProps) => <Button {...args} />;
 
-export const Default: Story = {
+export const LightMode: Story = {
 	args: {
 		variant: "default",
 		disabled: false,

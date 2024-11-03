@@ -24,7 +24,7 @@ const Render = (args: object) => (
 	</div>
 );
 
-export const Default: Story = {
+export const LightMode: Story = {
 	args: {
 		className: "",
 	},
