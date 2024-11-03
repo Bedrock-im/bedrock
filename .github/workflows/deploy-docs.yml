@@ -44,7 +44,7 @@ jobs:
 
   deploy-docs:
     environment:
-      name: github-pages
+      name: Documentation
       url: ${{ steps.deployment.outputs.page_url }}
     needs: build-docs
     runs-on: ubuntu-latest
