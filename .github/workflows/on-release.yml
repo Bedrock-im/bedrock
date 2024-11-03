@@ -1,0 +1,23 @@
+name: Release actions
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  documentation-changelog:
+    runs-on: ubuntu-latest
+    name: "Generate documentation changelog"
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: rhysd/changelog-from-release/action@v3
+        with:
+          file: docs/CHANGELOG.md
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          pull_request: true
