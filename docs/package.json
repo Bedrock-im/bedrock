@@ -1,0 +1,17 @@
+{
+  "name": "docs",
+  "version": "0.1.0",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview",
+    "format": "prettier '**/**/*.{ts,mts}' --write",
+    "format:check": "prettier '**/**/*.{ts,mts}' --check"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "vitepress": "^1.4.3"
+  },
+  "packageManager": "yarn@4.5.0"
+}

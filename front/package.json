@@ -7,7 +7,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "lint:check": "next lint",
     "format": "prettier '**/**/*.{ts,tsx}' --write",
     "format:check": "prettier '**/**/*.{ts,tsx}' --check",
     "storybook": "storybook dev -p 6006",
