@@ -37,7 +37,7 @@ const meta: Meta<CommandProps> = {
 	},
 };
 type Story = StoryObj<CommandProps>;
-type DarkModeMeta = CommandProps & { dark?: boolean };
+type DarkModeMeta = CommandProps & { dark?: boolean; className?: string };
 
 const Render = (args: DarkModeMeta) => {
 	const [open, setOpen] = React.useState(false);

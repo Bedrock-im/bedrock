@@ -24,7 +24,7 @@ const meta: Meta = {
 	},
 };
 type Story = StoryObj;
-type DarkModeMeta = { dark?: boolean };
+type DarkModeMeta = { dark?: boolean; className?: string };
 
 const Render = (args: DarkModeMeta) => (
 	<DropdownMenu {...args}>
