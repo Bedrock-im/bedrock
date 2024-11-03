@@ -10,7 +10,7 @@ import env from "@/config/env";
 
 // Aleph keys and channels settings
 const SECURITY_AGGREGATE_KEY = "security"; // Reserved Aleph key (https://docs.aleph.im/protocol/permissions/#the-security-aggregate)
-export const BEDROCK_MESSAGE = "Bedrock.im"; // Fixed message, don't change it or every user will lose his data
+export const BEDROCK_MESSAGE = "Bedrock.im"; // /!\ Fixed message, don't change it or every user will lose his data /!\
 const ALEPH_GENERAL_CHANNEL = env.ALEPH_GENERAL_CHANNEL;
 
 export class AlephService {
