@@ -1,0 +1,29 @@
+name: Continuous Integration - Documentation
+
+on:
+  pull_request:
+    path:
+      - 'docs/**'
+  push:
+    paths:
+      - 'docs/**'
+
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: yarn
+          cache-dependency-path: "yarn.lock"
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Build with VitePress
+        run: yarn workspace docs run build
