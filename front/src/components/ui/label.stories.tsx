@@ -21,7 +21,9 @@ type Story = StoryObj<LabelProps>;
 const Render = (args: LabelProps) => (
 	<div className="flex items-center space-x-2">
 		<Checkbox id="example" />
-		<Label htmlFor="example" {...args}>Click me!</Label>
+		<Label htmlFor="example" {...args}>
+			Click me!
+		</Label>
 	</div>
 );
 

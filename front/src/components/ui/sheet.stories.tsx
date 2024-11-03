@@ -17,9 +17,15 @@ const meta: Meta<SheetContentProps> = {
 	component: Sheet,
 	title: "Sheet",
 	args: {
+		side: "right",
 		className: "",
 	},
 	argTypes: {
+		side: {
+			type: "string",
+			control: "select",
+			options: ["top", "right", "bottom", "left"],
+		},
 		className: {
 			type: "string",
 			control: "text",
