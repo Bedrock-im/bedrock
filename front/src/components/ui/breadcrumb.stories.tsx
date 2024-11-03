@@ -58,7 +58,7 @@ const Render = (args: object) => (
 	</Breadcrumb>
 );
 
-export const Default: Story = {
+export const LightMode: Story = {
 	args: {
 		className: "",
 	},

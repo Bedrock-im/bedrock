@@ -31,7 +31,7 @@ type Story = StoryObj<BadgeProps>;
 
 const Render = (args: BadgeProps) => <Badge {...args} />;
 
-export const Default: Story = {
+export const LightMode: Story = {
 	args: {
 		variant: "default",
 		size: "default",

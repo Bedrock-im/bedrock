@@ -79,7 +79,7 @@ const Render = (args: DarkModeMeta) => (
 	</ContextMenu>
 );
 
-export const Default: Story = {
+export const LightMode: Story = {
 	args: {
 		className: "",
 	},

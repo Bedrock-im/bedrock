@@ -24,7 +24,7 @@ type Story = StoryObj<CheckboxProps>;
 
 const Render = (args: CheckboxProps) => <Checkbox {...args} />;
 
-export const Default: Story = {
+export const LightMode: Story = {
 	args: {
 		className: "",
 		disabled: false,

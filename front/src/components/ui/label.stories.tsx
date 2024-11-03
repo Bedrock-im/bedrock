@@ -27,7 +27,7 @@ const Render = (args: LabelProps) => (
 	</div>
 );
 
-export const Default: Story = {
+export const LightMode: Story = {
 	args: {
 		className: "",
 	},

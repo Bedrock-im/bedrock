@@ -28,7 +28,7 @@ const Render = (args: object) => (
 	</Card>
 );
 
-export const Default: Story = {
+export const LightMode: Story = {
 	args: {
 		className: "",
 	},

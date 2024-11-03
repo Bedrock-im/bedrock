@@ -54,7 +54,7 @@ const Render = (args: DarkModeMeta) => (
 	</Sheet>
 );
 
-export const Default: Story = {
+export const LightMode: Story = {
 	args: {
 		className: "",
 	},

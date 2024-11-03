@@ -32,7 +32,7 @@ const Render = (args: SeparatorProps) => (
 	</div>
 );
 
-export const Default: Story = {
+export const LightMode: Story = {
 	args: {
 		orientation: "horizontal",
 		className: "",

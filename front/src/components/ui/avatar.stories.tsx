@@ -29,7 +29,7 @@ type Story = StoryObj<AvatarProps>;
 
 const Render = (args: AvatarProps) => <Avatar {...args} />;
 
-export const Default: Story = {
+export const LightMode: Story = {
 	args: {
 		src: "https://avatars.githubusercontent.com/u/33784129?v=4",
 		alt: "EdenComp",
