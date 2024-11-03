@@ -33,7 +33,7 @@ const meta: Meta<SheetContentProps> = {
 	},
 };
 type Story = StoryObj<SheetContentProps>;
-type DarkModeMeta = SheetContentProps & { dark?: boolean };
+type DarkModeMeta = SheetContentProps & { dark?: boolean; className?: string };
 
 const Render = (args: DarkModeMeta) => (
 	<Sheet>
