@@ -1,34 +1,15 @@
 import { Meta, StoryObj } from "@storybook/react";
 
-import { Slider, SliderProps as DefaultSliderProps } from "@/components/ui/slider";
+import { Slider, SliderProps } from "@/components/ui/slider";
 
-type SliderProps = Omit<DefaultSliderProps, "value"> & {
-	value: number;
-};
-
-const meta: Meta<DefaultSliderProps> = {
+const meta: Meta<SliderProps> = {
 	component: Slider,
 	title: "Slider",
 	args: {
-		value: [20],
-		min: 0,
-		max: 100,
 		disabled: false,
 		className: "",
 	},
 	argTypes: {
-		value: {
-			type: "number",
-			control: "number",
-		},
-		min: {
-			type: "number",
-			control: "number",
-		},
-		max: {
-			type: "number",
-			control: "number",
-		},
 		disabled: {
 			type: "boolean",
 			control: "boolean",
@@ -41,13 +22,10 @@ const meta: Meta<DefaultSliderProps> = {
 };
 type Story = StoryObj<SliderProps>;
 
-const Render = (args: SliderProps) => <Slider {...args} value={[args.value]} />;
+const Render = (args: SliderProps) => <Slider {...args} defaultValue={[20]} min={0} max={100} />;
 
 export const LightMode: Story = {
 	args: {
-		value: 20,
-		min: 0,
-		max: 100,
 		disabled: false,
 		className: "",
 	},
@@ -61,9 +39,6 @@ export const LightMode: Story = {
 
 export const DarkMode: Story = {
 	args: {
-		value: 20,
-		min: 0,
-		max: 100,
 		disabled: false,
 		className: "",
 	},
