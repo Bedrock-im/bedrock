@@ -6,15 +6,10 @@ const meta: Meta<InputProps> = {
 	component: Input,
 	title: "Input",
 	args: {
-		value: "Text input",
 		disabled: false,
 		className: "",
 	},
 	argTypes: {
-		value: {
-			type: "string",
-			control: "text",
-		},
 		disabled: {
 			type: "boolean",
 			control: "boolean",
@@ -27,11 +22,10 @@ const meta: Meta<InputProps> = {
 };
 type Story = StoryObj<InputProps>;
 
-const Render = (args: InputProps) => <Input {...args} />;
+const Render = (args: InputProps) => <Input {...args} defaultValue="Text value" />;
 
 export const LightMode: Story = {
 	args: {
-		value: "Text input",
 		disabled: false,
 		className: "",
 	},
@@ -45,7 +39,6 @@ export const LightMode: Story = {
 
 export const DarkMode: Story = {
 	args: {
-		value: "Text input",
 		disabled: false,
 		className: "",
 	},

@@ -1,12 +1,13 @@
 import { Meta, StoryObj } from "@storybook/react";
 
 import { Checkbox, CheckboxProps } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 const meta: Meta<CheckboxProps> = {
 	component: Checkbox,
 	title: "Checkbox",
 	args: {
-		children: "Enable checkbox",
+		disabled: false,
 		className: "",
 	},
 	argTypes: {
@@ -22,7 +23,12 @@ const meta: Meta<CheckboxProps> = {
 };
 type Story = StoryObj<CheckboxProps>;
 
-const Render = (args: CheckboxProps) => <Checkbox {...args} />;
+const Render = (args: CheckboxProps) => (
+	<div className="flex items-center gap-x-2">
+		<Checkbox id="enable" {...args} />
+		<Label htmlFor="enable">Enable cookies</Label>
+	</div>
+);
 
 export const LightMode: Story = {
 	args: {

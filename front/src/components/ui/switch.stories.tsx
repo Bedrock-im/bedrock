@@ -1,5 +1,6 @@
 import { Meta, StoryObj } from "@storybook/react";
 
+import { Label } from "@/components/ui/label";
 import { Switch, SwitchProps } from "@/components/ui/switch";
 
 const meta: Meta<SwitchProps> = {
@@ -22,7 +23,12 @@ const meta: Meta<SwitchProps> = {
 };
 type Story = StoryObj<SwitchProps>;
 
-const Render = (args: SwitchProps) => <Switch {...args} />;
+const Render = (args: SwitchProps) => (
+	<div className="flex items-center gap-x-2">
+		<Switch id="enable" {...args} />
+		<Label htmlFor="enable">Enable cookies</Label>
+	</div>
+);
 
 export const LightMode: Story = {
 	args: {
