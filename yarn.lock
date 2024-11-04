@@ -12321,7 +12321,6 @@ __metadata:
     jest-environment-jsdom: "npm:^29.7.0"
     lucide-react: "npm:^0.453.0"
     next: "npm:14.2.15"
-    next-themes: "npm:^0.4.1"
     postcss: "npm:^8.4.47"
     prettier: "npm:^3.3.3"
     react: "npm:^18.3.1"
@@ -15275,16 +15274,6 @@ __metadata:
   version: 2.6.2
   resolution: "neo-async@npm:2.6.2"
   checksum: 10c0/c2f5a604a54a8ec5438a342e1f356dff4bc33ccccdb6dc668d94fe8e5eccfc9d2c2eea6064b0967a767ba63b33763f51ccf2cd2441b461a7322656c1f06b3f5d
-  languageName: node
-  linkType: hard
-
-"next-themes@npm:^0.4.1":
-  version: 0.4.1
-  resolution: "next-themes@npm:0.4.1"
-  peerDependencies:
-    react: ^16.8 || ^17 || ^18 || ^19 || ^19.0.0-rc
-    react-dom: ^16.8 || ^17 || ^18 || ^19 || ^19.0.0-rc
-  checksum: 10c0/6ce1b11c3cc836755a130d8e668496cb8bb0e82a984fe7d8bbebd3a23668d8fa552a398898c22c76a341ffb9580d43f50bbe3bb7494f23f2e536fe670fb50f4e
   languageName: node
   linkType: hard
 
