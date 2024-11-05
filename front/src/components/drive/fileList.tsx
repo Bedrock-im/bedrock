@@ -1,9 +1,9 @@
+import { FolderIcon, FileText } from "lucide-react";
 import React, { useState } from 'react';
 
 import "@/app/(drive)/drive.css";
-import { FileListProps } from "@/utils/types";
 import { Card, CardFooter, CardTitle, CardContent } from "@/components/ui/card";
-import { FolderIcon, FileText } from "lucide-react";
+import { FileListProps } from "@/utils/types";
 
 type SortColumn = 'name' | 'size' | 'createdAt' | 'permission';
 type SortOrder = 'asc' | 'desc';
@@ -29,14 +29,11 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 	});
 
 	const sortedFolders = [...folders].sort((a, b) => {
-		const isAscending = sortOrder === 'asc' ? 1 : -1;
+		//const isAscending = sortOrder === 'asc' ? 1 : -1;
 		//if (a[sortColumn] < b[sortColumn]) return -1 * isAscending;
 		//if (a[sortColumn] > b[sortColumn]) return 1 * isAscending;
 		return 0;
 	});
-	console.log(sortedFiles);
-
-
 
 	return (
 		<div className="file-list-container">
