@@ -3,8 +3,7 @@
 @tailwind utilities;
 
 .drive-container {
-    @apply flex flex-col h-[calc(100vh-4rem)] p-6 bg-gray-200 overflow-hidden;
-    justify-content: flex-start;
+    @apply flex flex-col h-screen bg-gray-200;
     align-items: center;
 }
 
@@ -22,7 +21,7 @@
 
 
 .drive-content {
-    @apply flex-1 overflow-y-auto p-4 w-full;
+    @apply flex-1 p-4 w-full;
 }
 
 .search-bar {
@@ -45,52 +44,31 @@
 }
 
 
+.file-list-container {
+    @apply flex flex-col flex-1 w-full overflow-hidden; /* Conteneur principal sans défilement */
+}
+
+.file-list-header {
+    @apply grid grid-cols-4 gap-4 mb-4 font-semibold text-gray-600;
+}
+
+.file-list-content {
+    @apply overflow-y-auto h-full ;
+    height: calc(100vh - 18rem);
+}
+
+
 .file-list {
     @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4;
     @apply text-2xl font-bold text-gray-900;
 }
 
-.drive-upload-button {
-    @apply bg-blue-500 text-white px-4 py-2 rounded-lg;
-    transition: background-color 0.2s;
-}
-
-.drive-upload-button:hover {
-    @apply bg-blue-600;
-}
-
-.drive-content {
-    @apply flex-1 overflow-y-auto p-4;
-}
-
-.file-list {
-    @apply grid grid-cols-1 gap-4;
-}
 
 .file-list-item {
-    @apply bg-white text-gray-900 p-4 rounded-lg shadow-md transition-all duration-200 cursor-pointer;
-}
-
-.file-list-item:hover {
-    @apply bg-gray-200;
-}
-
-.file-icon, .folder-icon {
-    @apply w-10 h-10 mb-2;
+    @apply grid grid-cols-4 gap-3 p-2.5 mb-1.5 hover:bg-gray-100 hover:shadow-lg transition;
 }
 
 
-.file-name {
-    @apply text-lg font-semibold text-gray-900 truncate;
-}
-
-.file-size {
-    @apply text-sm text-gray-600;
-}
-
-.folder-name {
-    @apply text-lg font-semibold text-gray-900 truncate;
-}
 
 
 
