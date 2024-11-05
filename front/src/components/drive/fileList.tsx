@@ -37,7 +37,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 
 	return (
 		<div className="file-list-container">
-			<div className="file-list-header grid grid-cols-4 gap-4 mb-4 font-semibold text-gray-600">
+			<div className="file-list-header">
 				<div onClick={() => handleSort('name')} className="cursor-pointer">
 					Name {sortColumn === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
 				</div>
@@ -52,10 +52,10 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 				</div>
 			</div>
 
-			<div className="file-list-content max-h-[70vh] overflow-y-auto">
+			<div className="file-list-content">
 				{sortedFolders.map((folder, index) => (
 					<Card key={index}
-								className="grid grid-cols-4 gap-3 p-2.5 mb-1.5 hover:bg-gray-100 hover:shadow-lg transition">
+								className="file-list-item">
 						<CardTitle className="flex items-center">
 							<FolderIcon className="size-6 mr-2 text-gray-500 fill-current" />
 							{folder.name}</CardTitle>
@@ -67,7 +67,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 
 				{sortedFiles.map((file) => (
 					<Card key={file.id}
-								className="grid grid-cols-4 gap-3 p-2 mb-1.5 hover:bg-gray-100 hover:shadow-lg transition">
+								className="file-list-item">
 						<CardTitle className="flex items-center">
 							<FileText className="size-6 mr-2 text-gray-500" />
 							{file.name}</CardTitle>						<CardContent>{file.size} KB</CardContent>
