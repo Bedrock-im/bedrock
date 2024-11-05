@@ -25,6 +25,11 @@ export const FileMetaSchema = z.object({
 	}),
 });
 
+export const FileEntriesSchema = z.array(FileEntrySchema).default([]);
+
+const FILE_ENTRIES_AGGREGATE_KEY = "bedrock_file_entries";
+const FILE_POST_TYPE = "bedrock_file";
+
 export type FileEntry = z.infer<typeof FileEntrySchema>;
 export type FileMeta = z.infer<typeof FileMetaSchema>;
 export type FileFullInfos = FileEntry & FileMeta;
@@ -69,29 +74,25 @@ export default class BedrockService {
 	async saveFile(fileInfos: Omit<FileFullInfos, "post_hash">): Promise<void> {
 		const { key, iv, ipfs_hash, path } = FileEntrySchema.omit({ post_hash: true }).and(FileMetaSchema).parse(fileInfos); // Validate the input because fileEntry can be built without using the parse method
 
-		const { item_hash } = await this.alephService.createPost("bedrock_file", {
+		const { item_hash } = await this.alephService.createPost(FILE_POST_TYPE, {
 			key: EncryptionService.encryptEcies(key, this.alephService.encryptionPrivateKey.publicKey.compressed),
 			iv: EncryptionService.encryptEcies(iv, this.alephService.encryptionPrivateKey.publicKey.compressed),
 			ipfs_hash,
 		});
-		await this.alephService.updateAggregate(
-			"bedrock_file_entries",
-			z.array(FileEntrySchema).default([]),
-			(oldContent) => {
-				if (oldContent.some((entry) => entry.path === path)) throw new Error(`File already exists at path: ${path}`);
-				return [
-					...oldContent,
-					{
-						post_hash: item_hash,
-						path: EncryptionService.encryptEcies(path, this.alephService.encryptionPrivateKey.publicKey.compressed),
-					},
-				];
-			},
-		);
+		await this.alephService.updateAggregate(FILE_ENTRIES_AGGREGATE_KEY, FileEntriesSchema, (oldContent) => {
+			if (oldContent.some((entry) => entry.path === path)) throw new Error(`File already exists at path: ${path}`);
+			return [
+				...oldContent,
+				{
+					post_hash: item_hash,
+					path: EncryptionService.encryptEcies(path, this.alephService.encryptionPrivateKey.publicKey.compressed),
+				},
+			];
+		});
 	}
 
 	async fetchFileEntries(): Promise<FileEntry[]> {
-		return (await this.alephService.fetchAggregate("bedrock_file_entries", z.array(FileEntrySchema).default([]))).map(
+		return (await this.alephService.fetchAggregate(FILE_ENTRIES_AGGREGATE_KEY, FileEntriesSchema)).map(
 			({ post_hash, path }) => ({
 				post_hash,
 				path: EncryptionService.decryptEcies(path, this.alephService.encryptionPrivateKey.secret),
