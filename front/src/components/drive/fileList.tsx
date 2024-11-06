@@ -12,6 +12,8 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 	const [sortColumn, setSortColumn] = useState<SortColumn>('name');
 	const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
+	let clickTimeout: NodeJS.Timeout | null = null;
+
 	const handleSort = (column: SortColumn) => {
 		if (sortColumn === column) {
 			setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -19,6 +21,26 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 			setSortColumn(column);
 			setSortOrder('asc');
 		}
+	};
+
+	const handleLeftClick = (name: string) => {
+		if (clickTimeout) clearTimeout(clickTimeout);
+
+		clickTimeout = setTimeout(() => {
+			alert(`Clic gauche sur ${name}`);
+			clickTimeout = null;
+		}, 200);
+	};
+
+	const handleDoubleClick = (name: string) => {
+		if (clickTimeout) clearTimeout(clickTimeout);
+		alert(`Double clic gauche sur ${name}`);
+		clickTimeout = null;
+	};
+
+	const handleRightClick = (event: React.MouseEvent, name: string) => {
+		event.preventDefault();
+		alert(`Clic droit sur ${name}`);
 	};
 
 	const sortedFiles = [...files].sort((a, b) => {
@@ -29,9 +51,6 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 	});
 
 	const sortedFolders = [...folders].sort((a, b) => {
-		//const isAscending = sortOrder === 'asc' ? 1 : -1;
-		//if (a[sortColumn] < b[sortColumn]) return -1 * isAscending;
-		//if (a[sortColumn] > b[sortColumn]) return 1 * isAscending;
 		return 0;
 	});
 
@@ -54,11 +73,17 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 
 			<div className="file-list-content">
 				{sortedFolders.map((folder, index) => (
-					<Card key={index}
-								className="file-list-item">
+					<Card
+						key={index}
+						className="file-list-item"
+						onClick={() => handleLeftClick(folder.name)}
+						onDoubleClick={() => handleDoubleClick(folder.name)}
+						onContextMenu={(e) => handleRightClick(e, folder.name)}
+					>
 						<CardTitle className="flex items-center">
-							<FolderIcon className="size-6 mr-2 text-gray-500 fill-current" />
-							{folder.name}</CardTitle>
+							<FolderIcon className="folder-icon" />
+							<span className="folder-name">{folder.name}</span>
+						</CardTitle>
 						<CardContent>-</CardContent>
 						<CardContent>-</CardContent>
 						<CardFooter>{folder.permission}</CardFooter>
@@ -66,11 +91,18 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 				))}
 
 				{sortedFiles.map((file) => (
-					<Card key={file.id}
-								className="file-list-item">
+					<Card
+						key={file.id}
+						className="file-list-item"
+						onClick={() => handleLeftClick(file.name)}
+						onDoubleClick={() => handleDoubleClick(file.name)}
+						onContextMenu={(e) => handleRightClick(e, file.name)}
+					>
 						<CardTitle className="flex items-center">
-							<FileText className="size-6 mr-2 text-gray-500" />
-							{file.name}</CardTitle>						<CardContent>{file.size} KB</CardContent>
+							<FileText className="file-icon" />
+							<span className="file-name">{file.name}</span>
+						</CardTitle>
+						<CardContent className="file-size">{file.size} KB</CardContent>
 						<CardContent>{file.createdAt}</CardContent>
 						<CardFooter>{file.permission}</CardFooter>
 					</Card>
