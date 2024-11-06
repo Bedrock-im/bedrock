@@ -54,9 +54,6 @@ const SetupFileList = () => {
 
 	return (
 		<div className="drive-container">
-			<div className="drive-title">
-				<h1>My Decentralized Drive</h1>
-			</div>
 			<div className="search-bar mb-4">
 				<input
 					type="text"
@@ -65,6 +62,9 @@ const SetupFileList = () => {
 					onChange={(e) => setSearchQuery(e.target.value)}
 					className="p-2 border border-gray-300 rounded-lg w-full"
 				/>
+			</div>
+			<div className="drive-title">
+				<h1>My Decentralized Drive</h1>
 			</div>
 			<div className="drive-content">
 				<FileList files={filteredFiles} folders={filteredFolders} />

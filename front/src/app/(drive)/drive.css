@@ -4,7 +4,6 @@
 
 .drive-container {
     @apply flex flex-col h-screen bg-gray-200;
-    align-items: center;
 }
 
 .drive-background {
@@ -16,7 +15,7 @@
 }
 
 .drive-title {
-    @apply text-4xl font-bold text-gray-900 flex justify-center items-center pb-8;
+    @apply text-3xl font-bold text-gray-900  pb-2 ml-8;
 }
 
 
@@ -25,7 +24,7 @@
 }
 
 .search-bar {
-    @apply w-full flex justify-center;
+    @apply w-full ml-8 mt-2;
 }
 
 .search-bar input {
