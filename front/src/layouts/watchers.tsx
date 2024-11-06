@@ -25,7 +25,7 @@ export function Watchers({ children }: WatchersProps) {
 				return;
 			}
 
-			accountStore.bedrockService = new BedrockService(alephService);
+			accountStore.connect(new BedrockService(alephService));
 		},
 		onDisconnect() {
 			accountStore.onDisconnect();

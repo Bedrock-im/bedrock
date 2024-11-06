@@ -118,15 +118,20 @@ export class AlephService {
 	}
 
 	async createAggregate<T extends Record<string, unknown>>(key: string, content: T): Promise<AggregateMessage<T>> {
-		return this.subAccountClient.createAggregate({ key, content, channel: ALEPH_GENERAL_CHANNEL });
+		return this.subAccountClient.createAggregate({
+			key,
+			content,
+			channel: ALEPH_GENERAL_CHANNEL,
+			address: this.account.address,
+		});
 	}
 
 	async fetchAggregate<T extends z.ZodTypeAny>(key: string, schema: T) {
-		try {
-			return schema.parse(await this.subAccountClient.fetchAggregate(this.account.address, key)) as z.infer<T>;
-		} catch (_) {
-			return schema.parse(undefined) as z.infer<T>;
-		}
+		const { success, data, error } = schema.safeParse(
+			await this.subAccountClient.fetchAggregate(this.account.address, key).catch(() => {}),
+		);
+		if (!success) throw new Error(`Invalid data from Aleph: ${error.message}`);
+		return data as z.infer<T>;
 	}
 
 	async updateAggregate<S extends z.ZodTypeAny, T extends z.infer<S>>(
@@ -137,7 +142,7 @@ export class AlephService {
 		const currentContent = await this.fetchAggregate(key, schema);
 		const newContent = update_content(currentContent);
 
-		return this.createAggregate(key, newContent);
+		return await this.createAggregate(key, newContent);
 	}
 
 	async createPost<T extends Record<string, unknown>>(type: string, content: T): Promise<PostMessage<T>> {
