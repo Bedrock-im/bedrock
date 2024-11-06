@@ -27,7 +27,7 @@ export const FileMetaSchema = z.object({
 	iv: z.string().regex(/^[a-f0-9]{32}$/, {
 		message: "Invalid IV format. It should be a 32-character hexadecimal string.",
 	}),
-	ipfs_hash: z.string().regex(/^[a-f0-9]{64}$/, {
+	store_hash: z.string().regex(/^[a-f0-9]{64}$/, {
 		message: "Invalid hash format. It should be a 64-character hexadecimal string.",
 	}),
 });
@@ -35,7 +35,7 @@ export const FileMetaSchema = z.object({
 export const EncryptedFileMetaSchema = z.object({
 	key: z.string().regex(/^[a-f0-9]+$/, { message: "Invalid data, it should be encrypted and in hex format." }),
 	iv: z.string().regex(/^[a-f0-9]+$/, { message: "Invalid data, it should be encrypted and in hex format." }),
-	ipfs_hash: z.string().regex(/^[a-f0-9]+$/, { message: "Invalid data, it should be encrypted and in hex format." }),
+	store_hash: z.string().regex(/^[a-f0-9]+$/, { message: "Invalid data, it should be encrypted and in hex format." }),
 });
 
 export const FileFullInfosSchema = FileEntrySchema.merge(FileMetaSchema);
@@ -87,7 +87,7 @@ export default class BedrockService {
 					return {
 						key: key.toString("hex"),
 						iv: iv.toString("hex"),
-						ipfs_hash: item_hash,
+						store_hash: item_hash,
 						path,
 					};
 				}),
@@ -144,11 +144,11 @@ export default class BedrockService {
 		return newFiles;
 	}
 
-	private async postFile({ key, iv, ipfs_hash }: Omit<FileFullInfos, "post_hash" | "path">): Promise<string> {
+	private async postFile({ key, iv, store_hash }: Omit<FileFullInfos, "post_hash" | "path">): Promise<string> {
 		const { item_hash } = await this.alephService.createPost(FILE_POST_TYPE, {
 			key: EncryptionService.encryptEcies(key, this.alephService.encryptionPrivateKey.publicKey.compressed),
 			iv: EncryptionService.encryptEcies(iv, this.alephService.encryptionPrivateKey.publicKey.compressed),
-			ipfs_hash,
+			store_hash,
 		});
 		return item_hash;
 	}
