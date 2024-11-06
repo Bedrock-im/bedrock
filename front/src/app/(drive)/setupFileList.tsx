@@ -3,16 +3,15 @@
 import { useEffect, useState } from 'react';
 
 import FileList from '@/components/drive/fileList';
+import { Separator } from "@/components/ui/separator";
 import { Permission } from '@/utils/types';
 
 import "./drive.css";
-import { Separator } from "@/components/ui/separator";
 const SetupFileList = () => {
 	const [files, setFiles] = useState<{ name: string; size: number; id: string; createdAt: string; permission: Permission, path: string
 	}[]>([]);
 	const [folders, setFolders] = useState<{ name: string; permission: Permission, path: string
 	}[]>([]);
-	const [userPath, setUserPath] = useState<string>('/');
 	const [searchQuery, setSearchQuery] = useState<string>('');
 
 
@@ -42,7 +41,7 @@ const SetupFileList = () => {
 			setFolders([{ name: 'Folder 1', permission: 'owner', path: '/' }, { name: 'Folder 2', permission: 'viewer', path: '/'}]);
 		};
 
-		fetchData();
+		fetchData().then(r => r);
 	}, []);
 
 	const filteredFiles = files.filter((file) =>
@@ -62,9 +61,6 @@ const SetupFileList = () => {
 					onChange={(e) => setSearchQuery(e.target.value)}
 					className="p-2 border border-gray-300 rounded-lg w-full"
 				/>
-			</div>
-			<div className="drive-title">
-				<h1>My Decentralized Drive</h1>
 			</div>
 			<div className="drive-content">
 				<FileList files={filteredFiles} folders={filteredFolders} />
