@@ -4,10 +4,10 @@ import { useCallback } from "react"; /*TODO: REMOVE TESTING AFTER REVIEW*/
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import useBedrockFileUploadDropzone from "@/hooks/useBedrockFileUploadDropzone";
-import { useBedrockAccountStore } from "@/stores/bedrockAccount";
+import { useAccountStore } from "@/stores/bedrockAccount";
 
 export default function Home() {
-	const { bedrockService } = useBedrockAccountStore();
+	const { bedrockService } = useAccountStore();
 	const { getInputProps, getRootProps } = useBedrockFileUploadDropzone({
 		current_directory: "/",
 		bedrockService: bedrockService!,

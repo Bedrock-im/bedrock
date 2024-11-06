@@ -7,14 +7,14 @@ import { useAccountEffect } from "wagmi";
 import { wagmiConfig } from "@/config/wagmi";
 import { AlephService, BEDROCK_MESSAGE } from "@/services/aleph";
 import BedrockService from "@/services/bedrock";
-import { useBedrockAccountStore } from "@/stores/bedrockAccount";
+import { useAccountStore } from "@/stores/bedrockAccount";
 
 type WatchersProps = {
 	children: ReactNode;
 };
 
 export function Watchers({ children }: WatchersProps) {
-	const accountStore = useBedrockAccountStore();
+	const accountStore = useAccountStore();
 
 	useAccountEffect({
 		async onConnect() {

@@ -11,7 +11,7 @@ type AccountStoreActions = {
 	connect: (bedrockService: BedrockService) => void;
 };
 
-export const useBedrockAccountStore = create<AccountStoreState & AccountStoreActions>((set) => ({
+export const useAccountStore = create<AccountStoreState & AccountStoreActions>((set) => ({
 	bedrockService: null,
 	connect(bedrockService: BedrockService) {
 		set({ bedrockService });
