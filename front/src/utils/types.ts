@@ -18,4 +18,4 @@ export type FileListProps = {
 	folders: DriveFolderProps[];
 };
 
-export type Permission = 'owner' | 'viewer' | 'editor';
+export type Permission = "owner" | "viewer" | "editor";
