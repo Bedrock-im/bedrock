@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import FileList from "@/components/drive/fileList";
 import { Separator } from "@/components/ui/separator";
-import { Permission } from "@/utils/types";
 import { useAccountStore } from "@/stores/bedrockAccount";
+import { Permission } from "@/utils/types";
+
 import "./drive.css";
 
 const SetupFileList = () => {
@@ -19,14 +21,11 @@ const SetupFileList = () => {
 	useEffect(() => {
 		const fetchData = async () => {
 			if (!bedrockService) {
-				console.log("BedrockService n'est pas disponible.");
 				return;
 			}
 
 			try {
-				console.log(bedrockService)
 				const fileEntries = await bedrockService.fetchFileEntries();
-				console.log("files entries", fileEntries)
 				const formattedFiles = fileEntries.map((entry) => ({
 					name: entry.path.split("/").pop() || "Unnamed file",
 					size: Math.floor(Math.random() * 500) + 100,
@@ -37,12 +36,13 @@ const SetupFileList = () => {
 				}));
 
 				setFiles(formattedFiles);
+				setFolders([{ name: "Folder 1", permission: "viewer", path: "/folder1" }]);
 			} catch (error) {
 				console.error("Erreur lors de la récupération des fichiers :", error);
 			}
 		};
 
-		fetchData();
+		fetchData().then((r) => r);
 	}, [bedrockService]);
 
 	const filteredFiles = files.filter((file) => file.name.toLowerCase().includes(searchQuery.toLowerCase()));

@@ -1,25 +1,23 @@
 import { FolderIcon, FileText } from "lucide-react";
-import React, { useState } from 'react';
-import { useDropzone } from "react-dropzone";
+import React, { useState } from "react";
 
 import "@/app/(drive)/drive.css";
-import { Card, CardFooter, CardTitle, CardContent } from "@/components/ui/card";
-import { FileListProps } from "@/utils/types";
 import { DrivePageTitle } from "@/components/drive/drivePageTitle";
-import BedrockService, { DirectoryPath } from "@/services/bedrock";
+import { Card, CardFooter, CardTitle, CardContent } from "@/components/ui/card";
 import useBedrockFileUploadDropzone from "@/hooks/useBedrockFileUploadDropzone";
-import { toast } from "sonner";
+import BedrockService from "@/services/bedrock";
+import { FileListProps } from "@/utils/types";
 
-type SortColumn = 'name' | 'size' | 'createdAt' | 'permission';
-type SortOrder = 'asc' | 'desc';
+type SortColumn = "name" | "size" | "createdAt" | "permission";
+type SortOrder = "asc" | "desc";
 
 interface FileListWithUploadProps extends FileListProps {
 	bedrockService: BedrockService;
 }
 
 const FileList: React.FC<FileListWithUploadProps> = ({ files, folders, bedrockService }) => {
-	const [sortColumn, setSortColumn] = useState<SortColumn>('name');
-	const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+	const [sortColumn, setSortColumn] = useState<SortColumn>("name");
+	const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 	const [countItem, setCountItem] = useState<number>(0);
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
@@ -32,10 +30,10 @@ const FileList: React.FC<FileListWithUploadProps> = ({ files, folders, bedrockSe
 
 	const handleSort = (column: SortColumn) => {
 		if (sortColumn === column) {
-			setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+			setSortOrder(sortOrder === "asc" ? "desc" : "asc");
 		} else {
 			setSortColumn(column);
-			setSortOrder('asc');
+			setSortOrder("asc");
 		}
 	};
 
@@ -73,13 +71,13 @@ const FileList: React.FC<FileListWithUploadProps> = ({ files, folders, bedrockSe
 	};
 
 	const sortedFiles = [...files].sort((a, b) => {
-		const isAscending = sortOrder === 'asc' ? 1 : -1;
+		const isAscending = sortOrder === "asc" ? 1 : -1;
 		if (a[sortColumn] < b[sortColumn]) return -1 * isAscending;
 		if (a[sortColumn] > b[sortColumn]) return 1 * isAscending;
 		return 0;
 	});
 
-	const sortedFolders = [...folders].sort((a, b) => {
+	const sortedFolders = [...folders].sort(() => {
 		return 0;
 	});
 
@@ -92,17 +90,17 @@ const FileList: React.FC<FileListWithUploadProps> = ({ files, folders, bedrockSe
 					<p>Drag & drop some files here, or click to select files</p>
 				</div>
 				<div className="file-list-header">
-					<div onClick={() => handleSort('name')} className="cursor-pointer">
-						Name {sortColumn === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
+					<div onClick={() => handleSort("name")} className="cursor-pointer">
+						Name {sortColumn === "name" && (sortOrder === "asc" ? "↑" : "↓")}
 					</div>
-					<div onClick={() => handleSort('size')} className="cursor-pointer">
-						Size {sortColumn === 'size' && (sortOrder === 'asc' ? '↑' : '↓')}
+					<div onClick={() => handleSort("size")} className="cursor-pointer">
+						Size {sortColumn === "size" && (sortOrder === "asc" ? "↑" : "↓")}
 					</div>
-					<div onClick={() => handleSort('createdAt')} className="cursor-pointer">
-						Created At {sortColumn === 'createdAt' && (sortOrder === 'asc' ? '↑' : '↓')}
+					<div onClick={() => handleSort("createdAt")} className="cursor-pointer">
+						Created At {sortColumn === "createdAt" && (sortOrder === "asc" ? "↑" : "↓")}
 					</div>
-					<div onClick={() => handleSort('permission')} className="cursor-pointer">
-						Permission {sortColumn === 'permission' && (sortOrder === 'asc' ? '↑' : '↓')}
+					<div onClick={() => handleSort("permission")} className="cursor-pointer">
+						Permission {sortColumn === "permission" && (sortOrder === "asc" ? "↑" : "↓")}
 					</div>
 				</div>
 
