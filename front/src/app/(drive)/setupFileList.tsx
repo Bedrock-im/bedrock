@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import FileList from "@/components/drive/fileList";
 import { Separator } from "@/components/ui/separator";
-import { useAccountStore } from "@/stores/bedrockAccount";
+import { useAccountStore } from "@/stores/account";
 import { Permission } from "@/utils/types";
 
 import "./drive.css";

@@ -21,10 +21,7 @@ const FileList: React.FC<FileListWithUploadProps> = ({ files, folders, bedrockSe
 	const [countItem, setCountItem] = useState<number>(0);
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
-	const { getRootProps, getInputProps } = useBedrockFileUploadDropzone({
-		current_directory: "/",
-		bedrockService,
-	});
+	const { getRootProps, getInputProps } = useBedrockFileUploadDropzone({});
 
 	let clickTimeout: NodeJS.Timeout | null = null;
 

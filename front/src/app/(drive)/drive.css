@@ -53,12 +53,12 @@
 }
 
 .search-bar input:focus {
-    border-color: #0070f3; /* Change the border color when focused */
+    border-color: #0070f3;
 }
 
 
 .file-list-container {
-    @apply flex flex-col flex-1 w-full overflow-hidden; /* Conteneur principal sans défilement */
+    @apply flex flex-col flex-1 w-full overflow-hidden;
 }
 
 .file-list-header {
@@ -67,7 +67,7 @@
 
 .file-list-content {
     @apply overflow-y-auto h-full ;
-    height: calc(100vh - 18rem);
+    height: calc(100vh - 22rem);
 }
 
 
