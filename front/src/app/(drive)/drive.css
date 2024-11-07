@@ -18,6 +18,19 @@
     @apply text-3xl font-bold text-gray-900  pb-2 ml-8;
 }
 
+.file-upload-dropzone {
+    padding: 1rem;
+    border: 2px dashed #0070f3;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 1rem;
+    cursor: pointer;
+}
+
+.file-upload-dropzone:hover {
+    background-color: #f0f4f8;
+}
+
 
 .drive-content {
     @apply flex-1 p-4 w-full;
@@ -53,7 +66,7 @@
 
 .file-list-content {
     @apply overflow-y-auto h-full ;
-    height: calc(100vh - 18rem);
+    height: calc(100vh - 22rem);
 }
 
 
