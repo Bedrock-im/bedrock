@@ -62,11 +62,11 @@ export type DirectoryPath = `${string}/`;
 export default class BedrockService {
 	constructor(private alephService: AlephService) {}
 
-	async uploadFiles(directory_path: DirectoryPath, ...files: File[]): Promise<Omit<FileFullInfos, "post_hash">[]> {
+	async uploadFiles(directoryPath: DirectoryPath, ...files: File[]): Promise<Omit<FileFullInfos, "post_hash">[]> {
 		const uploadedFiles = await this.fetchFileEntries();
 		const results = await Promise.allSettled(
 			files
-				.map((file) => ({ file, path: `${directory_path}${file.name}` }))
+				.map((file) => ({ file, path: `${directoryPath}${file.name}` }))
 				.filter(({ path }) => {
 					if (this.fileExists(uploadedFiles, path)) {
 						console.error(`File already exists at path: ${path}`);
