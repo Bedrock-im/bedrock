@@ -1,3 +1,3 @@
-export const shrinkEtAddress = (address: string) => {
+export const shrinkEthAddress = (address: string) => {
 	return `${address.slice(0, 6)}...${address.slice(-4)}`;
 };

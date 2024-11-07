@@ -1,6 +1,6 @@
 import { AuthenticatedAlephHttpClient } from "@aleph-sdk/client";
 import { ETHAccount, getAccountFromProvider, importAccountFromPrivateKey } from "@aleph-sdk/ethereum";
-import { ForgetMessage, ItemType, StoreMessage } from "@aleph-sdk/message";
+import { AggregateMessage, ForgetMessage, ItemType, PostMessage, StoreMessage } from "@aleph-sdk/message";
 import { PrivateKey } from "eciesjs";
 import { SignMessageReturnType } from "viem";
 import web3 from "web3";
@@ -15,12 +15,9 @@ const ALEPH_GENERAL_CHANNEL = env.ALEPH_GENERAL_CHANNEL;
 
 export class AlephService {
 	constructor(
-		/* eslint-disable-next-line no-unused-vars */
 		private account: ETHAccount,
-		/* eslint-disable-next-line no-unused-vars */
 		private subAccountClient: AuthenticatedAlephHttpClient,
-		// eslint-disable-next-line no-unused-vars
-		private encryptionPrivateKey: PrivateKey,
+		public encryptionPrivateKey: PrivateKey,
 	) {}
 
 	static async initialize(hash: SignMessageReturnType) {
@@ -118,5 +115,57 @@ export class AlephService {
 
 	async deleteFiles(itemHashes: string[]): Promise<ForgetMessage> {
 		return this.subAccountClient.forget({ hashes: itemHashes });
+	}
+
+	async createAggregate<T extends Record<string, unknown>>(key: string, content: T): Promise<AggregateMessage<T>> {
+		return this.subAccountClient.createAggregate({
+			key,
+			content,
+			channel: ALEPH_GENERAL_CHANNEL,
+			address: this.account.address,
+		});
+	}
+
+	async fetchAggregate<T extends z.ZodTypeAny>(key: string, schema: T) {
+		const { success, data, error } = schema.safeParse(
+			await this.subAccountClient.fetchAggregate(this.account.address, key).catch(() => {}),
+		);
+		if (!success) throw new Error(`Invalid data from Aleph: ${error.message}`);
+		return data as z.infer<T>;
+	}
+
+	async updateAggregate<S extends z.ZodTypeAny, T extends z.infer<S>>(
+		key: string,
+		schema: S,
+		update_content: (content: T) => T,
+	): Promise<AggregateMessage<T>> {
+		const currentContent = await this.fetchAggregate(key, schema);
+		const newContent = update_content(currentContent);
+
+		return await this.createAggregate(key, newContent);
+	}
+
+	async createPost<T extends Record<string, unknown>>(type: string, content: T): Promise<PostMessage<T>> {
+		return this.subAccountClient.createPost({
+			postType: type,
+			content,
+			channel: ALEPH_GENERAL_CHANNEL,
+		});
+	}
+
+	async fetchPosts<T extends z.ZodTypeAny>(
+		type: string,
+		schema: T,
+		addresses: string[] = [this.account.address],
+		hashes: string[] = [],
+	) {
+		return schema.parse(
+			await this.subAccountClient.getPost({
+				channels: [ALEPH_GENERAL_CHANNEL],
+				types: [type],
+				addresses,
+				hashes,
+			}),
+		) as z.infer<T>[];
 	}
 }
