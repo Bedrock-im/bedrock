@@ -57,7 +57,7 @@ export type FileMeta = z.infer<typeof FileMetaSchema>;
 export type EncryptedFileEntry = z.infer<typeof EncryptedFileEntrySchema>;
 export type EncryptedFileMeta = z.infer<typeof EncryptedFileMetaSchema>;
 export type FileFullInfos = z.infer<typeof FileFullInfosSchema>;
-export type DirectoryPath = `${string}/`;
+export type DirectoryPath = `/${string}/` | "/";
 
 export default class BedrockService {
 	constructor(private alephService: AlephService) {}
