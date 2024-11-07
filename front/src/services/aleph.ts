@@ -150,6 +150,7 @@ export class AlephService {
 			postType: type,
 			content,
 			channel: ALEPH_GENERAL_CHANNEL,
+			address: this.account.address,
 		});
 	}
 

@@ -2,25 +2,23 @@ import { useCallback } from "react";
 import { DropzoneOptions, useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 
-import BedrockService, { DirectoryPath } from "@/services/bedrock";
+import { useAccountStore } from "@/stores/account";
+import { useDriveParametersStore } from "@/stores/driveParameters";
 
-export type FileUploadOptions = { current_directory: DirectoryPath; bedrockService: BedrockService } & DropzoneOptions;
+export default function useBedrockFileUploadDropzone(options: DropzoneOptions) {
+	const bedrockService = useAccountStore((state) => state.bedrockService);
+	const currentDirectoryPath = useDriveParametersStore((state) => state.currentDirectoryPath);
 
-export default function useBedrockFileUploadDropzone({
-	current_directory,
-	bedrockService,
-	...options
-}: FileUploadOptions) {
 	const onDrop = useCallback(
 		async (acceptedFiles: File[]) => {
 			if (!bedrockService) return;
-			const fileInfos = bedrockService.uploadFiles(current_directory, ...acceptedFiles);
+			const fileInfos = bedrockService.uploadFiles(currentDirectoryPath, ...acceptedFiles);
 			toast.promise(fileInfos, {
 				loading: `Uploading ${acceptedFiles.length} files...`,
 				success: (uploadedFiles) => `Successfully uploaded ${uploadedFiles.length} files`,
 				error: (err) => `Failed to upload files: ${err}`,
 			});
-			const awaitedFileInfos = await fileInfos;
+			const awaitedFileInfos = await fileInfos.catch(() => []);
 			if (awaitedFileInfos.length === 0) return;
 			const fileEntries = bedrockService.saveFiles(...awaitedFileInfos);
 			toast.promise(fileEntries, {
@@ -29,7 +27,7 @@ export default function useBedrockFileUploadDropzone({
 				error: (err) => `Failed to save files: ${err}`,
 			});
 		},
-		[current_directory, bedrockService],
+		[currentDirectoryPath, bedrockService],
 	);
 
 	// Placing the onDrop function first allows the user to override it in the hooks' options
