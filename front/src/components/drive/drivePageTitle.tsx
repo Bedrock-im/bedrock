@@ -1,9 +1,8 @@
-"use client"
+"use client";
 
-import React from 'react';
+import React from "react";
 
 import "@/app/(drive)/drive.css";
-
 
 interface DrivePageTitleProps {
 	selectedItemsCount: number;
@@ -14,7 +13,7 @@ export const DrivePageTitle: React.FC<DrivePageTitleProps> = ({ selectedItemsCou
 		<div>
 			{selectedItemsCount === 0 ? (
 				<div className="drive-title">
-							<h1>My Drive</h1>
+					<h1>My Drive</h1>
 				</div>
 			) : (
 				<div className="drive-title">
