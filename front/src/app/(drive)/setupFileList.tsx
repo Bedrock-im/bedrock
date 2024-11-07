@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 
 import FileList from "@/components/drive/fileList";
 import { Separator } from "@/components/ui/separator";
+import { useAccountStore } from "@/stores/bedrockAccount";
 import { Permission } from "@/utils/types";
 
 import "./drive.css";
+
 const SetupFileList = () => {
 	const [files, setFiles] = useState<
 		{ name: string; size: number; id: string; createdAt: string; permission: Permission; path: string }[]
@@ -14,38 +16,34 @@ const SetupFileList = () => {
 	const [folders, setFolders] = useState<{ name: string; permission: Permission; path: string }[]>([]);
 	const [searchQuery, setSearchQuery] = useState<string>("");
 
+	const bedrockService = useAccountStore((state) => state.bedrockService);
+
 	useEffect(() => {
 		const fetchData = async () => {
-			setFiles([
-				{ name: "file1.txt", size: 20, id: "1", createdAt: "2021-10-10", permission: "owner", path: "/Folder 1" },
-				{ name: "file2.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-				{ name: "file3.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-				{ name: "file4.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-				{ name: "file5.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-				{ name: "file6.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-				{ name: "file7.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-				{ name: "file8.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-				{ name: "file9.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-				{ name: "file10.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-				{ name: "file11.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-				{ name: "file12.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-				{ name: "file13.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-				{ name: "file14.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-				{ name: "file15.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-				{ name: "file16.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-				{ name: "file17.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-				{ name: "file18.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-				{ name: "file19.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-				{ name: "file20.png", size: 300, id: "2", createdAt: "2021-10-11", permission: "viewer", path: "/" },
-			]);
-			setFolders([
-				{ name: "Folder 1", permission: "owner", path: "/" },
-				{ name: "Folder 2", permission: "viewer", path: "/" },
-			]);
+			if (!bedrockService) {
+				return;
+			}
+
+			try {
+				const fileEntries = await bedrockService.fetchFileEntries();
+				const formattedFiles = fileEntries.map((entry) => ({
+					name: entry.path.split("/").pop() || "Unnamed file",
+					size: Math.floor(Math.random() * 500) + 100,
+					id: entry.post_hash,
+					createdAt: new Date().toISOString().split("T")[0],
+					permission: "viewer" as Permission,
+					path: entry.path,
+				}));
+
+				setFiles(formattedFiles);
+				setFolders([{ name: "Folder 1", permission: "viewer", path: "/folder1" }]);
+			} catch (error) {
+				console.error("Erreur lors de la récupération des fichiers :", error);
+			}
 		};
 
 		fetchData().then((r) => r);
-	}, []);
+	}, [bedrockService]);
 
 	const filteredFiles = files.filter((file) => file.name.toLowerCase().includes(searchQuery.toLowerCase()));
 	const filteredFolders = folders.filter((folder) => folder.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -62,7 +60,11 @@ const SetupFileList = () => {
 				/>
 			</div>
 			<div className="drive-content">
-				<FileList files={filteredFiles} folders={filteredFolders} />
+				{bedrockService ? (
+					<FileList files={filteredFiles} folders={filteredFolders} bedrockService={bedrockService} />
+				) : (
+					<p>Le service Bedrock nest pas disponible. Veuillez vous connecter.</p>
+				)}
 			</div>
 			<Separator />
 		</div>

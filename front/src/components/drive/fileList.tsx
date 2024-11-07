@@ -1,19 +1,30 @@
-import { FolderIcon, FileText, X } from "lucide-react";
+import { FolderIcon, FileText } from "lucide-react";
 import React, { useState } from "react";
 
 import "@/app/(drive)/drive.css";
 import { DrivePageTitle } from "@/components/drive/drivePageTitle";
 import { Card, CardFooter, CardTitle, CardContent } from "@/components/ui/card";
+import useBedrockFileUploadDropzone from "@/hooks/useBedrockFileUploadDropzone";
+import BedrockService from "@/services/bedrock";
 import { FileListProps } from "@/utils/types";
 
 type SortColumn = "name" | "size" | "createdAt" | "permission";
 type SortOrder = "asc" | "desc";
 
-const FileList: React.FC<FileListProps> = ({ files, folders }) => {
+interface FileListWithUploadProps extends FileListProps {
+	bedrockService: BedrockService;
+}
+
+const FileList: React.FC<FileListWithUploadProps> = ({ files, folders, bedrockService }) => {
 	const [sortColumn, setSortColumn] = useState<SortColumn>("name");
 	const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 	const [countItem, setCountItem] = useState<number>(0);
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+
+	const { getRootProps, getInputProps } = useBedrockFileUploadDropzone({
+		current_directory: "/",
+		bedrockService,
+	});
 
 	let clickTimeout: NodeJS.Timeout | null = null;
 
@@ -59,15 +70,6 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 		alert(`Clic droit sur ${name}`);
 	};
 
-	const handleDeselect = (name: string) => {
-		setSelectedItems((prevSelectedItems) => {
-			const updatedSelectedItems = new Set(prevSelectedItems);
-			updatedSelectedItems.delete(name);
-			setCountItem(countItem - 1);
-			return updatedSelectedItems;
-		});
-	};
-
 	const sortedFiles = [...files].sort((a, b) => {
 		const isAscending = sortOrder === "asc" ? 1 : -1;
 		if (a[sortColumn] < b[sortColumn]) return -1 * isAscending;
@@ -83,6 +85,10 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 		<div>
 			<DrivePageTitle selectedItemsCount={countItem} />
 			<div className="file-list-container">
+				<div {...getRootProps()} className="file-upload-dropzone">
+					<input {...getInputProps()} />
+					<p>Drag & drop some files here, or click to select files</p>
+				</div>
 				<div className="file-list-header">
 					<div onClick={() => handleSort("name")} className="cursor-pointer">
 						Name {sortColumn === "name" && (sortOrder === "asc" ? "↑" : "↓")}
@@ -110,15 +116,6 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 							<CardTitle className="flex items-center">
 								<FolderIcon className="folder-icon" />
 								<span className="folder-name">{folder.name}</span>
-								{selectedItems.has(folder.name) && (
-									<X
-										className="ml-2 text-red-500 cursor-pointer"
-										onClick={(e) => {
-											e.stopPropagation();
-											handleDeselect(folder.name);
-										}}
-									/>
-								)}
 							</CardTitle>
 							<CardContent>-</CardContent>
 							<CardContent>-</CardContent>
@@ -137,15 +134,6 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 							<CardTitle className="flex items-center">
 								<FileText className="file-icon" />
 								<span className="file-name">{file.name}</span>
-								{selectedItems.has(file.name) && (
-									<X
-										className="ml-2 text-red-500 cursor-pointer"
-										onClick={(e) => {
-											e.stopPropagation();
-											handleDeselect(file.name);
-										}}
-									/>
-								)}
 							</CardTitle>
 							<CardContent className="file-size">{file.size} KB</CardContent>
 							<CardContent>{file.createdAt}</CardContent>
