@@ -8,8 +8,9 @@ import SetupFileList from "./setupFileList";
 export default function DriveLayout({ children }: Readonly<{ children: ReactNode }>) {
 	return (
 		<AuthWrapper>
-			<BedrockSidebar>{children}
-				<SetupFileList/>
+			<BedrockSidebar>
+				{children}
+				<SetupFileList />
 			</BedrockSidebar>
 		</AuthWrapper>
 	);

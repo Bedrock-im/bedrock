@@ -1,17 +1,17 @@
 import { FolderIcon, FileText, X } from "lucide-react";
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 import "@/app/(drive)/drive.css";
 import { DrivePageTitle } from "@/components/drive/drivePageTitle";
 import { Card, CardFooter, CardTitle, CardContent } from "@/components/ui/card";
 import { FileListProps } from "@/utils/types";
 
-type SortColumn = 'name' | 'size' | 'createdAt' | 'permission';
-type SortOrder = 'asc' | 'desc';
+type SortColumn = "name" | "size" | "createdAt" | "permission";
+type SortOrder = "asc" | "desc";
 
 const FileList: React.FC<FileListProps> = ({ files, folders }) => {
-	const [sortColumn, setSortColumn] = useState<SortColumn>('name');
-	const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+	const [sortColumn, setSortColumn] = useState<SortColumn>("name");
+	const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 	const [countItem, setCountItem] = useState<number>(0);
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
@@ -19,10 +19,10 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 
 	const handleSort = (column: SortColumn) => {
 		if (sortColumn === column) {
-			setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+			setSortOrder(sortOrder === "asc" ? "desc" : "asc");
 		} else {
 			setSortColumn(column);
-			setSortOrder('asc');
+			setSortOrder("asc");
 		}
 	};
 
@@ -69,7 +69,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 	};
 
 	const sortedFiles = [...files].sort((a, b) => {
-		const isAscending = sortOrder === 'asc' ? 1 : -1;
+		const isAscending = sortOrder === "asc" ? 1 : -1;
 		if (a[sortColumn] < b[sortColumn]) return -1 * isAscending;
 		if (a[sortColumn] > b[sortColumn]) return 1 * isAscending;
 		return 0;
@@ -84,17 +84,17 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 			<DrivePageTitle selectedItemsCount={countItem} />
 			<div className="file-list-container">
 				<div className="file-list-header">
-					<div onClick={() => handleSort('name')} className="cursor-pointer">
-						Name {sortColumn === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
+					<div onClick={() => handleSort("name")} className="cursor-pointer">
+						Name {sortColumn === "name" && (sortOrder === "asc" ? "↑" : "↓")}
 					</div>
-					<div onClick={() => handleSort('size')} className="cursor-pointer">
-						Size {sortColumn === 'size' && (sortOrder === 'asc' ? '↑' : '↓')}
+					<div onClick={() => handleSort("size")} className="cursor-pointer">
+						Size {sortColumn === "size" && (sortOrder === "asc" ? "↑" : "↓")}
 					</div>
-					<div onClick={() => handleSort('createdAt')} className="cursor-pointer">
-						Created At {sortColumn === 'createdAt' && (sortOrder === 'asc' ? '↑' : '↓')}
+					<div onClick={() => handleSort("createdAt")} className="cursor-pointer">
+						Created At {sortColumn === "createdAt" && (sortOrder === "asc" ? "↑" : "↓")}
 					</div>
-					<div onClick={() => handleSort('permission')} className="cursor-pointer">
-						Permission {sortColumn === 'permission' && (sortOrder === 'asc' ? '↑' : '↓')}
+					<div onClick={() => handleSort("permission")} className="cursor-pointer">
+						Permission {sortColumn === "permission" && (sortOrder === "asc" ? "↑" : "↓")}
 					</div>
 				</div>
 
