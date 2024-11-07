@@ -57,16 +57,16 @@ export type FileMeta = z.infer<typeof FileMetaSchema>;
 export type EncryptedFileEntry = z.infer<typeof EncryptedFileEntrySchema>;
 export type EncryptedFileMeta = z.infer<typeof EncryptedFileMetaSchema>;
 export type FileFullInfos = z.infer<typeof FileFullInfosSchema>;
-export type DirectoryPath = `${string}/`;
+export type DirectoryPath = `/${string}/` | "/";
 
 export default class BedrockService {
 	constructor(private alephService: AlephService) {}
 
-	async uploadFiles(directory_path: DirectoryPath, ...files: File[]): Promise<Omit<FileFullInfos, "post_hash">[]> {
+	async uploadFiles(directoryPath: DirectoryPath, ...files: File[]): Promise<Omit<FileFullInfos, "post_hash">[]> {
 		const uploadedFiles = await this.fetchFileEntries();
 		const results = await Promise.allSettled(
 			files
-				.map((file) => ({ file, path: `${directory_path}${file.name}` }))
+				.map((file) => ({ file, path: `${directoryPath}${file.name}` }))
 				.filter(({ path }) => {
 					if (this.fileExists(uploadedFiles, path)) {
 						console.error(`File already exists at path: ${path}`);
