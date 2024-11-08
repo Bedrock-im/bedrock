@@ -1,7 +1,26 @@
+<a id="0.1.2"></a>
+# [0.1.2](https://github.com/Bedrock-im/bedrock/releases/tag/0.1.2) - 2024-11-08
+
+## Basic drive interface
+
+Basic interface to interact with the drive.
+
+## 🚀 Features
+
+- Feat: setup drive interface by [@chuipagro](https://github.com/chuipagro) ([#55](https://github.com/Bedrock-im/bedrock/issues/55))
+
+## 📄 Documentation
+
+- Update changelog for 0.1.1 by [@github-actions](https://github.com/github-actions) ([#59](https://github.com/Bedrock-im/bedrock/issues/59))
+
+
+[Changes][0.1.2]
+
+
 <a id="0.1.1"></a>
 # [0.1.1](https://github.com/Bedrock-im/bedrock/releases/tag/0.1.1) - 2024-11-08
 
-# 0.1.1 - File upload
+## File upload
 
 General enhancements with basic features, code hierarchy improvements and final design system components
 
@@ -21,7 +40,7 @@ General enhancements with basic features, code hierarchy improvements and final 
 <a id="0.1.0"></a>
 # [0.1.0](https://github.com/Bedrock-im/bedrock/releases/tag/0.1.0) - 2024-11-03
 
-# 0.1.0 - Basic setup
+## Basic setup
 
 First release with the backbone setup of Bedrock.im, including the UI with a custom design system and Aleph accounts creation, documentation and automated tests.
 
@@ -50,6 +69,7 @@ First release with the backbone setup of Bedrock.im, including the UI with a cus
 [Changes][0.1.0]
 
 
+[0.1.2]: https://github.com/Bedrock-im/bedrock/compare/0.1.1...0.1.2
 [0.1.1]: https://github.com/Bedrock-im/bedrock/compare/0.1.0...0.1.1
 [0.1.0]: https://github.com/Bedrock-im/bedrock/tree/0.1.0
 
