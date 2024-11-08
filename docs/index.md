@@ -4,15 +4,14 @@ layout: home
 
 hero:
   name: "Bedrock.im"
-  text: "A VitePress Site"
-  tagline: My great project tagline
+  tagline: Your private workspace by design, not by promise.
   actions:
     - theme: brand
-      text: Markdown Examples
-      link: /markdown-examples
+      text: Introduction
+      link: /introduction
     - theme: alt
-      text: API Examples
-      link: /api-examples
+      text: Changelog
+      link: /CHANGELOG
 
 features:
   - title: Feature A

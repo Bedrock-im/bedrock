@@ -16,15 +16,12 @@ export default defineConfig({
 
 		sidebar: [
 			{
-				text: "Changelog",
-				link: "/CHANGELOG",
+				text: "Introduction",
+				link: "/introduction",
 			},
 			{
-				text: "Examples",
-				items: [
-					{ text: "Markdown Examples", link: "/markdown-examples" },
-					{ text: "Runtime API Examples", link: "/api-examples" },
-				],
+				text: "Changelog",
+				link: "/CHANGELOG",
 			},
 		],
 
