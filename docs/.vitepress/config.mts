@@ -6,7 +6,6 @@ export default defineConfig({
 	description: "Bedrock.im official documentation",
 
 	lastUpdated: true,
-	base: "/bedrock/",
 
 	themeConfig: {
 		// https://vitepress.dev/reference/default-theme-config
