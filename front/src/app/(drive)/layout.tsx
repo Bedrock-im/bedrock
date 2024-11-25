@@ -10,7 +10,7 @@ export default function DriveLayout({ children }: Readonly<{ children: ReactNode
 		<AuthWrapper>
 			<BedrockSidebar>
 				{children}
-				<FileList />
+				<FileList pageType={"My files"} />
 			</BedrockSidebar>
 		</AuthWrapper>
 	);
