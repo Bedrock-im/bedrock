@@ -26,12 +26,11 @@ interface FileEntry {
 
 interface FolderEntry {
 	name: string;
-	permission: Permission;
 	path: string;
 }
 
 interface FileListProps {
-	pageType: PageType; // Define the page type
+	pageType: PageType;
 }
 
 const FileList: React.FC<FileListProps> = ({ pageType }) => {
@@ -42,6 +41,10 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 	const [files, setFiles] = useState<FileEntry[]>([]);
 	const [folders, setFolders] = useState<FolderEntry[]>([]);
 	const [searchQuery, setSearchQuery] = useState<string>("");
+	const [filteredFiles, setFilteredFiles] = useState<FileEntry[]>([])
+	const [filteredFolders, setFilteredFolders] = useState<FolderEntry[]>([])
+	const [userPath, setUserPath] = useState<string>("");
+
 
 	const bedrockService = useAccountStore((state) => state.bedrockService);
 
@@ -63,25 +66,50 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 				createdAt: new Date().toISOString().split("T")[0],
 				permission: "viewer" as Permission,
 				path: entry.path,
-				deleted_at: Math.random() > 0.5 ? new Date().toISOString() : null, // Mock deleted_at for testing
+				deleted_at: null,
 			}));
+			formattedFiles.push({ name: "test", path: "root/hello/test", createdAt: new Date().toISOString().split("T")[0], deleted_at: null, id: "1234565", size: 123456, permission: "editor"})
 
 			setFiles(formattedFiles);
-			setFolders([{ name: "Folder 1", permission: "viewer", path: "/folder1" }]);
+
+			const generatedFolders = generateFoldersFromFiles(formattedFiles);
+			setFolders(generatedFolders);
 		} catch (error) {
 			console.error("Erreur lors de la récupération des fichiers :", error);
 		}
 	};
 
+	useEffect(() => {
+		fetchFiles().then();
+	}, [bedrockService]);
+
+	const generateFoldersFromFiles = (fileEntries: FileEntry[]): FolderEntry[] => {
+		const folderPaths = new Set<string>();
+
+		fileEntries.forEach((file) => {
+			const pathParts = file.path.split("/");
+			pathParts.pop();
+			let currentPath = "";
+			pathParts.forEach((part) => {
+				currentPath += `/${part}`;
+				folderPaths.add(currentPath);
+			});
+		});
+
+		return Array.from(folderPaths).map((path) => ({
+			name: path.split("/").pop() || ".",
+			path,
+		}));
+	};
 	const handleDelete = () => {
 		alert("Delete");
 	}
 
 	const filterFilesByPageType = () => {
 		if (pageType === "Trash") {
-			return files.filter((file) => file.deleted_at); // Only files with a `deleted_at` value
+			return files.filter((file) => file.deleted_at);
 		} else if (pageType === "My files") {
-			return files.filter((file) => !file.deleted_at); // Only files without a `deleted_at` value
+			return files.filter((file) => !file.deleted_at);
 		}
 		return files;
 	};
@@ -92,16 +120,39 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 		});
 	}, [bedrockService]);
 
-	// Filter files and folders based on the search query
-	const filteredFiles = filterFilesByPageType().filter((file) =>
-		file.name.toLowerCase().includes(searchQuery.toLowerCase()),
-	);
 
-	const filteredFolders = folders.filter((folder) =>
-		folder.name.toLowerCase().includes(searchQuery.toLowerCase()),
-	);
+	const filterFilesAndFolders = () => {
+		const filteredByPageType = filterFilesByPageType();
 
-	// Sorting function
+		const finalFilteredFiles = filteredByPageType.filter(
+			(file) =>
+				file.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+				file.path.startsWith(userPath) &&
+				file.path.split("/").length === userPath.split("/").length + 1,
+		);
+
+		const finalFilteredFolders = folders.filter(
+			(folder) =>
+				folder.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+				folder.path.startsWith(userPath) &&
+				folder.path.split("/").length === userPath.split("/").length + 1,
+		);
+		if (userPath && userPath !== "/") {
+			finalFilteredFolders.unshift({
+				name: "..",
+				path: userPath.split("/").slice(0, -1).join("/") || "/",
+			});
+		}
+
+		setFilteredFiles(finalFilteredFiles);
+		setFilteredFolders(finalFilteredFolders);
+	};
+
+	useEffect(() => {
+		filterFilesAndFolders();
+	}, [searchQuery, files, folders, userPath]);
+
+
 	const handleSort = (column: SortColumn) => {
 		if (sortColumn === column) {
 			setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -132,6 +183,19 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 			clickTimeout = null;
 		}, 200);
 	};
+
+	const handleDoubleClick = (name: string) => {
+		if (clickTimeout) clearTimeout(clickTimeout);
+		if (name === "..") {
+			setUserPath((prev) => prev.split("/").slice(0, -1).join("/"));
+			return;
+		}
+		else {
+			setUserPath((prev) => `${prev}/${name}`);
+		}
+		clickTimeout = null;
+	};
+
 
 	return (
 		<div className="drive-container">
@@ -169,18 +233,27 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 							</div>
 							<div className="file-list-content">
 								{filteredFolders.map((folder, index) => (
-									<Card key={index} className={`file-list-item`}>
+									<Card
+										key={index}
+										className={`file-list-item`}
+										onClick={() => handleLeftClick(folder.name)}
+										onDoubleClick={() => handleDoubleClick(folder.name)}
+									>
 										<CardTitle className="flex items-center">
 											<FolderIcon className="folder-icon" />
 											<span className="folder-name">{folder.name}</span>
 										</CardTitle>
 										<CardContent>-</CardContent>
 										<CardContent>-</CardContent>
-										<CardFooter>{folder.permission}</CardFooter>
+										<CardFooter>-</CardFooter>
 									</Card>
 								))}
 								{filteredFiles.map((file) => (
-									<Card key={file.id} className={`file-list-item`}>
+									<Card
+										key={file.id}
+										className={`file-list-item`}
+										onClick={() => handleLeftClick(file.name)}
+									>
 										<CardTitle className="flex items-center">
 											<FileText className="file-icon" />
 											<span className="file-name">{file.name}</span>
