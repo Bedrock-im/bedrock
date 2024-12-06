@@ -1,6 +1,7 @@
 "use client"
 
 import { FolderIcon, FileText } from "lucide-react";
+import { useQueryState } from 'nuqs'
 import React, { useEffect, useState } from "react";
 
 import "@/app/(drive)/drive.css";
@@ -9,6 +10,7 @@ import { Card, CardFooter, CardTitle, CardContent } from "@/components/ui/card";
 import useBedrockFileUploadDropzone from "@/hooks/useBedrockFileUploadDropzone";
 import { useAccountStore } from "@/stores/account";
 import { Permission } from "@/utils/types";
+
 
 type SortColumn = "name" | "size" | "createdAt" | "permission";
 type SortOrder = "asc" | "desc";
@@ -40,10 +42,10 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 	const [files, setFiles] = useState<FileEntry[]>([]);
 	const [folders, setFolders] = useState<FolderEntry[]>([]);
-	const [searchQuery, setSearchQuery] = useState<string>("");
+	const [searchQuery, setSearchQuery] = useQueryState("name", {defaultValue: ""})
 	const [filteredFiles, setFilteredFiles] = useState<FileEntry[]>([])
 	const [filteredFolders, setFilteredFolders] = useState<FolderEntry[]>([])
-	const [userPath, setUserPath] = useState<string>("");
+	const [userPath, setUserPath] = useQueryState("", {defaultValue: ""});
 
 
 	const bedrockService = useAccountStore((state) => state.bedrockService);
@@ -68,7 +70,7 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 				path: entry.path,
 				deleted_at: null,
 			}));
-			formattedFiles.push({ name: "test", path: "root/hello/test", createdAt: new Date().toISOString().split("T")[0], deleted_at: null, id: "1234565", size: 123456, permission: "editor"})
+			formattedFiles.push({ name: "test", path: "/root/hello/test", createdAt: new Date().toISOString().split("T")[0], deleted_at: null, id: "1234565", size: 123456, permission: "editor"})
 
 			setFiles(formattedFiles);
 
@@ -87,20 +89,25 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 		const folderPaths = new Set<string>();
 
 		fileEntries.forEach((file) => {
-			const pathParts = file.path.split("/");
-			pathParts.pop();
-			let currentPath = "";
-			pathParts.forEach((part) => {
-				currentPath += `/${part}`;
-				folderPaths.add(currentPath);
-			});
+			const pathParts = file.path.split("/").filter(Boolean);
+			if (pathParts.length > 1) {
+				pathParts.pop();
+				let currentPath = "";
+				pathParts.forEach((part) => {
+					currentPath += `/${part}`;
+					folderPaths.add(currentPath);
+				});
+			}
 		});
 
-		return Array.from(folderPaths).map((path) => ({
-			name: path.split("/").pop() || ".",
-			path,
-		}));
+		return Array.from(folderPaths)
+			.filter((path) => path !== "/")
+			.map((path) => ({
+				name: path.split("/").pop() || "",
+				path,
+			}));
 	};
+
 	const handleDelete = () => {
 		alert("Delete");
 	}
@@ -127,16 +134,17 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 		const finalFilteredFiles = filteredByPageType.filter(
 			(file) =>
 				file.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-				file.path.startsWith(userPath) &&
-				file.path.split("/").length === userPath.split("/").length + 1,
+				(userPath === "/" ? file.path.split("/").length === 2 : file.path.startsWith(userPath) &&
+					file.path.split("/").length === userPath.split("/").length + 1)
 		);
 
 		const finalFilteredFolders = folders.filter(
 			(folder) =>
 				folder.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-				folder.path.startsWith(userPath) &&
-				folder.path.split("/").length === userPath.split("/").length + 1,
+				(userPath === "/" ? folder.path.split("/").length === 2 : folder.path.startsWith(userPath) &&
+					folder.path.split("/").length === userPath.split("/").length + 1)
 		);
+
 		if (userPath && userPath !== "/") {
 			finalFilteredFolders.unshift({
 				name: "..",
@@ -147,6 +155,7 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 		setFilteredFiles(finalFilteredFiles);
 		setFilteredFolders(finalFilteredFolders);
 	};
+
 
 	useEffect(() => {
 		filterFilesAndFolders();

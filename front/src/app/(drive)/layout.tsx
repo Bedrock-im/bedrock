@@ -1,9 +1,9 @@
+import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { ReactNode } from "react";
 
 import SetupFileList from "@/app/(drive)/SetupFileList";
 import { AuthWrapper } from "@/components/AuthWrapper";
 import { BedrockSidebar } from "@/components/BedrockSidebar";
-
 import FileList from "@/components/drive/FileList";
 
 export default function DriveLayout({ children }: Readonly<{ children: ReactNode }>) {
@@ -11,7 +11,9 @@ export default function DriveLayout({ children }: Readonly<{ children: ReactNode
 		<AuthWrapper>
 			<BedrockSidebar>
 				{children}
-				<FileList pageType={"My files"} />
+				<NuqsAdapter>
+					<FileList pageType={"My files"} />
+				</NuqsAdapter>
 			</BedrockSidebar>
 		</AuthWrapper>
 	);
