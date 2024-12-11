@@ -122,9 +122,7 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 	};
 
 	useEffect(() => {
-		fetchFiles().then(() => {
-			console.log("Fichiers récupérés", files);
-		});
+		fetchFiles();
 	}, [bedrockService]);
 
 
@@ -180,10 +178,10 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 
 				if (updatedSelectedItems.has(name)) {
 					updatedSelectedItems.delete(name);
-					setCountItem(countItem - 1);
+					setCountItem((prev) => prev - 1);
 				} else {
 					updatedSelectedItems.add(name);
-					setCountItem(countItem + 1);
+					setCountItem((prev) => prev + 1);
 				}
 
 				return updatedSelectedItems;
