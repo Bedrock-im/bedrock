@@ -203,7 +203,6 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 		clickTimeout = null;
 	};
 
-
 	return (
 		<div className="drive-container">
 			<div className="search-bar mb-4">
@@ -239,42 +238,50 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 								</div>
 							</div>
 							<div className="file-list-content">
-								{filteredFolders.map((folder, index) => (
-									<Card
-										key={index}
-										className={`file-list-item`}
-										onClick={() => handleLeftClick(folder.name)}
-										onDoubleClick={() => handleDoubleClick(folder.name)}
-									>
-										<CardTitle className="flex items-center">
-											<FolderIcon className="folder-icon" />
-											<span className="folder-name">{folder.name}</span>
-										</CardTitle>
-										<CardContent>-</CardContent>
-										<CardContent>-</CardContent>
-										<CardFooter>-</CardFooter>
-									</Card>
-								))}
-								{filteredFiles.map((file) => (
-									<Card
-										key={file.id}
-										className={`file-list-item`}
-										onClick={() => handleLeftClick(file.name)}
-									>
-										<CardTitle className="flex items-center">
-											<FileText className="file-icon" />
-											<span className="file-name">{file.name}</span>
-										</CardTitle>
-										<CardContent className="file-size">{file.size} KB</CardContent>
-										<CardContent>{file.createdAt}</CardContent>
-										<CardFooter>{file.permission}</CardFooter>
-									</Card>
-								))}
+								{filteredFolders.length === 0 && filteredFiles.length === 0 ? (
+									<div className="no-files-message">
+										No files or folders found in this directory.
+									</div>
+								) : (
+									<>
+										{filteredFolders.map((folder, index) => (
+											<Card
+												key={index}
+												className={`file-list-item`}
+												onClick={() => handleLeftClick(folder.name)}
+												onDoubleClick={() => handleDoubleClick(folder.name)}
+											>
+												<CardTitle className="flex items-center">
+													<FolderIcon className="folder-icon" />
+													<span className="folder-name">{folder.name}</span>
+												</CardTitle>
+												<CardContent>-</CardContent>
+												<CardContent>-</CardContent>
+												<CardFooter>-</CardFooter>
+											</Card>
+										))}
+										{filteredFiles.map((file) => (
+											<Card
+												key={file.id}
+												className={`file-list-item`}
+												onClick={() => handleLeftClick(file.name)}
+											>
+												<CardTitle className="flex items-center">
+													<FileText className="file-icon" />
+													<span className="file-name">{file.name}</span>
+												</CardTitle>
+												<CardContent className="file-size">{file.size} KB</CardContent>
+												<CardContent>{file.createdAt}</CardContent>
+												<CardFooter>{file.permission}</CardFooter>
+											</Card>
+										))}
+									</>
+								)}
 							</div>
 						</div>
 					</div>
 				) : (
-					<p>Le service Bedrock nest pas disponible. Veuillez vous connecter.</p>
+					<p>could not connect please try later</p>
 				)}
 			</div>
 		</div>
