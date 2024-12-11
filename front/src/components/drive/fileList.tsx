@@ -178,10 +178,10 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 
 				if (updatedSelectedItems.has(name)) {
 					updatedSelectedItems.delete(name);
-					setCountItem((prev) => prev - 1);
+					setCountItem(updatedSelectedItems.size);
 				} else {
 					updatedSelectedItems.add(name);
-					setCountItem((prev) => prev + 1);
+					setCountItem(updatedSelectedItems.size);
 				}
 
 				return updatedSelectedItems;
@@ -191,8 +191,14 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 		}, 200);
 	};
 
+	useEffect(() => {
+		setCountItem(selectedItems.size);
+	}, [selectedItems]);
+
+
 	const handleDoubleClick = (name: string) => {
 		if (clickTimeout) clearTimeout(clickTimeout);
+		setSelectedItems(new Set());
 		if (name === "..") {
 			setUserPath((prev) => prev.split("/").slice(0, -1).join("/"));
 			return;
