@@ -1,12 +1,16 @@
 "use client"
 
+import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { FolderIcon, FileText } from "lucide-react";
 import { useQueryState } from 'nuqs'
 import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import "@/app/(drive)/drive.css";
 import { DrivePageTitle } from "@/components/drive/drivePageTitle";
 import { Card, CardFooter, CardTitle, CardContent } from "@/components/ui/card";
+import Draggable from "@/components/ui/draggable";
+import DraggableDroppable from "@/components/ui/draggableDroppable";
 import useBedrockFileUploadDropzone from "@/hooks/useBedrockFileUploadDropzone";
 import { useAccountStore } from "@/stores/account";
 import { Permission } from "@/utils/types";
@@ -54,6 +58,41 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 
 	let clickTimeout: NodeJS.Timeout | null = null;
 
+	const handleMoveFile = async (fileId: string, targetFolderPath: string) => {
+		if (!bedrockService) return;
+		try {
+			const newPath = `${targetFolderPath}/${files.find((file) => file.id === fileId)?.name}`;
+			const updatedFile = await bedrockService.moveFile(fileId, newPath);
+
+			setFiles((prevFiles) =>
+				prevFiles.map((file) => (file.id === fileId ? { ...file, path: updatedFile.path } : file))
+			);
+
+			toast.success("File moved successfully!");
+		} catch (error) {
+			if (error instanceof Error) {
+				toast.error(error.message || "Failed to move file");
+			}
+			else {
+				toast.error("Failed to move file")
+			}
+
+		}
+	};
+
+	const handleDragEnd = (event: DragEndEvent) => {
+		const { active, over } = event;
+
+		if (over && active.id !== over.id) {
+			const draggedFileId = active.id as string;
+			const targetFolderPath = over.id === ".."
+				? userPath.split("/").slice(0, -1).join("/") || "/"
+				: `${userPath}/${over.id}`;
+
+			handleMoveFile(draggedFileId, targetFolderPath).then()
+		}
+	};
+
 	const fetchFiles = async () => {
 		if (!bedrockService) {
 			return;
@@ -71,6 +110,7 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 				deleted_at: null,
 			}));
 			formattedFiles.push({ name: "test", path: "/root/hello/test", createdAt: new Date().toISOString().split("T")[0], deleted_at: null, id: "1234565", size: 123456, permission: "editor"})
+			formattedFiles.push({ name: "test2", path: "/root/hello/caca/test2", createdAt: new Date().toISOString().split("T")[0], deleted_at: new Date().toString(), id: "1234565", size: 123456, permission: "editor"})
 
 			setFiles(formattedFiles);
 
@@ -204,87 +244,93 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 	};
 
 	return (
-		<div className="drive-container">
-			<div className="search-bar mb-4">
-				<input
-					type="text"
-					placeholder="Search files and folders..."
-					value={searchQuery}
-					onChange={(e) => setSearchQuery(e.target.value)}
-					className="p-2 border border-gray-300 rounded-lg w-full"
-				/>
-			</div>
-			<div className="drive-content">
-				{bedrockService ? (
-					<div>
-						<DrivePageTitle selectedItemsCount={countItem} onDelete={handleDelete}/>
-						<div className="file-list-container">
-							<div {...getRootProps()} className="file-upload-dropzone">
-								<input {...getInputProps()} />
-								<p>Drag & drop some files here, or click to select files</p>
-							</div>
-							<div className="file-list-header">
-								<div onClick={() => handleSort("name")} className="cursor-pointer">
-									Name {sortColumn === "name" && (sortOrder === "asc" ? "↑" : "↓")}
+		<DndContext onDragEnd={handleDragEnd}>
+			<div className="drive-container">
+				<div className="search-bar mb-4">
+					<input
+						type="text"
+						placeholder="Search files and folders..."
+						value={searchQuery}
+						onChange={(e) => setSearchQuery(e.target.value)}
+						className="p-2 border border-gray-300 rounded-lg w-full"
+					/>
+				</div>
+				<div className="drive-content">
+					{bedrockService ? (
+						<div>
+							<DrivePageTitle selectedItemsCount={countItem} onDelete={handleDelete}/>
+							<div className="file-list-container">
+								<div {...getRootProps()} className="file-upload-dropzone">
+									<input {...getInputProps()} />
+									<p>Drag & drop some files here, or click to select files</p>
 								</div>
-								<div onClick={() => handleSort("size")} className="cursor-pointer">
-									Size {sortColumn === "size" && (sortOrder === "asc" ? "↑" : "↓")}
-								</div>
-								<div onClick={() => handleSort("createdAt")} className="cursor-pointer">
-									Created At {sortColumn === "createdAt" && (sortOrder === "asc" ? "↑" : "↓")}
-								</div>
-								<div onClick={() => handleSort("permission")} className="cursor-pointer">
-									Permission {sortColumn === "permission" && (sortOrder === "asc" ? "↑" : "↓")}
-								</div>
-							</div>
-							<div className="file-list-content">
-								{filteredFolders.length === 0 && filteredFiles.length === 0 ? (
-									<div className="no-files-message">
-										No files or folders found in this directory.
+								<div className="file-list-header">
+									<div onClick={() => handleSort("name")} className="cursor-pointer">
+										Name {sortColumn === "name" && (sortOrder === "asc" ? "↑" : "↓")}
 									</div>
-								) : (
-									<>
-										{filteredFolders.map((folder, index) => (
-											<Card
-												key={index}
-												className={`file-list-item`}
-												onClick={() => handleLeftClick(folder.name)}
-												onDoubleClick={() => handleDoubleClick(folder.name)}
-											>
-												<CardTitle className="flex items-center">
-													<FolderIcon className="folder-icon" />
-													<span className="folder-name">{folder.name}</span>
-												</CardTitle>
-												<CardContent>-</CardContent>
-												<CardContent>-</CardContent>
-												<CardFooter>-</CardFooter>
-											</Card>
-										))}
-										{filteredFiles.map((file) => (
-											<Card
-												key={file.id}
-												className={`file-list-item`}
-												onClick={() => handleLeftClick(file.name)}
-											>
-												<CardTitle className="flex items-center">
-													<FileText className="file-icon" />
-													<span className="file-name">{file.name}</span>
-												</CardTitle>
-												<CardContent className="file-size">{file.size} KB</CardContent>
-												<CardContent>{file.createdAt}</CardContent>
-												<CardFooter>{file.permission}</CardFooter>
-											</Card>
-										))}
-									</>
-								)}
+									<div onClick={() => handleSort("size")} className="cursor-pointer">
+										Size {sortColumn === "size" && (sortOrder === "asc" ? "↑" : "↓")}
+									</div>
+									<div onClick={() => handleSort("createdAt")} className="cursor-pointer">
+										Created At {sortColumn === "createdAt" && (sortOrder === "asc" ? "↑" : "↓")}
+									</div>
+									<div onClick={() => handleSort("permission")} className="cursor-pointer">
+										Permission {sortColumn === "permission" && (sortOrder === "asc" ? "↑" : "↓")}
+									</div>
+								</div>
+								<div className="file-list-content">
+									{filteredFolders.length === 0 && filteredFiles.length === 0 ? (
+										<div className="no-files-message">
+											No files or folders found in this directory.
+										</div>
+									) : (
+										<>
+											{filteredFolders.map((folder, index) => (
+												<DraggableDroppable key={index} id={folder.name} onDrop={handleDragEnd}>
+													<Card
+														key={index}
+														className={`file-list-item`}
+														onClick={() => handleLeftClick(folder.name)}
+														onDoubleClick={() => handleDoubleClick(folder.name)}
+													>
+														<CardTitle className="flex items-center">
+															<FolderIcon className="folder-icon" />
+															<span className="folder-name">{folder.name}</span>
+														</CardTitle>
+														<CardContent>-</CardContent>
+														<CardContent>-</CardContent>
+														<CardFooter>-</CardFooter>
+													</Card>
+												</DraggableDroppable>
+											))}
+											{filteredFiles.map((file) => (
+												<Draggable key={file.id} id={file.id}>
+													<Card
+														key={file.id}
+														className={`file-list-item`}
+														onClick={() => handleLeftClick(file.name)}
+													>
+														<CardTitle className="flex items-center">
+															<FileText className="file-icon" />
+															<span className="file-name">{file.name}</span>
+														</CardTitle>
+														<CardContent className="file-size">{file.size} KB</CardContent>
+														<CardContent>{file.createdAt}</CardContent>
+														<CardFooter>{file.permission}</CardFooter>
+													</Card>
+												</Draggable>
+											))}
+										</>
+									)}
+								</div>
 							</div>
 						</div>
-					</div>
-				) : (
-					<p>could not connect please try later</p>
-				)}
+					) : (
+						<p>could not connect please try later</p>
+					)}
+				</div>
 			</div>
-		</div>
+		</DndContext>
 	);
 };
 
