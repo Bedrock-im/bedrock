@@ -56,6 +56,11 @@
     border-color: #0070f3;
 }
 
+.folder-hovered {
+    background-color: rgba(0, 123, 255, 0.2);
+    border: 2px dashed rgba(0, 123, 255, 0.5);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
 
 .file-list-container {
     @apply flex flex-col flex-1 w-full overflow-hidden;

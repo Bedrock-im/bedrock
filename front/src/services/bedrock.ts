@@ -144,6 +144,39 @@ export default class BedrockService {
 		return newFiles;
 	}
 
+	async moveFile(fileId: string, newPath: string): Promise<FileEntry> {
+		const allFiles = await this.fetchFileEntries();
+		const fileToMove = allFiles.find((file) => file.post_hash === fileId);
+
+		if (!fileToMove) {
+			throw new Error("File not found");
+		}
+
+		if (this.fileExists(allFiles, newPath)) {
+			throw new Error(`A file already exists at the path: ${newPath}`);
+		}
+
+		const updatedFile: FileEntry = { ...fileToMove, path: newPath };
+
+		await this.alephService.updateAggregate(FILE_ENTRIES_AGGREGATE_KEY, EncryptedFileEntriesSchema, ({ files }) => {
+			const decryptedFiles = this.decryptFilesPaths(files);
+
+			const updatedFiles = decryptedFiles.map((file) =>
+				file.post_hash === fileId ? updatedFile : file
+			);
+
+			return {
+				files: updatedFiles.map(({ post_hash, path }) => ({
+					post_hash,
+					path: EncryptionService.encryptEcies(path, this.alephService.encryptionPrivateKey.publicKey.compressed),
+				})),
+			};
+		});
+
+		return updatedFile;
+	}
+
+
 	private async postFile({ key, iv, store_hash }: Omit<FileFullInfos, "post_hash" | "path">): Promise<string> {
 		const { item_hash } = await this.alephService.createPost(FILE_POST_TYPE, {
 			key: EncryptionService.encryptEcies(key, this.alephService.encryptionPrivateKey.publicKey.compressed),
