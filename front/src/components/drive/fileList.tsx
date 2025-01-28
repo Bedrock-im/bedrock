@@ -84,7 +84,7 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 		const { active, over } = event;
 
 		if (over && active.id !== over.id) {
-			const draggedFileId = active.id as string;
+			const draggedId = active.id as string;
 			const targetFolderPath = over.id === ".."
 				? (() => {
 					const parentPath = userPath.split("/").slice(0, -1).join("/") + "/";
@@ -92,9 +92,31 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 				})()
 				: `${userPath}/${over.id}`;
 
-			handleMoveFile(draggedFileId, targetFolderPath).then()
+			const draggedFolder = folders.find((folder) => folder.name === draggedId);
+			const draggedFile = files.find((file) => file.id === draggedId);
+
+			if (draggedFolder) {
+				const folderPath = draggedFolder.path;
+				const itemsToMove = files.filter((file) => file.path.startsWith(folderPath));
+				const foldersToMove = folders.filter((folder) => folder.path.startsWith(folderPath));
+
+				itemsToMove.forEach((file) => {
+					const newFilePath = file.path.replace(folderPath, targetFolderPath);
+					handleMoveFile(file.id, newFilePath).then();
+				});
+
+				foldersToMove.forEach((folder) => {
+					const newFolderPath = folder.path.replace(folderPath, targetFolderPath);
+					setFolders((prevFolders) =>
+						prevFolders.map((f) => (f.path === folder.path ? { ...f, path: newFolderPath } : f))
+					);
+				});
+			} else if (draggedFile) {
+				handleMoveFile(draggedFile.id, targetFolderPath).then();
+			}
 		}
 	};
+
 
 	const fetchFiles = async () => {
 		if (!bedrockService) {
@@ -112,8 +134,6 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 				path: entry.path,
 				deleted_at: null,
 			}));
-			formattedFiles.push({ name: "test", path: "/root/hello/test", createdAt: new Date().toISOString().split("T")[0], deleted_at: null, id: "1234565", size: 123456, permission: "editor"})
-			formattedFiles.push({ name: "test2", path: "/root/hello/caca/test2", createdAt: new Date().toISOString().split("T")[0], deleted_at: new Date().toString(), id: "1234565", size: 123456, permission: "editor"})
 
 			setFiles(formattedFiles);
 
