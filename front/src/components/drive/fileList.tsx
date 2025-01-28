@@ -61,7 +61,7 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 	const handleMoveFile = async (fileId: string, targetFolderPath: string) => {
 		if (!bedrockService) return;
 		try {
-			const newPath = `${targetFolderPath}/${files.find((file) => file.id === fileId)?.name}`;
+			const newPath = `${targetFolderPath}${files.find((file) => file.id === fileId)?.name}`;
 			const updatedFile = await bedrockService.moveFile(fileId, newPath);
 
 			setFiles((prevFiles) =>
@@ -86,7 +86,10 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 		if (over && active.id !== over.id) {
 			const draggedFileId = active.id as string;
 			const targetFolderPath = over.id === ".."
-				? userPath.split("/").slice(0, -1).join("/") || "/"
+				? (() => {
+					const parentPath = userPath.split("/").slice(0, -1).join("/") + "/";
+					return parentPath || "/";
+				})()
 				: `${userPath}/${over.id}`;
 
 			handleMoveFile(draggedFileId, targetFolderPath).then()
