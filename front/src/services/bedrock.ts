@@ -11,6 +11,7 @@ export const FileEntrySchema = z.object({
 	post_hash: z.string().regex(/^[a-f0-9]{64}$/, {
 		message: "Invalid hash format. It should be a 64-character hexadecimal string.",
 	}),
+	deleted_at: z.string().nullable().optional(),
 });
 
 export const EncryptedFileEntrySchema = z.object({
@@ -185,6 +186,98 @@ export default class BedrockService {
 		});
 		return item_hash;
 	}
+
+	async softDeleteFile(fileId: string): Promise<FileEntry> {
+		const allFiles = await this.fetchFileEntries();
+		const fileToDelete = allFiles.find((file) => file.post_hash === fileId);
+
+		if (!fileToDelete) {
+			throw new Error("File not found");
+		}
+
+		if (fileToDelete.deleted_at) {
+			throw new Error("File is already in trash");
+		}
+
+		const updatedFile: FileEntry = {
+			...fileToDelete,
+			deleted_at: new Date().toISOString(), // Marque comme supprimé
+		};
+
+		await this.alephService.updateAggregate(FILE_ENTRIES_AGGREGATE_KEY, EncryptedFileEntriesSchema, ({ files }) => {
+			const decryptedFiles = this.decryptFilesPaths(files);
+
+			const updatedFiles = decryptedFiles.map((file) =>
+				file.post_hash === fileId ? updatedFile : file
+			);
+
+			return {
+				files: updatedFiles.map(({ post_hash, path, deleted_at }) => ({
+					post_hash,
+					path: EncryptionService.encryptEcies(path, this.alephService.encryptionPrivateKey.publicKey.compressed),
+					deleted_at: deleted_at ? EncryptionService.encryptEcies(deleted_at, this.alephService.encryptionPrivateKey.publicKey.compressed) : null,
+				})),
+			};
+		});
+
+		return updatedFile;
+	}
+
+	async hardDeleteFile(fileId: string): Promise<void> {
+		const allFiles = await this.fetchFileEntries();
+		const fileToDelete = allFiles.find((file) => file.post_hash === fileId);
+
+		if (!fileToDelete) {
+			throw new Error("File not found");
+		}
+
+		await this.alephService.updateAggregate(FILE_ENTRIES_AGGREGATE_KEY, EncryptedFileEntriesSchema, ({ files }) => {
+			const decryptedFiles = this.decryptFilesPaths(files);
+
+			const updatedFiles = decryptedFiles.filter((file) => file.post_hash !== fileId);
+
+			return {
+				files: updatedFiles.map(({ post_hash, path, deleted_at }) => ({
+					post_hash,
+					path: EncryptionService.encryptEcies(path, this.alephService.encryptionPrivateKey.publicKey.compressed),
+					deleted_at: deleted_at ? EncryptionService.encryptEcies(deleted_at, this.alephService.encryptionPrivateKey.publicKey.compressed) : null,
+				})),
+			};
+		});
+
+		console.log(`File with ID ${fileId} permanently deleted`);
+	}
+
+
+	async restoreFile(fileId: string): Promise<FileEntry> {
+		const allFiles = await this.fetchFileEntries();
+		const fileToRestore = allFiles.find((file) => file.post_hash === fileId);
+
+		if (!fileToRestore || !fileToRestore.deleted_at) {
+			throw new Error("File is not in trash or does not exist");
+		}
+
+		const restoredFile = { ...fileToRestore, deleted_at: null };
+
+		await this.alephService.updateAggregate(FILE_ENTRIES_AGGREGATE_KEY, EncryptedFileEntriesSchema, ({ files }) => {
+			const decryptedFiles = this.decryptFilesPaths(files);
+
+			const updatedFiles = decryptedFiles.map((file) =>
+				file.post_hash === fileId ? restoredFile : file
+			);
+
+			return {
+				files: updatedFiles.map(({ post_hash, path, deleted_at }) => ({
+					post_hash,
+					path: EncryptionService.encryptEcies(path, this.alephService.encryptionPrivateKey.publicKey.compressed),
+					deleted_at: deleted_at ? EncryptionService.encryptEcies(deleted_at, this.alephService.encryptionPrivateKey.publicKey.compressed) : null,
+				})),
+			};
+		});
+
+		return restoredFile;
+	}
+
 
 	fileExists(files: FileEntry[], path: string): boolean {
 		return files.some((entry) => entry.path === path);
