@@ -84,13 +84,14 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 		const { active, over } = event;
 
 		if (over && active.id !== over.id) {
+			console.log("active", active);
 			const draggedId = active.id as string;
 			const targetFolderPath = over.id === ".."
 				? (() => {
 					const parentPath = userPath.split("/").slice(0, -1).join("/") + "/";
 					return parentPath || "/";
 				})()
-				: `${userPath}/${over.id}`;
+				: `${userPath}/${over.id}/`;
 
 			const draggedFolder = folders.find((folder) => folder.name === draggedId);
 			const draggedFile = files.find((file) => file.id === draggedId);
