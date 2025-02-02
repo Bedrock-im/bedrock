@@ -61,7 +61,7 @@ const SetupFileList = () => {
 			</div>
 			<div className="drive-content">
 				{bedrockService ? (
-					<FileList files={filteredFiles} folders={filteredFolders} bedrockService={bedrockService} />
+					<FileList files={filteredFiles} folders={filteredFolders} />
 				) : (
 					<p>Please connect to use Bedrock</p>
 				)}
