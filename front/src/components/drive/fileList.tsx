@@ -1,21 +1,16 @@
-import { FolderIcon, FileText } from "lucide-react";
+import { FileText, FolderIcon } from "lucide-react";
 import React, { useState } from "react";
 
 import "@/app/(drive)/drive.css";
 import { DrivePageTitle } from "@/components/drive/drivePageTitle";
-import { Card, CardFooter, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import useBedrockFileUploadDropzone from "@/hooks/useBedrockFileUploadDropzone";
-import BedrockService from "@/services/bedrock";
 import { FileListProps } from "@/utils/types";
 
 type SortColumn = "name" | "size" | "createdAt" | "permission";
 type SortOrder = "asc" | "desc";
 
-interface FileListWithUploadProps extends FileListProps {
-	bedrockService: BedrockService;
-}
-
-const FileList: React.FC<FileListWithUploadProps> = ({ files, folders, bedrockService }) => {
+const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 	const [sortColumn, setSortColumn] = useState<SortColumn>("name");
 	const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 	const [countItem, setCountItem] = useState<number>(0);
