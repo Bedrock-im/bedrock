@@ -38,7 +38,7 @@ const SetupFileList = () => {
 				setFiles(formattedFiles);
 				setFolders([{ name: "Folder 1", permission: "viewer", path: "/folder1" }]);
 			} catch (error) {
-				console.error("Erreur lors de la récupération des fichiers :", error);
+				console.error("Failed to fetch files:", error);
 			}
 		};
 
@@ -63,7 +63,7 @@ const SetupFileList = () => {
 				{bedrockService ? (
 					<FileList files={filteredFiles} folders={filteredFolders} bedrockService={bedrockService} />
 				) : (
-					<p>Le service Bedrock nest pas disponible. Veuillez vous connecter.</p>
+					<p>Please connect to use Bedrock</p>
 				)}
 			</div>
 			<Separator />

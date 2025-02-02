@@ -1,3 +1,4 @@
+import { MessageNotFoundError } from "@aleph-sdk/message";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -58,9 +59,24 @@ export type EncryptedFileEntry = z.infer<typeof EncryptedFileEntrySchema>;
 export type EncryptedFileMeta = z.infer<typeof EncryptedFileMetaSchema>;
 export type FileFullInfos = z.infer<typeof FileFullInfosSchema>;
 export type DirectoryPath = `/${string}/` | "/";
+export type EncryptedFileEntriesSchema = z.infer<typeof EncryptedFileEntriesSchema>;
 
 export default class BedrockService {
 	constructor(private alephService: AlephService) {}
+
+	async setup(): Promise<void> {
+		try {
+			await this.fetchFileEntries();
+		} catch (err) {
+			if (err instanceof MessageNotFoundError) {
+				// New user with no file entries yet
+				const emptyFileEntries: EncryptedFileEntriesSchema = { files: [] };
+				await this.alephService.createAggregate(FILE_ENTRIES_AGGREGATE_KEY, emptyFileEntries);
+			} else {
+				throw err;
+			}
+		}
+	}
 
 	async uploadFiles(directoryPath: DirectoryPath, ...files: File[]): Promise<Omit<FileFullInfos, "post_hash">[]> {
 		const uploadedFiles = await this.fetchFileEntries();
@@ -107,7 +123,7 @@ export default class BedrockService {
 			.map((result) => result.value);
 	}
 
-	// The difference between this method and the uploadFiles method is that this method saves the file hash to blockchain so that it can be fetched later
+	// The difference between this method and the uploadFiles method is that this method saves the file hashes on Aleph so that it can be fetched later
 	async saveFiles(...fileInfos: Omit<FileFullInfos, "post_hash">[]): Promise<FileEntry[]> {
 		fileInfos = z.array(FileFullInfosSchema.omit({ post_hash: true })).parse(fileInfos); // Validate the input because fileEntry can be built without using the parse method
 
@@ -144,24 +160,8 @@ export default class BedrockService {
 		return newFiles;
 	}
 
-	private async postFile({ key, iv, store_hash }: Omit<FileFullInfos, "post_hash" | "path">): Promise<string> {
-		const { item_hash } = await this.alephService.createPost(FILE_POST_TYPE, {
-			key: EncryptionService.encryptEcies(key, this.alephService.encryptionPrivateKey.publicKey.compressed),
-			iv: EncryptionService.encryptEcies(iv, this.alephService.encryptionPrivateKey.publicKey.compressed),
-			store_hash,
-		});
-		return item_hash;
-	}
-
 	fileExists(files: FileEntry[], path: string): boolean {
 		return files.some((entry) => entry.path === path);
-	}
-
-	private decryptFilesPaths(files: EncryptedFileEntry[]): FileEntry[] {
-		return files.map(({ post_hash, path }) => ({
-			post_hash,
-			path: EncryptionService.decryptEcies(path, this.alephService.encryptionPrivateKey.secret),
-		}));
 	}
 
 	async fetchFileEntries(): Promise<FileEntry[]> {
@@ -171,5 +171,21 @@ export default class BedrockService {
 				path: EncryptionService.decryptEcies(path, this.alephService.encryptionPrivateKey.secret),
 			}),
 		);
+	}
+
+	private async postFile({ key, iv, store_hash }: Omit<FileFullInfos, "post_hash" | "path">): Promise<string> {
+		const { item_hash } = await this.alephService.createPost(FILE_POST_TYPE, {
+			key: EncryptionService.encryptEcies(key, this.alephService.encryptionPrivateKey.publicKey.compressed),
+			iv: EncryptionService.encryptEcies(iv, this.alephService.encryptionPrivateKey.publicKey.compressed),
+			store_hash,
+		});
+		return item_hash;
+	}
+
+	private decryptFilesPaths(files: EncryptedFileEntry[]): FileEntry[] {
+		return files.map(({ post_hash, path }) => ({
+			post_hash,
+			path: EncryptionService.decryptEcies(path, this.alephService.encryptionPrivateKey.secret),
+		}));
 	}
 }
