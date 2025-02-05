@@ -1,8 +1,8 @@
 "use client";
 
 import { signMessage } from "@wagmi/core";
-import { ReactNode } from "react";
-import { useAccountEffect } from "wagmi";
+import { ReactNode, useCallback, useEffect } from "react";
+import { useAccount, useAccountEffect } from "wagmi";
 
 import { wagmiConfig } from "@/config/wagmi";
 import { AlephService, BEDROCK_MESSAGE } from "@/services/aleph";
@@ -14,21 +14,32 @@ type WatchersProps = {
 };
 
 export function Watchers({ children }: WatchersProps) {
+	const account = useAccount();
 	const accountStore = useAccountStore();
+
+	const initAccount = useCallback(async () => {
+		const hash = await signMessage(wagmiConfig, { message: BEDROCK_MESSAGE });
+		const alephService = await AlephService.initialize(hash);
+		if (alephService === undefined) {
+			return;
+		}
+
+		const bedrockService = new BedrockService(alephService);
+		await bedrockService.setup();
+
+		accountStore.connect(bedrockService);
+	}, [accountStore]);
+
+	useEffect(() => {
+		if (account.isConnected && !accountStore.bedrockService) {
+			initAccount();
+		}
+	}, [account, accountStore, initAccount]);
 
 	useAccountEffect({
 		async onConnect() {
 			// TODO: add some local storage persistance with user settings choice
-			const hash = await signMessage(wagmiConfig, { message: BEDROCK_MESSAGE });
-			const alephService = await AlephService.initialize(hash);
-			if (alephService === undefined) {
-				return;
-			}
-
-			const bedrockService = new BedrockService(alephService);
-			await bedrockService.setup();
-
-			accountStore.connect(bedrockService);
+			await initAccount();
 		},
 		onDisconnect() {
 			accountStore.onDisconnect();

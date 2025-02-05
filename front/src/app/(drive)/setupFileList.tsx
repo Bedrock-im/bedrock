@@ -1,5 +1,6 @@
 "use client";
 
+import { LoaderIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import FileList from "@/components/drive/fileList";
@@ -63,7 +64,7 @@ const SetupFileList = () => {
 				{bedrockService ? (
 					<FileList files={filteredFiles} folders={filteredFolders} />
 				) : (
-					<p>Please connect to use Bedrock</p>
+					<LoaderIcon className="animate-spin m-auto h-[100vh]" />
 				)}
 			</div>
 			<Separator />
