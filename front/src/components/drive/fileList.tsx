@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { FolderIcon, FileText } from "lucide-react";
@@ -128,12 +128,12 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 			const fileEntries = await bedrockService.fetchFileEntries();
 			const formattedFiles = fileEntries.map((entry) => ({
 				name: entry.path.split("/").pop() || "Unnamed file",
-				size: Math.floor(Math.random() * 500) + 100,
+				size: 0,
 				id: entry.post_hash,
 				createdAt: new Date().toISOString().split("T")[0],
 				permission: "viewer" as Permission,
 				path: entry.path,
-				deleted_at: null,
+				deleted_at: entry.deleted_at,
 			}));
 
 			setFiles(formattedFiles);
@@ -145,9 +145,6 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 		}
 	};
 
-	useEffect(() => {
-		fetchFiles().then();
-	}, [bedrockService]);
 
 	const generateFoldersFromFiles = (fileEntries: FileEntry[]): FolderEntry[] => {
 		const folderPaths = new Set<string>();
@@ -187,7 +184,30 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 
 	useEffect(() => {
 		fetchFiles();
-	}, [bedrockService]);
+	}, [files]);
+
+
+	const handleDownloadFile = async (fileId: string, fileName: string) => {
+		if (!bedrockService) return;
+
+		try {
+			const fileBuffer = await bedrockService.alephService.downloadFile(fileId);
+			const blob = new Blob([fileBuffer], { type: "application/octet-stream" });
+			const url = URL.createObjectURL(blob);
+
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = fileName;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+
+			toast.success("Téléchargement réussi !");
+		} catch (error) {
+			console.error("Erreur lors du téléchargement :", error);
+			toast.error("Échec du téléchargement.");
+		}
+	};
 
 
 	const filterFilesAndFolders = () => {
@@ -242,10 +262,10 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 
 				if (updatedSelectedItems.has(name)) {
 					updatedSelectedItems.delete(name);
-					setCountItem((prev) => prev - 1);
+					setCountItem(updatedSelectedItems.size);
 				} else {
 					updatedSelectedItems.add(name);
-					setCountItem((prev) => prev + 1);
+					setCountItem(updatedSelectedItems.size);
 				}
 
 				return updatedSelectedItems;
@@ -255,8 +275,13 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 		}, 200);
 	};
 
+	useEffect(() => {
+		setCountItem(selectedItems.size);
+	}, [selectedItems]);
+
 	const handleDoubleClick = (name: string) => {
 		if (clickTimeout) clearTimeout(clickTimeout);
+		setSelectedItems(new Set());
 		if (name === "..") {
 			setUserPath((prev) => prev.split("/").slice(0, -1).join("/"));
 			return;
@@ -341,6 +366,12 @@ const FileList: React.FC<FileListProps> = ({ pageType }) => {
 														<CardContent className="file-size">{file.size} KB</CardContent>
 														<CardContent>{file.createdAt}</CardContent>
 														<CardFooter>{file.permission}</CardFooter>
+														<button
+															className="p-1 bg-blue-500 text-white rounded"
+															onClick={() => handleDownloadFile(file.id, file.name)}
+														>
+															Télécharger
+														</button>
 													</Card>
 												</Draggable>
 											))}
