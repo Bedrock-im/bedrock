@@ -1,7 +1,7 @@
 "use client";
 
 import { useLogout, usePrivy } from "@privy-io/react-auth";
-import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Sparkles } from "lucide-react";
+import { BadgeCheck, Bell, ChevronsUpDown, LogOut, WrenchIcon } from "lucide-react";
 import { useAccount, useDisconnect, useEnsAvatar, useEnsName } from "wagmi";
 
 import { Avatar } from "@/components/ui/avatar";
@@ -64,19 +64,12 @@ export const BedrockAccountMenu = () => {
 				<DropdownMenuSeparator />
 				<DropdownMenuGroup>
 					<DropdownMenuItem>
-						<Sparkles />
-						Upgrade to Pro
-					</DropdownMenuItem>
-				</DropdownMenuGroup>
-				<DropdownMenuSeparator />
-				<DropdownMenuGroup>
-					<DropdownMenuItem>
 						<BadgeCheck />
 						Account
 					</DropdownMenuItem>
 					<DropdownMenuItem>
-						<CreditCard />
-						Billing
+						<WrenchIcon />
+						Settings
 					</DropdownMenuItem>
 					<DropdownMenuItem>
 						<Bell />
