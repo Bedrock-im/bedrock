@@ -6,15 +6,13 @@ import { useEffect, useState } from "react";
 import FileList from "@/components/drive/fileList";
 import { Separator } from "@/components/ui/separator";
 import { useAccountStore } from "@/stores/account";
-import { Permission } from "@/utils/types";
+import { DriveFileProps, DriveFolderProps, Permission } from "@/utils/types";
 
 import "./drive.css";
 
 const SetupFileList = () => {
-	const [files, setFiles] = useState<
-		{ name: string; size: number; id: string; createdAt: string; permission: Permission; path: string }[]
-	>([]);
-	const [folders, setFolders] = useState<{ name: string; permission: Permission; path: string }[]>([]);
+	const [files, setFiles] = useState<DriveFileProps[]>([]);
+	const [folders, setFolders] = useState<DriveFolderProps[]>([]);
 	const [searchQuery, setSearchQuery] = useState<string>("");
 
 	const bedrockService = useAccountStore((state) => state.bedrockService);
@@ -27,17 +25,28 @@ const SetupFileList = () => {
 
 			try {
 				const fileEntries = await bedrockService.fetchFileEntries();
-				const formattedFiles = fileEntries.map((entry) => ({
+				const formattedFiles: DriveFileProps[] = fileEntries.map((entry) => ({
+					type: "file",
 					name: entry.path.split("/").pop() || "Unnamed file",
 					size: Math.floor(Math.random() * 500) + 100,
 					id: entry.post_hash,
 					createdAt: new Date().toISOString().split("T")[0],
+					deletedAt: null,
 					permission: "viewer" as Permission,
 					path: entry.path,
 				}));
 
 				setFiles(formattedFiles);
-				setFolders([{ name: "Folder 1", permission: "viewer", path: "/folder1" }]);
+				setFolders([
+					{
+						type: "folder",
+						name: "Folder 1",
+						permission: "viewer",
+						path: "/folder1",
+						createdAt: new Date().toISOString().split("T")[0],
+						deletedAt: null,
+					},
+				]);
 			} catch (error) {
 				console.error("Failed to fetch files:", error);
 			}
