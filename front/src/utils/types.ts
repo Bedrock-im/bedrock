@@ -1,16 +1,19 @@
-export type DriveFileProps = {
-	id: string;
+export type DriveContent = {
 	name: string;
-	size: number;
-	createdAt: string;
 	path: string;
+	createdAt: string;
+	deletedAt: string | null;
 	permission: Permission;
 };
 
-export type DriveFolderProps = {
-	name: string;
-	path: string;
-	permission: Permission;
+export type DriveFileProps = DriveContent & {
+	type: "file";
+	id: string;
+	size: number;
+};
+
+export type DriveFolderProps = DriveContent & {
+	type: "folder";
 };
 
 export type FileListProps = {
@@ -18,4 +21,4 @@ export type FileListProps = {
 	folders: DriveFolderProps[];
 };
 
-export type Permission = "owner" | "viewer" | "editor";
+export type Permission = "owner" | "editor" | "viewer";

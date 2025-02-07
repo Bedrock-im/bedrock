@@ -1,9 +1,8 @@
-import { FileText, FolderIcon } from "lucide-react";
 import React, { useState } from "react";
 
 import "@/app/(drive)/drive.css";
+import { DriveItem } from "@/components/drive/DriveItem";
 import { DrivePageTitle } from "@/components/drive/drivePageTitle";
-import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import useBedrockFileUploadDropzone from "@/hooks/useBedrockFileUploadDropzone";
 import { FileListProps } from "@/utils/types";
 
@@ -51,17 +50,6 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 		}, 200);
 	};
 
-	const handleDoubleClick = (name: string) => {
-		if (clickTimeout) clearTimeout(clickTimeout);
-		alert(`Double clic gauche sur ${name}`);
-		clickTimeout = null;
-	};
-
-	const handleRightClick = (event: React.MouseEvent, name: string) => {
-		event.preventDefault();
-		alert(`Clic droit sur ${name}`);
-	};
-
 	const sortedFiles = [...files].sort((a, b) => {
 		const isAscending = sortOrder === "asc" ? 1 : -1;
 		if (a[sortColumn] < b[sortColumn]) return -1 * isAscending;
@@ -98,39 +86,23 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 
 				<div className="file-list-content">
 					{sortedFolders.map((folder, index) => (
-						<Card
+						<DriveItem
 							key={index}
-							className={`file-list-item ${selectedItems.has(folder.name) ? "selected" : ""}`}
+							type="folder"
+							isSelected={selectedItems.has(folder.name)}
 							onClick={() => handleLeftClick(folder.name)}
-							onDoubleClick={() => handleDoubleClick(folder.name)}
-							onContextMenu={(e) => handleRightClick(e, folder.name)}
-						>
-							<CardTitle className="flex items-center">
-								<FolderIcon className="folder-icon" />
-								<span className="folder-name">{folder.name}</span>
-							</CardTitle>
-							<CardContent>-</CardContent>
-							<CardContent>-</CardContent>
-							<CardFooter>{folder.permission}</CardFooter>
-						</Card>
+							file={folder}
+						/>
 					))}
-
-					{sortedFiles.map((file) => (
-						<Card
-							key={file.id}
-							className={`file-list-item ${selectedItems.has(file.name) ? "selected" : ""}`}
+					{sortedFiles.map((file, index) => (
+						<DriveItem
+							key={index}
+							type="file"
+							isSelected={selectedItems.has(file.name)}
 							onClick={() => handleLeftClick(file.name)}
-							onDoubleClick={() => handleDoubleClick(file.name)}
-							onContextMenu={(e) => handleRightClick(e, file.name)}
-						>
-							<CardTitle className="flex items-center">
-								<FileText className="file-icon" />
-								<span className="file-name">{file.name}</span>
-							</CardTitle>
-							<CardContent className="file-size">{file.size} KB</CardContent>
-							<CardContent>{file.createdAt}</CardContent>
-							<CardFooter>{file.permission}</CardFooter>
-						</Card>
+							file={file}
+							size={file.size}
+						/>
 					))}
 				</div>
 			</div>
