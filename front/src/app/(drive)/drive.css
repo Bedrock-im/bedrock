@@ -52,6 +52,13 @@
     margin-bottom: 1rem;
 }
 
+
+.folder-hovered {
+    background-color: rgba(0, 123, 255, 0.2);
+    border: 2px dashed rgba(0, 123, 255, 0.5);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
 .search-bar input:focus {
     border-color: #0070f3;
 }
