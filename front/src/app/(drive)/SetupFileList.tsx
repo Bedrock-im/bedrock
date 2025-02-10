@@ -5,11 +5,10 @@ import { useEffect, useState } from "react";
 
 import FileList from "@/components/drive/FileList";
 import { Separator } from "@/components/ui/separator";
-
-import "./drive.css";
-
 import { useAccountStore } from "@/stores/account";
 import { useDriveStore } from "@/stores/drive";
+
+import "./drive.css";
 
 const SetupFileList = () => {
 	const [searchQuery, setSearchQuery] = useState<string>("");
