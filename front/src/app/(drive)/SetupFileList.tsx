@@ -3,60 +3,70 @@
 import { LoaderIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import FileList from "@/components/drive/fileList";
+import FileList from "@/components/drive/FileList";
 import { Separator } from "@/components/ui/separator";
-import { useAccountStore } from "@/stores/account";
-import { DriveFileProps, DriveFolderProps, Permission } from "@/utils/types";
 
 import "./drive.css";
 
+import { useAccountStore } from "@/stores/account";
+import { useDriveStore } from "@/stores/drive";
+
 const SetupFileList = () => {
-	const [files, setFiles] = useState<DriveFileProps[]>([]);
-	const [folders, setFolders] = useState<DriveFolderProps[]>([]);
 	const [searchQuery, setSearchQuery] = useState<string>("");
+	const { files, folders, setFiles, setFolders, currentWorkingDirectory } = useDriveStore();
 
 	const bedrockService = useAccountStore((state) => state.bedrockService);
 
 	useEffect(() => {
-		const fetchData = async () => {
-			if (!bedrockService) {
-				return;
-			}
+		if (!bedrockService) {
+			return;
+		}
 
+		(async () => {
 			try {
 				const fileEntries = await bedrockService.fetchFileEntries();
-				const formattedFiles: DriveFileProps[] = fileEntries.map((entry) => ({
-					type: "file",
-					name: entry.path.split("/").pop() || "Unnamed file",
-					size: Math.floor(Math.random() * 500) + 100,
-					id: entry.post_hash,
-					createdAt: new Date().toISOString().split("T")[0],
-					deletedAt: null,
-					permission: "viewer" as Permission,
-					path: entry.path,
-				}));
+				const fullFiles = await bedrockService.fetchFilesMetaFromEntries(...fileEntries);
 
-				setFiles(formattedFiles);
+				const folderPaths = new Set<string>();
+
+				fileEntries.forEach((file) => {
+					const pathParts = file.path.split("/").filter(Boolean);
+					if (pathParts.length > 1) {
+						pathParts.pop();
+						let currentPath = "";
+						pathParts.forEach((part) => {
+							currentPath += `/${part}`;
+							folderPaths.add(currentPath);
+						});
+					}
+				});
+
+				setFiles(fullFiles);
 				setFolders([
-					{
-						type: "folder",
-						name: "Folder 1",
-						permission: "viewer",
-						path: "/folder1",
-						createdAt: new Date().toISOString().split("T")[0],
-						deletedAt: null,
-					},
+					...Array.from(folderPaths)
+						.filter((path) => path !== "/")
+						.map((path) => ({
+							path,
+							created_at: new Date().toISOString(),
+							deleted_at: null,
+						})),
 				]);
 			} catch (error) {
 				console.error("Failed to fetch files:", error);
 			}
-		};
+		})();
+	}, [bedrockService, setFolders, setFiles]);
 
-		fetchData().then((r) => r);
-	}, [bedrockService]);
-
-	const filteredFiles = files.filter((file) => file.name.toLowerCase().includes(searchQuery.toLowerCase()));
-	const filteredFolders = folders.filter((folder) => folder.name.toLowerCase().includes(searchQuery.toLowerCase()));
+	const cwdRegex = `^${currentWorkingDirectory.replace("/", "\\/")}[^ \\/]+$`;
+	const filteredFiles = files.filter(
+		(file) => file.path.match(cwdRegex) && file.path.toLowerCase().includes(searchQuery.toLowerCase()),
+	);
+	const filteredFolders = folders.filter(
+		(folder) =>
+			folder.path.match(cwdRegex) &&
+			folder.path !== currentWorkingDirectory && // Don't show the current directory
+			folder.path.toLowerCase().includes(searchQuery.toLowerCase()),
+	);
 
 	return (
 		<div className="drive-container">
