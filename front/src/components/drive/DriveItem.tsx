@@ -3,13 +3,13 @@ import React, { useMemo } from "react";
 
 import { DriveMenu } from "@/components/drive/DriveMenu";
 import { Card, CardContent } from "@/components/ui/card";
-import { DriveContent } from "@/utils/types";
+import { DriveFile, DriveFolder } from "@/stores/drive";
 
 interface DriveItemProps {
 	type: "file" | "folder";
 	isSelected: boolean;
 	onClick?: () => void;
-	file: DriveContent;
+	file: DriveFile | DriveFolder;
 	size?: number;
 }
 
@@ -36,11 +36,11 @@ export const DriveItem = ({ type, isSelected, onClick, file, size }: DriveItemPr
 			>
 				<CardContent className="flex py-0 items-center gap-x-2">
 					{type === "folder" ? <FolderIcon className="folder-icon" /> : <FileText className="file-icon" />}
-					<span>{file.name}</span>
+					<span>-</span>
 				</CardContent>
 				<CardContent className="flex py-0 items-center">{sizeFormat}</CardContent>
-				<CardContent className="flex py-0 items-center">{file.createdAt}</CardContent>
-				<CardContent className="flex py-0 items-center">{file.permission}</CardContent>
+				<CardContent className="flex py-0 items-center">{file.created_at}</CardContent>
+				<CardContent className="flex py-0 items-center">-</CardContent>
 			</Card>
 		</DriveMenu>
 	);

@@ -160,13 +160,33 @@ export class AlephService {
 		addresses: string[] = [this.account.address],
 		hashes: string[] = [],
 	) {
-		return schema.parse(
-			await this.subAccountClient.getPost({
-				channels: [ALEPH_GENERAL_CHANNEL],
-				types: [type],
-				addresses,
-				hashes,
-			}),
+		return z.array(schema).parse(
+			(
+				await this.subAccountClient.getPosts({
+					channels: [ALEPH_GENERAL_CHANNEL],
+					types: [type],
+					addresses,
+					hashes,
+				})
+			).posts.map((post) => post.content),
 		) as z.infer<T>[];
+	}
+
+	async fetchPost<T extends z.ZodTypeAny>(
+		type: string,
+		schema: T,
+		addresses: string[] = [this.account.address],
+		hash: string,
+	) {
+		return schema.parse(
+			(
+				await this.subAccountClient.getPost({
+					channels: [ALEPH_GENERAL_CHANNEL],
+					types: [type],
+					addresses,
+					hashes: [hash],
+				})
+			).content,
+		) as z.infer<T>;
 	}
 }
