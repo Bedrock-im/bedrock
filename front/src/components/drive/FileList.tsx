@@ -1,8 +1,17 @@
-import React, { useState } from "react";
+"use client";
+
+import { DndContext, DragEndEvent } from "@dnd-kit/core";
+import { FolderIcon, FileText } from "lucide-react";
+import { useQueryState } from 'nuqs'
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import "@/app/(drive)/drive.css";
 import { DrivePageTitle } from "@/components/drive/DrivePageTitle";
 import FileCard from "@/components/drive/FileCard";
+import { Card, CardFooter, CardTitle, CardContent } from "@/components/ui/card";
+import Draggable from "@/components/ui/draggable";
+import DraggableDroppable from "@/components/ui/draggableDroppable";
 import useBedrockFileUploadDropzone from "@/hooks/useBedrockFileUploadDropzone";
 import { useAccountStore } from "@/stores/account";
 import { DriveFile, DriveFolder, useDriveStore } from "@/stores/drive";
@@ -27,6 +36,172 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 	const { getRootProps, getInputProps } = useBedrockFileUploadDropzone({});
 
 	let clickTimeout: NodeJS.Timeout | null = null;
+
+
+
+	const handleDragEnd = (event: DragEndEvent) => {
+		const { active, over } = event;
+
+		if (over && active.id !== over.id) {
+			console.log("active", active);
+			const draggedId = active.id as string;
+			const targetFolderPath = over.id === ".."
+				? (() => {
+					const parentPath = userPath.split("/").slice(0, -1).join("/") + "/";
+					return parentPath || "/";
+				})()
+				: `${userPath}/${over.id}/`;
+
+			const draggedFolder = folders.find((folder) => folder.name === draggedId);
+			const draggedFile = files.find((file) => file.id === draggedId);
+
+			if (draggedFolder) {
+				const folderPath = draggedFolder.path;
+				const itemsToMove = files.filter((file) => file.path.startsWith(folderPath));
+				const foldersToMove = folders.filter((folder) => folder.path.startsWith(folderPath));
+
+				itemsToMove.forEach((file) => {
+					const newFilePath = file.path.replace(folderPath, targetFolderPath);
+					handleMoveFile(file.id, newFilePath).then();
+				});
+
+				foldersToMove.forEach((folder) => {
+					const newFolderPath = folder.path.replace(folderPath, targetFolderPath);
+					setFolders((prevFolders) =>
+						prevFolders.map((f) => (f.path === folder.path ? { ...f, path: newFolderPath } : f))
+					);
+				});
+			} else if (draggedFile) {
+				handleMoveFile(draggedFile.id, targetFolderPath).then();
+			}
+		}
+	};
+
+
+	const fetchFiles = async () => {
+		if (!bedrockService) {
+			return;
+		}
+
+		try {
+			const fileEntries = await bedrockService.fetchFileEntries();
+			const formattedFiles = fileEntries.map((entry) => ({
+				name: entry.path.split("/").pop() || "Unnamed file",
+				size: 0,
+				id: entry.post_hash,
+				createdAt: new Date().toISOString().split("T")[0],
+				permission: "viewer" as Permission,
+				path: entry.path,
+				deleted_at: entry.deleted_at,
+			}));
+
+			setFiles(formattedFiles);
+
+			const generatedFolders = generateFoldersFromFiles(formattedFiles);
+			setFolders(generatedFolders);
+		} catch (error) {
+			console.error("Erreur lors de la récupération des fichiers :", error);
+		}
+	};
+
+
+	const generateFoldersFromFiles = (fileEntries: FileEntry[]): FolderEntry[] => {
+		const folderPaths = new Set<string>();
+
+		fileEntries.forEach((file) => {
+			const pathParts = file.path.split("/").filter(Boolean);
+			if (pathParts.length > 1) {
+				pathParts.pop();
+				let currentPath = "";
+				pathParts.forEach((part) => {
+					currentPath += `/${part}`;
+					folderPaths.add(currentPath);
+				});
+			}
+		});
+
+		return Array.from(folderPaths)
+			.filter((path) => path !== "/")
+			.map((path) => ({
+				name: path.split("/").pop() || "",
+				path,
+			}));
+	};
+
+	const handleDelete = () => {
+		alert("Delete");
+	}
+
+	const filterFilesByPageType = () => {
+		if (pageType === "Trash") {
+			return files.filter((file) => file.deleted_at);
+		} else if (pageType === "My files") {
+			return files.filter((file) => !file.deleted_at);
+		}
+		return files;
+	};
+
+	useEffect(() => {
+		fetchFiles();
+	}, [files]);
+
+
+	const handleDownloadFile = async (fileId: string, fileName: string) => {
+		if (!bedrockService) return;
+
+		try {
+			const fileBuffer = await bedrockService.alephService.downloadFile(fileId);
+			const blob = new Blob([fileBuffer], { type: "application/octet-stream" });
+			const url = URL.createObjectURL(blob);
+
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = fileName;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+
+			toast.success("Téléchargement réussi !");
+		} catch (error) {
+			console.error("Erreur lors du téléchargement :", error);
+			toast.error("Échec du téléchargement.");
+		}
+	};
+
+
+	const filterFilesAndFolders = () => {
+		const filteredByPageType = filterFilesByPageType();
+
+		const finalFilteredFiles = filteredByPageType.filter(
+			(file) =>
+				file.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+				(userPath === "/" ? file.path.split("/").length === 2 : file.path.startsWith(userPath) &&
+					file.path.split("/").length === userPath.split("/").length + 1)
+		);
+
+		const finalFilteredFolders = folders.filter(
+			(folder) =>
+				folder.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+				(userPath === "/" ? folder.path.split("/").length === 2 : folder.path.startsWith(userPath) &&
+					folder.path.split("/").length === userPath.split("/").length + 1)
+		);
+
+		if (userPath && userPath !== "/") {
+			finalFilteredFolders.unshift({
+				name: "..",
+				path: userPath.split("/").slice(0, -1).join("/") || "/",
+			});
+		}
+
+		setFilteredFiles(finalFilteredFiles);
+		setFilteredFolders(finalFilteredFolders);
+	};
+
+
+	useEffect(() => {
+		filterFilesAndFolders();
+	}, [searchQuery, files, folders, userPath]);
+
 
 	const handleSort = (column: SortColumn) => {
 		if (sortColumn === column) {
