@@ -18,13 +18,15 @@ import { DriveFile, DriveFolder, useDriveStore } from "@/stores/drive";
 
 type SortColumn = "path" | "size" | "created_at";
 type SortOrder = "asc" | "desc";
+type PageType = "My files" | "Trash | Shared";
 
 export type FileListProps = {
 	files: DriveFile[];
 	folders: DriveFolder[];
 };
 
-const FileList: React.FC<FileListProps> = ({ files, folders }) => {
+const FileList: React.FC<FileListProps> = () => {
+	const [searchQuery, setSearchQuery] = useState<string>("");
 	const [sortColumn, setSortColumn] = useState<SortColumn>("path");
 	const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 	const [countItem, setCountItem] = useState<number>(0);
@@ -38,7 +40,6 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 	let clickTimeout: NodeJS.Timeout | null = null;
 
 
-
 	const handleDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event;
 
@@ -47,10 +48,10 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 			const draggedId = active.id as string;
 			const targetFolderPath = over.id === ".."
 				? (() => {
-					const parentPath = userPath.split("/").slice(0, -1).join("/") + "/";
+					const parentPath = currentWorkingDirectory.split("/").slice(0, -1).join("/") + "/";
 					return parentPath || "/";
 				})()
-				: `${userPath}/${over.id}/`;
+				: `${currentWorkingDirectory}/${over.id}/`;
 
 			const draggedFolder = folders.find((folder) => folder.name === draggedId);
 			const draggedFile = files.find((file) => file.id === draggedId);
@@ -62,7 +63,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 
 				itemsToMove.forEach((file) => {
 					const newFilePath = file.path.replace(folderPath, targetFolderPath);
-					handleMoveFile(file.id, newFilePath).then();
+					handleMove(file.id, newFilePath).then();
 				});
 
 				foldersToMove.forEach((folder) => {
@@ -72,7 +73,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 					);
 				});
 			} else if (draggedFile) {
-				handleMoveFile(draggedFile.id, targetFolderPath).then();
+				handleMove(draggedFile.id, targetFolderPath).then();
 			}
 		}
 	};
@@ -128,9 +129,6 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 			}));
 	};
 
-	const handleDelete = () => {
-		alert("Delete");
-	}
 
 	const filterFilesByPageType = () => {
 		if (pageType === "Trash") {
@@ -175,21 +173,21 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 		const finalFilteredFiles = filteredByPageType.filter(
 			(file) =>
 				file.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-				(userPath === "/" ? file.path.split("/").length === 2 : file.path.startsWith(userPath) &&
-					file.path.split("/").length === userPath.split("/").length + 1)
+				(currentWorkingDirectory === "/" ? file.path.split("/").length === 2 : file.path.startsWith(currentWorkingDirectory) &&
+					file.path.split("/").length === currentWorkingDirectory.split("/").length + 1)
 		);
 
 		const finalFilteredFolders = folders.filter(
 			(folder) =>
 				folder.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-				(userPath === "/" ? folder.path.split("/").length === 2 : folder.path.startsWith(userPath) &&
-					folder.path.split("/").length === userPath.split("/").length + 1)
+				(currentWorkingDirectory === "/" ? folder.path.split("/").length === 2 : folder.path.startsWith(currentWorkingDirectory) &&
+					folder.path.split("/").length === currentWorkingDirectory.split("/").length + 1)
 		);
 
-		if (userPath && userPath !== "/") {
+		if (currentWorkingDirectory && currentWorkingDirectory !== "/") {
 			finalFilteredFolders.unshift({
 				name: "..",
-				path: userPath.split("/").slice(0, -1).join("/") || "/",
+				path: currentWorkingDirectory.split("/").slice(0, -1).join("/") || "/",
 			});
 		}
 
@@ -200,7 +198,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders }) => {
 
 	useEffect(() => {
 		filterFilesAndFolders();
-	}, [searchQuery, files, folders, userPath]);
+	}, [searchQuery, files, folders, currentWorkingDirectory]);
 
 
 	const handleSort = (column: SortColumn) => {
