@@ -1,18 +1,15 @@
 "use client";
 
-import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { useQueryState } from 'nuqs'
 import React, { useEffect, useState } from "react";
 
 import { DrivePageTitle } from "@/components/drive/DrivePageTitle";
 import FileCard from "@/components/drive/FileCard";
-import Draggable from "@/components/ui/draggable";
-import DraggableDroppable from "@/components/ui/draggableDroppable";
+
 import useBedrockFileUploadDropzone from "@/hooks/useBedrockFileUploadDropzone";
 import { useAccountStore } from "@/stores/account";
 import { useDriveStore } from "@/stores/drive";
 
-import Droppable from "../ui/droppable";
 import UploadButton from "./UploadButton";
 
 type SortColumn = "path" | "size" | "created_at";
@@ -88,25 +85,6 @@ const FileList: React.FC<FileListProps> = () => {
 			}
 		})();
 	}, [bedrockService, setFolders, setFiles]);
-
-	const handleDragEnd = (event: DragEndEvent) => {
-		const { active, over } = event;
-		if (over && active.id !== over.id) {
-			const draggedPath = active.id as string;
-			const targetPath = over.id === ".."
-				? currentWorkingDirectory.split("/").slice(0, -1).join("/") || "/"
-				: `${currentWorkingDirectory}/${over.id}`;
-
-			const draggedFolder = folders.find((folder) => folder.path === draggedPath);
-			const draggedFile = files.find((file) => file.path === draggedPath);
-
-			if (draggedFolder) {
-				moveFolder(draggedFolder.path, targetPath);
-			} else if (draggedFile) {
-				moveFile(draggedFile.path, targetPath);
-			}
-		}
-	};
 
 
 	/*const handleDownloadFile = async (fileId: string, fileName: string) => {
@@ -251,55 +229,53 @@ const FileList: React.FC<FileListProps> = () => {
 	});
 
 	return (
-		<DndContext onDragEnd={handleDragEnd}>
-			{bedrockService? (
-			<div className={"flex flex-col h-screen bg-gray-200"}>
-				<div className=" ml-8 mt-2 mb-4 mr-5">
-					<input
-						type="text"
-						placeholder="Search files and folders..."
-						value={searchQuery}
-						onChange={(e) => setSearchQuery(e.target.value || null)}
-						className="p-2 border border-gray-300 rounded-lg w-full"
-					/>
-				</div>
-				<div className={"flex-1 p-4 w-full"}>
-					<div className="flex justify-between items-center px-8">
-						<UploadButton
-							onCreateFolder={() => handleCreateFolder()}
-							getInputProps={getInputProps}
+		<div className="flex flex-col h-screen bg-gray-200">
+			{bedrockService ? (
+				<>
+					<div className="ml-8 mt-2 mb-4 mr-5">
+						<input
+							type="text"
+							placeholder="Search files and folders..."
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value || null)}
+							className="p-2 border border-gray-300 rounded-lg w-full"
 						/>
-						<input type="file" id="fileInput" className="hidden"
-									 onChange={() => {}} />
 					</div>
 
-					<DrivePageTitle selectedItemsCount={countItem} onDelete={() => {}} />
-
-					<div className="flex flex-col flex-1 w-full overflow-hidden">
-						<div className="grid grid-cols-4 gap-4 mb-4 font-semibold text-gray-600">
-							<div onClick={() => handleSort("path")} className="cursor-pointer">
-								Name {sortColumn === "path" && (sortOrder === "asc" ? "↑" : "↓")}
-							</div>
-							<div onClick={() => handleSort("size")} className="cursor-pointer">
-								Size {sortColumn === "size" && (sortOrder === "asc" ? "↑" : "↓")}
-							</div>
-							<div onClick={() => handleSort("created_at")} className="cursor-pointer">
-								Created At {sortColumn === "created_at" && (sortOrder === "asc" ? "↑" : "↓")}
-							</div>
+					<div className="flex-1 p-4 w-full">
+						<div className="flex justify-between items-center px-8">
+							<UploadButton
+								onCreateFolder={handleCreateFolder}
+								getInputProps={getInputProps}
+							/>
+							<input type="file" id="fileInput" className="hidden" onChange={() => {}} />
 						</div>
 
-						<div className="overflow-y-auto">
-							{currentWorkingDirectory !== "/" && (
-								<Droppable id="..">
+						<DrivePageTitle selectedItemsCount={countItem} onDelete={() => {}} />
+
+						<div className="flex flex-col flex-1 w-full overflow-hidden">
+							<div className="grid grid-cols-4 gap-4 mb-4 font-semibold text-gray-600">
+								<div onClick={() => handleSort("path")} className="cursor-pointer">
+									Name {sortColumn === "path" && (sortOrder === "asc" ? "↑" : "↓")}
+								</div>
+								<div onClick={() => handleSort("size")} className="cursor-pointer">
+									Size {sortColumn === "size" && (sortOrder === "asc" ? "↑" : "↓")}
+								</div>
+								<div onClick={() => handleSort("created_at")} className="cursor-pointer">
+									Created At {sortColumn === "created_at" && (sortOrder === "asc" ? "↑" : "↓")}
+								</div>
+							</div>
+
+							<div className="overflow-y-auto">
+								{currentWorkingDirectory !== "/" && (
 									<FileCard
 										folder
 										metadata={{ path: "..", created_at: new Date().toISOString(), deleted_at: null }}
-										onLeftClick={handleGoBackOneDirectory}
+										onLeftClick={() => changeCurrentWorkingDirectory(currentWorkingDirectory.split("/").slice(0, -1).join("/") || "/")}
 									/>
-								</Droppable>
-							)}
-							{sortedFolders.map((folder, index) => (
-								<DraggableDroppable id={folder.path} key={index} onDrop={handleDragEnd}>
+								)}
+
+								{filteredFolders.map((folder) => (
 									<FileCard
 										metadata={folder}
 										folder
@@ -310,11 +286,9 @@ const FileList: React.FC<FileListProps> = () => {
 										onDelete={() => handleDelete(folder.path, true)}
 										onMove={() => handleMove(folder.path, true)}
 									/>
-								</DraggableDroppable>
-							))}
+								))}
 
-							{sortedFiles.map((file, index) => (
-								<Draggable id={file.path} key={index}>
+								{filteredFiles.map((file) => (
 									<FileCard
 										metadata={file}
 										key={file.path}
@@ -324,18 +298,17 @@ const FileList: React.FC<FileListProps> = () => {
 										onDelete={() => handleDelete(file.path, false)}
 										onMove={() => handleMove(file.path, false)}
 									/>
-								</Draggable>
-							))}
+								))}
+							</div>
 						</div>
 					</div>
-				</div>
-			</div>
+				</>
 			) : (
 				<div className="flex items-center justify-center h-screen">
 					<div className="text-2xl font-semibold">Loading...</div>
 				</div>
 			)}
-		</DndContext>
+		</div>
 	);
 };
 
