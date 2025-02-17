@@ -1,5 +1,3 @@
-"use client";
-
 import { Trash } from "lucide-react";
 import React from "react";
 
@@ -18,7 +16,7 @@ export const DrivePageTitle: React.FC<DrivePageTitleProps> = ({ selectedItemsCou
 				<h1 className="text-2xl font-semibold">
 					{selectedItemsCount > 0
 						? `${selectedItemsCount} item${selectedItemsCount > 1 ? "s" : ""} selected`
-						: "My Drive"}
+						: currentWorkingDirectory}
 				</h1>
 				{selectedItemsCount > 0 && (
 					<button

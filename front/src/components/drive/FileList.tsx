@@ -13,6 +13,7 @@ import { useAccountStore } from "@/stores/account";
 import { useDriveStore } from "@/stores/drive";
 
 import Droppable from "../ui/droppable";
+import UploadButton from "./UploadButton";
 
 type SortColumn = "path" | "size" | "created_at";
 type SortOrder = "asc" | "desc";
@@ -29,11 +30,12 @@ const FileList: React.FC<FileListProps> = () => {
 	const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 	const [countItem, setCountItem] = useState<number>(0);
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-	const { files, folders, setFiles, setFolders, deleteFile, deleteFolder, moveFile, moveFolder, currentWorkingDirectory, changeCurrentWorkingDirectory } =
+	const { files, folders, setFiles, setFolders, deleteFile, addFolder, deleteFolder, moveFile, moveFolder, currentWorkingDirectory, changeCurrentWorkingDirectory } =
 		useDriveStore();
 	const { bedrockService } = useAccountStore();
+	const {  getInputProps } = useBedrockFileUploadDropzone({});
 
-	const { getRootProps, getInputProps } = useBedrockFileUploadDropzone({});
+
 
 	let clickTimeout: NodeJS.Timeout | null = null;
 	const cwdRegex = `^${currentWorkingDirectory.replace("/", "\\/")}[^ \\/]+$`;
@@ -139,6 +141,28 @@ const FileList: React.FC<FileListProps> = () => {
 		}
 	};
 
+	const handleCreateFolder = () => {
+		const folderName = prompt("Enter folder name");
+		if (!folderName) return;
+
+		const newFolderPath = `${currentWorkingDirectory}/${folderName}`;
+
+		if (folders.some((folder) => folder.path === newFolderPath)) {
+			alert("This folder already exists!");
+			return;
+		}
+
+		const newFolder = {
+			path: newFolderPath,
+			created_at: new Date().toISOString(),
+			deleted_at: null,
+		};
+
+		addFolder(newFolder);
+
+		alert(`The folder "${folderName}" has been created locally. It will only be saved if a file is moved inside.`);
+	};
+
 	const handleLeftClick = (path: string) => {
 		if (clickTimeout) clearTimeout(clickTimeout);
 
@@ -228,8 +252,9 @@ const FileList: React.FC<FileListProps> = () => {
 
 	return (
 		<DndContext onDragEnd={handleDragEnd}>
+			{bedrockService? (
 			<div className={"flex flex-col h-screen bg-gray-200"}>
-				<div className="w-full ml-8 mt-2 mb-4">
+				<div className=" ml-8 mt-2 mb-4 mr-5">
 					<input
 						type="text"
 						placeholder="Search files and folders..."
@@ -239,12 +264,18 @@ const FileList: React.FC<FileListProps> = () => {
 					/>
 				</div>
 				<div className={"flex-1 p-4 w-full"}>
-				<DrivePageTitle selectedItemsCount={countItem} onDelete={() => console.log("delete")} />
+					<div className="flex justify-between items-center px-8">
+						<UploadButton
+							onCreateFolder={() => handleCreateFolder()}
+							getInputProps={getInputProps}
+						/>
+						<input type="file" id="fileInput" className="hidden"
+									 onChange={() => {}} />
+					</div>
+
+					<DrivePageTitle selectedItemsCount={countItem} onDelete={() => {}} />
+
 					<div className="flex flex-col flex-1 w-full overflow-hidden">
-						<div {...getRootProps()} className="p-4 border-2 border-dashed border-blue-500 rounded-lg text-center mb-4 cursor-pointer hover:bg-gray-100">
-							<input {...getInputProps()} />
-							<p>Drag & drop some files here, or click to select files</p>
-						</div>
 						<div className="grid grid-cols-4 gap-4 mb-4 font-semibold text-gray-600">
 							<div onClick={() => handleSort("path")} className="cursor-pointer">
 								Name {sortColumn === "path" && (sortOrder === "asc" ? "↑" : "↓")}
@@ -299,6 +330,11 @@ const FileList: React.FC<FileListProps> = () => {
 					</div>
 				</div>
 			</div>
+			) : (
+				<div className="flex items-center justify-center h-screen">
+					<div className="text-2xl font-semibold">Loading...</div>
+				</div>
+			)}
 		</DndContext>
 	);
 };
