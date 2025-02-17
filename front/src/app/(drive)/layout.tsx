@@ -11,7 +11,7 @@ export default function DriveLayout({ children }: Readonly<{ children: ReactNode
 			<BedrockSidebar>
 				{children}
 				<NuqsAdapter>
-					<FileList />
+					<FileList pageType={"My files"}/>
 				</NuqsAdapter>
 			</BedrockSidebar>
 		</AuthWrapper>

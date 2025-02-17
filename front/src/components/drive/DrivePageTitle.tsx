@@ -3,7 +3,6 @@
 import { Trash } from "lucide-react";
 import React from "react";
 
-import "@/app/(drive)/drive.css";
 import { useDriveStore } from "@/stores/drive";
 
 export type DrivePageTitleProps = {

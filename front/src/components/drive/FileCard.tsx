@@ -1,7 +1,6 @@
 import { Edit, FileText, FolderIcon, Move, Trash } from "lucide-react";
 import React from "react";
 
-import "@/app/(drive)/drive.css";
 import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import {
 	ContextMenu,
@@ -46,7 +45,7 @@ const FileCard = ({
 		<ContextMenu>
 			<ContextMenuTrigger>
 				<Card
-					className={`file-list-item ${selected ? "selected" : ""}`}
+					className={`grid grid-cols-4 gap-3 p-2.5 mb-1.5 hover:bg-gray-100 hover:shadow-lg transition ${selected ? "selected" : ""}`}
 					onClick={() => onLeftClick?.()}
 					onDoubleClick={() => onDoubleClick?.()}
 				>

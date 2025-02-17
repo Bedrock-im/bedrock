@@ -1,150 +1,113 @@
 "use client";
 
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
-import { FolderIcon, FileText } from "lucide-react";
 import { useQueryState } from 'nuqs'
 import React, { useEffect, useState } from "react";
-import { toast } from "sonner";
 
-import "@/app/(drive)/drive.css";
 import { DrivePageTitle } from "@/components/drive/DrivePageTitle";
 import FileCard from "@/components/drive/FileCard";
-import { Card, CardFooter, CardTitle, CardContent } from "@/components/ui/card";
 import Draggable from "@/components/ui/draggable";
 import DraggableDroppable from "@/components/ui/draggableDroppable";
 import useBedrockFileUploadDropzone from "@/hooks/useBedrockFileUploadDropzone";
 import { useAccountStore } from "@/stores/account";
-import { DriveFile, DriveFolder, useDriveStore } from "@/stores/drive";
+import { useDriveStore } from "@/stores/drive";
+
+import Droppable from "../ui/droppable";
 
 type SortColumn = "path" | "size" | "created_at";
 type SortOrder = "asc" | "desc";
 type PageType = "My files" | "Trash | Shared";
 
 export type FileListProps = {
-	files: DriveFile[];
-	folders: DriveFolder[];
+	pageType: PageType;
 };
 
 const FileList: React.FC<FileListProps> = () => {
-	const [searchQuery, setSearchQuery] = useState<string>("");
+	const [searchQuery, setSearchQuery] = useQueryState("name", {defaultValue: ""});
+	const [, setCurrentWorkingDirectoryUrl] = useQueryState("cwd", { defaultValue: "/" });
 	const [sortColumn, setSortColumn] = useState<SortColumn>("path");
 	const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 	const [countItem, setCountItem] = useState<number>(0);
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-	const { deleteFile, deleteFolder, moveFile, moveFolder, currentWorkingDirectory, changeCurrentWorkingDirectory } =
+	const { files, folders, setFiles, setFolders, deleteFile, deleteFolder, moveFile, moveFolder, currentWorkingDirectory, changeCurrentWorkingDirectory } =
 		useDriveStore();
 	const { bedrockService } = useAccountStore();
 
 	const { getRootProps, getInputProps } = useBedrockFileUploadDropzone({});
 
 	let clickTimeout: NodeJS.Timeout | null = null;
+	const cwdRegex = `^${currentWorkingDirectory.replace("/", "\\/")}[^ \\/]+$`;
+	const filteredFiles = files.filter(
+		(file) => file.path.match(cwdRegex) && file.path.toLowerCase().includes(searchQuery.toLowerCase()),
+	);
+	const filteredFolders = folders.filter(
+		(folder) =>
+			folder.path.match(cwdRegex) &&
+			folder.path !== currentWorkingDirectory && // Don't show the current directory
+			folder.path.toLowerCase().includes(searchQuery.toLowerCase()),
+	);
 
-
-	const handleDragEnd = (event: DragEndEvent) => {
-		const { active, over } = event;
-
-		if (over && active.id !== over.id) {
-			console.log("active", active);
-			const draggedId = active.id as string;
-			const targetFolderPath = over.id === ".."
-				? (() => {
-					const parentPath = currentWorkingDirectory.split("/").slice(0, -1).join("/") + "/";
-					return parentPath || "/";
-				})()
-				: `${currentWorkingDirectory}/${over.id}/`;
-
-			const draggedFolder = folders.find((folder) => folder.name === draggedId);
-			const draggedFile = files.find((file) => file.id === draggedId);
-
-			if (draggedFolder) {
-				const folderPath = draggedFolder.path;
-				const itemsToMove = files.filter((file) => file.path.startsWith(folderPath));
-				const foldersToMove = folders.filter((folder) => folder.path.startsWith(folderPath));
-
-				itemsToMove.forEach((file) => {
-					const newFilePath = file.path.replace(folderPath, targetFolderPath);
-					handleMove(file.id, newFilePath).then();
-				});
-
-				foldersToMove.forEach((folder) => {
-					const newFolderPath = folder.path.replace(folderPath, targetFolderPath);
-					setFolders((prevFolders) =>
-						prevFolders.map((f) => (f.path === folder.path ? { ...f, path: newFolderPath } : f))
-					);
-				});
-			} else if (draggedFile) {
-				handleMove(draggedFile.id, targetFolderPath).then();
-			}
-		}
-	};
-
-
-	const fetchFiles = async () => {
+	useEffect(() => {
 		if (!bedrockService) {
 			return;
 		}
 
-		try {
-			const fileEntries = await bedrockService.fetchFileEntries();
-			const formattedFiles = fileEntries.map((entry) => ({
-				name: entry.path.split("/").pop() || "Unnamed file",
-				size: 0,
-				id: entry.post_hash,
-				createdAt: new Date().toISOString().split("T")[0],
-				permission: "viewer" as Permission,
-				path: entry.path,
-				deleted_at: entry.deleted_at,
-			}));
+		(async () => {
+			try {
+				const fileEntries = await bedrockService.fetchFileEntries();
+				const fullFiles = await bedrockService.fetchFilesMetaFromEntries(...fileEntries);
 
-			setFiles(formattedFiles);
+				const folderPaths = new Set<string>();
 
-			const generatedFolders = generateFoldersFromFiles(formattedFiles);
-			setFolders(generatedFolders);
-		} catch (error) {
-			console.error("Erreur lors de la récupération des fichiers :", error);
-		}
-	};
-
-
-	const generateFoldersFromFiles = (fileEntries: FileEntry[]): FolderEntry[] => {
-		const folderPaths = new Set<string>();
-
-		fileEntries.forEach((file) => {
-			const pathParts = file.path.split("/").filter(Boolean);
-			if (pathParts.length > 1) {
-				pathParts.pop();
-				let currentPath = "";
-				pathParts.forEach((part) => {
-					currentPath += `/${part}`;
-					folderPaths.add(currentPath);
+				fileEntries.forEach((file) => {
+					const pathParts = file.path.split("/").filter(Boolean);
+					if (pathParts.length > 1) {
+						pathParts.pop();
+						let currentPath = "";
+						pathParts.forEach((part) => {
+							currentPath += `/${part}`;
+							folderPaths.add(currentPath);
+						});
+					}
 				});
+
+				setFiles(fullFiles);
+				setFolders([
+					...Array.from(folderPaths)
+						.filter((path) => path !== "/")
+						.map((path) => ({
+							path,
+							created_at: new Date().toISOString(),
+							deleted_at: null,
+						})),
+				]);
+			} catch (error) {
+				console.error("Failed to fetch files:", error);
 			}
-		});
+		})();
+	}, [bedrockService, setFolders, setFiles]);
 
-		return Array.from(folderPaths)
-			.filter((path) => path !== "/")
-			.map((path) => ({
-				name: path.split("/").pop() || "",
-				path,
-			}));
-	};
+	const handleDragEnd = (event: DragEndEvent) => {
+		const { active, over } = event;
+		if (over && active.id !== over.id) {
+			const draggedPath = active.id as string;
+			const targetPath = over.id === ".."
+				? currentWorkingDirectory.split("/").slice(0, -1).join("/") || "/"
+				: `${currentWorkingDirectory}/${over.id}`;
 
+			const draggedFolder = folders.find((folder) => folder.path === draggedPath);
+			const draggedFile = files.find((file) => file.path === draggedPath);
 
-	const filterFilesByPageType = () => {
-		if (pageType === "Trash") {
-			return files.filter((file) => file.deleted_at);
-		} else if (pageType === "My files") {
-			return files.filter((file) => !file.deleted_at);
+			if (draggedFolder) {
+				moveFolder(draggedFolder.path, targetPath);
+			} else if (draggedFile) {
+				moveFile(draggedFile.path, targetPath);
+			}
 		}
-		return files;
 	};
 
-	useEffect(() => {
-		fetchFiles();
-	}, [files]);
 
-
-	const handleDownloadFile = async (fileId: string, fileName: string) => {
+	/*const handleDownloadFile = async (fileId: string, fileName: string) => {
 		if (!bedrockService) return;
 
 		try {
@@ -164,41 +127,7 @@ const FileList: React.FC<FileListProps> = () => {
 			console.error("Erreur lors du téléchargement :", error);
 			toast.error("Échec du téléchargement.");
 		}
-	};
-
-
-	const filterFilesAndFolders = () => {
-		const filteredByPageType = filterFilesByPageType();
-
-		const finalFilteredFiles = filteredByPageType.filter(
-			(file) =>
-				file.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-				(currentWorkingDirectory === "/" ? file.path.split("/").length === 2 : file.path.startsWith(currentWorkingDirectory) &&
-					file.path.split("/").length === currentWorkingDirectory.split("/").length + 1)
-		);
-
-		const finalFilteredFolders = folders.filter(
-			(folder) =>
-				folder.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-				(currentWorkingDirectory === "/" ? folder.path.split("/").length === 2 : folder.path.startsWith(currentWorkingDirectory) &&
-					folder.path.split("/").length === currentWorkingDirectory.split("/").length + 1)
-		);
-
-		if (currentWorkingDirectory && currentWorkingDirectory !== "/") {
-			finalFilteredFolders.unshift({
-				name: "..",
-				path: currentWorkingDirectory.split("/").slice(0, -1).join("/") || "/",
-			});
-		}
-
-		setFilteredFiles(finalFilteredFiles);
-		setFilteredFolders(finalFilteredFolders);
-	};
-
-
-	useEffect(() => {
-		filterFilesAndFolders();
-	}, [searchQuery, files, folders, currentWorkingDirectory]);
+	};*/
 
 
 	const handleSort = (column: SortColumn) => {
@@ -278,78 +207,99 @@ const FileList: React.FC<FileListProps> = () => {
 	const handleGoBackOneDirectory = () => {
 		const newPath = currentWorkingDirectory.slice(0, -1).split("/").slice(0, -1).join("/") || "/";
 		changeCurrentWorkingDirectory(newPath);
+		setCurrentWorkingDirectoryUrl(newPath);
 	};
 
 	const handleGoToDirectory = (path: string) => {
 		changeCurrentWorkingDirectory(path);
+		setCurrentWorkingDirectoryUrl(path);
 	};
 
-	const sortedFiles = [...files].sort((a, b) => {
+	const sortedFiles = [...filteredFiles].sort((a, b) => {
 		const isAscending = sortOrder === "asc" ? 1 : -1;
 		if (a[sortColumn] < b[sortColumn]) return -1 * isAscending;
 		if (a[sortColumn] > b[sortColumn]) return 1 * isAscending;
 		return 0;
 	});
 
-	const sortedFolders = [...folders].sort(() => {
+	const sortedFolders = [...filteredFolders].sort(() => {
 		return 0;
 	});
 
 	return (
-		<div>
-			<DrivePageTitle selectedItemsCount={countItem} />
-			<div className="file-list-container">
-				<div {...getRootProps()} className="file-upload-dropzone">
-					<input {...getInputProps()} />
-					<p>Drag & drop some files here, or click to select files</p>
+		<DndContext onDragEnd={handleDragEnd}>
+			<div className={"flex flex-col h-screen bg-gray-200"}>
+				<div className="w-full ml-8 mt-2 mb-4">
+					<input
+						type="text"
+						placeholder="Search files and folders..."
+						value={searchQuery}
+						onChange={(e) => setSearchQuery(e.target.value || null)}
+						className="p-2 border border-gray-300 rounded-lg w-full"
+					/>
 				</div>
-				<div className="file-list-header">
-					<div onClick={() => handleSort("path")} className="cursor-pointer">
-						Name {sortColumn === "path" && (sortOrder === "asc" ? "↑" : "↓")}
-					</div>
-					<div onClick={() => handleSort("size")} className="cursor-pointer">
-						Size {sortColumn === "size" && (sortOrder === "asc" ? "↑" : "↓")}
-					</div>
-					<div onClick={() => handleSort("created_at")} className="cursor-pointer">
-						Created At {sortColumn === "created_at" && (sortOrder === "asc" ? "↑" : "↓")}
-					</div>
-				</div>
+				<div className={"flex-1 p-4 w-full"}>
+				<DrivePageTitle selectedItemsCount={countItem} onDelete={() => console.log("delete")} />
+					<div className="flex flex-col flex-1 w-full overflow-hidden">
+						<div {...getRootProps()} className="p-4 border-2 border-dashed border-blue-500 rounded-lg text-center mb-4 cursor-pointer hover:bg-gray-100">
+							<input {...getInputProps()} />
+							<p>Drag & drop some files here, or click to select files</p>
+						</div>
+						<div className="grid grid-cols-4 gap-4 mb-4 font-semibold text-gray-600">
+							<div onClick={() => handleSort("path")} className="cursor-pointer">
+								Name {sortColumn === "path" && (sortOrder === "asc" ? "↑" : "↓")}
+							</div>
+							<div onClick={() => handleSort("size")} className="cursor-pointer">
+								Size {sortColumn === "size" && (sortOrder === "asc" ? "↑" : "↓")}
+							</div>
+							<div onClick={() => handleSort("created_at")} className="cursor-pointer">
+								Created At {sortColumn === "created_at" && (sortOrder === "asc" ? "↑" : "↓")}
+							</div>
+						</div>
 
-				<div className="file-list-content">
-					{currentWorkingDirectory !== "/" && (
-						<FileCard
-							folder
-							metadata={{ path: "..", created_at: new Date().toISOString(), deleted_at: null }}
-							onLeftClick={handleGoBackOneDirectory}
-						/>
-					)}
-					{sortedFolders.map((folder) => (
-						<FileCard
-							metadata={folder}
-							folder
-							key={folder.path}
-							selected={selectedItems.has(folder.path)}
-							onLeftClick={() => handleGoToDirectory(folder.path)}
-							onRename={() => handleRename(folder.path, true)}
-							onDelete={() => handleDelete(folder.path, true)}
-							onMove={() => handleMove(folder.path, true)}
-						/>
-					))}
+						<div className="overflow-y-auto">
+							{currentWorkingDirectory !== "/" && (
+								<Droppable id="..">
+									<FileCard
+										folder
+										metadata={{ path: "..", created_at: new Date().toISOString(), deleted_at: null }}
+										onLeftClick={handleGoBackOneDirectory}
+									/>
+								</Droppable>
+							)}
+							{sortedFolders.map((folder, index) => (
+								<DraggableDroppable id={folder.path} key={index} onDrop={handleDragEnd}>
+									<FileCard
+										metadata={folder}
+										folder
+										key={folder.path}
+										selected={selectedItems.has(folder.path)}
+										onLeftClick={() => handleGoToDirectory(folder.path)}
+										onRename={() => handleRename(folder.path, true)}
+										onDelete={() => handleDelete(folder.path, true)}
+										onMove={() => handleMove(folder.path, true)}
+									/>
+								</DraggableDroppable>
+							))}
 
-					{sortedFiles.map((file) => (
-						<FileCard
-							metadata={file}
-							key={file.path}
-							selected={selectedItems.has(file.path)}
-							onLeftClick={() => handleLeftClick(file.path)}
-							onRename={() => handleRename(file.path, false)}
-							onDelete={() => handleDelete(file.path, false)}
-							onMove={() => handleMove(file.path, false)}
-						/>
-					))}
+							{sortedFiles.map((file, index) => (
+								<Draggable id={file.path} key={index}>
+									<FileCard
+										metadata={file}
+										key={file.path}
+										selected={selectedItems.has(file.path)}
+										onLeftClick={() => handleLeftClick(file.path)}
+										onRename={() => handleRename(file.path, false)}
+										onDelete={() => handleDelete(file.path, false)}
+										onMove={() => handleMove(file.path, false)}
+									/>
+								</Draggable>
+							))}
+						</div>
+					</div>
 				</div>
 			</div>
-		</div>
+		</DndContext>
 	);
 };
 
