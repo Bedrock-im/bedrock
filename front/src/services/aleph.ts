@@ -109,8 +109,17 @@ export class AlephService {
 		});
 	}
 
-	async downloadFile(ipfsHash: string): Promise<ArrayBuffer> {
-		return this.subAccountClient.downloadFile(ipfsHash);
+	async downloadFile(storeHash: string): Promise<ArrayBuffer> {
+		const ipfsHash = await this.subAccountClient.getMessage(storeHash);
+		const ContentSchema = z.object({
+			address: z.string(),
+			item_type: z.string(),
+			item_hash: z.string(),
+			time: z.number(),
+		});
+		const { success, data } = ContentSchema.safeParse(ipfsHash.content);
+		if (!success) throw new Error(`Invalid data from Aleph: ${data}`);
+		return this.subAccountClient.downloadFile(data.item_hash);
 	}
 
 	async deleteFiles(itemHashes: string[]): Promise<ForgetMessage> {

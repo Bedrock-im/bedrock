@@ -1,7 +1,6 @@
-import { Edit, FileText, FolderIcon, Move, Trash } from "lucide-react";
+import { Edit, FileText, FolderIcon, Move, Trash, FileDown } from "lucide-react";
 import React from "react";
 
-import "@/app/(drive)/drive.css";
 import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import {
 	ContextMenu,
@@ -20,6 +19,7 @@ export type FileCardProps = {
 	onDelete?: () => void;
 	onRename?: () => void;
 	onMove?: () => void;
+	onDownload?: () => void;
 } & (FileCardFileProps | FileCardFolderProps);
 
 type FileCardFileProps = {
@@ -40,13 +40,14 @@ const FileCard = ({
 	onDelete,
 	onMove,
 	onRename,
+	onDownload,
 	metadata,
 }: FileCardProps) => {
 	return (
 		<ContextMenu>
 			<ContextMenuTrigger>
 				<Card
-					className={`file-list-item ${selected ? "selected" : ""}`}
+					className={`grid grid-cols-4 gap-3 p-2.5 mb-1.5 hover:bg-gray-100 hover:shadow-lg transition ${selected ? "selected" : ""}`}
 					onClick={() => onLeftClick?.()}
 					onDoubleClick={() => onDoubleClick?.()}
 				>
@@ -82,6 +83,10 @@ const FileCard = ({
 				<ContextMenuItem className="flex space-x-4" onClick={() => onMove?.()}>
 					<Move />
 					<ContextMenuLabel>Move</ContextMenuLabel>
+				</ContextMenuItem>
+				<ContextMenuItem className="flex space-x-4" onClick={() => onDownload?.()}>
+					<FileDown />
+					<ContextMenuLabel>Download</ContextMenuLabel>
 				</ContextMenuItem>
 			</ContextMenuContent>
 		</ContextMenu>

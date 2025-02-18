@@ -311,6 +311,13 @@ export default class BedrockService {
 		return item_hash;
 	}
 
+	async downloadFileFromStoreHash(storeHash: string, key: string, iv: string): Promise<Buffer> {
+		const encryptedBuffer = await this.alephService.downloadFile(storeHash);
+		const bufferKey = Buffer.from(key, "hex");
+		const bufferIv = Buffer.from(iv, "hex");
+		return EncryptionService.decryptFile(encryptedBuffer, bufferKey, bufferIv);
+	}
+
 	private decryptFilesPaths(files: EncryptedFileEntry[]): FileEntry[] {
 		return files.map(({ post_hash, path }) => ({
 			post_hash,
