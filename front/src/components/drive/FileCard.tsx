@@ -1,4 +1,4 @@
-import { Edit, FileText, FolderIcon, Move, Trash } from "lucide-react";
+import { Edit, FileText, FolderIcon, Move, Trash, FileDown } from "lucide-react";
 import React from "react";
 
 import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,7 @@ export type FileCardProps = {
 	onDelete?: () => void;
 	onRename?: () => void;
 	onMove?: () => void;
+	onDownload?: () => void;
 } & (FileCardFileProps | FileCardFolderProps);
 
 type FileCardFileProps = {
@@ -39,6 +40,7 @@ const FileCard = ({
 	onDelete,
 	onMove,
 	onRename,
+	onDownload,
 	metadata,
 }: FileCardProps) => {
 	return (
@@ -81,6 +83,10 @@ const FileCard = ({
 				<ContextMenuItem className="flex space-x-4" onClick={() => onMove?.()}>
 					<Move />
 					<ContextMenuLabel>Move</ContextMenuLabel>
+				</ContextMenuItem>
+				<ContextMenuItem className="flex space-x-4" onClick={() => onDownload?.()}>
+					<FileDown />
+					<ContextMenuLabel>Download</ContextMenuLabel>
 				</ContextMenuItem>
 			</ContextMenuContent>
 		</ContextMenu>

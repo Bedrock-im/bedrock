@@ -86,30 +86,6 @@ const FileList: React.FC<FileListProps> = () => {
 		})();
 	}, [bedrockService, setFolders, setFiles]);
 
-
-	/*const handleDownloadFile = async (fileId: string, fileName: string) => {
-		if (!bedrockService) return;
-
-		try {
-			const fileBuffer = await bedrockService.alephService.downloadFile(fileId);
-			const blob = new Blob([fileBuffer], { type: "application/octet-stream" });
-			const url = URL.createObjectURL(blob);
-
-			const link = document.createElement("a");
-			link.href = url;
-			link.download = fileName;
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
-
-			toast.success("Téléchargement réussi !");
-		} catch (error) {
-			console.error("Erreur lors du téléchargement :", error);
-			toast.error("Échec du téléchargement.");
-		}
-	};*/
-
-
 	const handleSort = (column: SortColumn) => {
 		if (sortColumn === column) {
 			setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -118,6 +94,38 @@ const FileList: React.FC<FileListProps> = () => {
 			setSortOrder("asc");
 		}
 	};
+
+	const handleDownloadFile = async (filePath: string) => {
+		if (!bedrockService) return;
+
+		try {
+			const fileEntries = await bedrockService.fetchFileEntries();
+			const file = fileEntries.find((entry) => entry.path === filePath);
+
+			if (!file) {
+				console.error("File not found:", filePath);
+				return;
+			}
+
+			const fileData = await bedrockService.fetchFilesMetaFromEntries(file);
+			const buffer = await bedrockService.downloadFileFromStoreHash(fileData[0].store_hash, fileData[0].key, fileData[0].iv);
+			const blob = new Blob([buffer], { type: "application/octet-stream" });
+			const url = URL.createObjectURL(blob);
+
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = filePath.split('/').pop() || "downloaded-file";
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+
+
+
+		} catch (error) {
+			console.error("Failed to download file:", error);
+		}
+	};
+
 
 	const handleCreateFolder = () => {
 		const folderName = prompt("Enter folder name");
@@ -213,20 +221,14 @@ const FileList: React.FC<FileListProps> = () => {
 	};
 
 	const handleGoToDirectory = (path: string) => {
+		if (path === "..") {
+			handleGoBackOneDirectory();
+			return;
+		}
 		changeCurrentWorkingDirectory(path);
 		setCurrentWorkingDirectoryUrl(path);
 	};
 
-	const sortedFiles = [...filteredFiles].sort((a, b) => {
-		const isAscending = sortOrder === "asc" ? 1 : -1;
-		if (a[sortColumn] < b[sortColumn]) return -1 * isAscending;
-		if (a[sortColumn] > b[sortColumn]) return 1 * isAscending;
-		return 0;
-	});
-
-	const sortedFolders = [...filteredFolders].sort(() => {
-		return 0;
-	});
 
 	return (
 		<div className="flex flex-col h-screen bg-gray-200">
@@ -297,6 +299,7 @@ const FileList: React.FC<FileListProps> = () => {
 										onRename={() => handleRename(file.path, false)}
 										onDelete={() => handleDelete(file.path, false)}
 										onMove={() => handleMove(file.path, false)}
+										onDownload={() => handleDownloadFile(file.path)}
 									/>
 								))}
 							</div>
