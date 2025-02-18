@@ -1,6 +1,6 @@
 "use client";
 
-import { useQueryState } from 'nuqs'
+import { useQueryState } from "nuqs";
 import React, { useEffect, useState } from "react";
 
 import { DrivePageTitle } from "@/components/drive/DrivePageTitle";
@@ -21,18 +21,27 @@ export type FileListProps = {
 };
 
 const FileList: React.FC<FileListProps> = () => {
-	const [searchQuery, setSearchQuery] = useQueryState("name", {defaultValue: ""});
+	const [searchQuery, setSearchQuery] = useQueryState("name", { defaultValue: "" });
 	const [, setCurrentWorkingDirectoryUrl] = useQueryState("cwd", { defaultValue: "/" });
 	const [sortColumn, setSortColumn] = useState<SortColumn>("path");
 	const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 	const [countItem, setCountItem] = useState<number>(0);
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-	const { files, folders, setFiles, setFolders, deleteFile, addFolder, deleteFolder, moveFile, moveFolder, currentWorkingDirectory, changeCurrentWorkingDirectory } =
-		useDriveStore();
+	const {
+		files,
+		folders,
+		setFiles,
+		setFolders,
+		deleteFile,
+		addFolder,
+		deleteFolder,
+		moveFile,
+		moveFolder,
+		currentWorkingDirectory,
+		changeCurrentWorkingDirectory,
+	} = useDriveStore();
 	const { bedrockService } = useAccountStore();
-	const {  getInputProps } = useBedrockFileUploadDropzone({});
-
-
+	const { getInputProps } = useBedrockFileUploadDropzone({});
 
 	let clickTimeout: NodeJS.Timeout | null = null;
 	const cwdRegex = `^${currentWorkingDirectory.replace("/", "\\/")}[^ \\/]+$`;
@@ -108,24 +117,24 @@ const FileList: React.FC<FileListProps> = () => {
 			}
 
 			const fileData = await bedrockService.fetchFilesMetaFromEntries(file);
-			const buffer = await bedrockService.downloadFileFromStoreHash(fileData[0].store_hash, fileData[0].key, fileData[0].iv);
+			const buffer = await bedrockService.downloadFileFromStoreHash(
+				fileData[0].store_hash,
+				fileData[0].key,
+				fileData[0].iv,
+			);
 			const blob = new Blob([buffer], { type: "application/octet-stream" });
 			const url = URL.createObjectURL(blob);
 
 			const link = document.createElement("a");
 			link.href = url;
-			link.download = filePath.split('/').pop() || "downloaded-file";
+			link.download = filePath.split("/").pop() || "downloaded-file";
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);
-
-
-
 		} catch (error) {
 			console.error("Failed to download file:", error);
 		}
 	};
-
 
 	const handleCreateFolder = () => {
 		const folderName = prompt("Enter folder name");
@@ -229,7 +238,6 @@ const FileList: React.FC<FileListProps> = () => {
 		setCurrentWorkingDirectoryUrl(path);
 	};
 
-
 	return (
 		<div className="flex flex-col h-screen bg-gray-200">
 			{bedrockService ? (
@@ -246,10 +254,7 @@ const FileList: React.FC<FileListProps> = () => {
 
 					<div className="flex-1 p-4 w-full">
 						<div className="flex justify-between items-center px-8">
-							<UploadButton
-								onCreateFolder={handleCreateFolder}
-								getInputProps={getInputProps}
-							/>
+							<UploadButton onCreateFolder={handleCreateFolder} getInputProps={getInputProps} />
 							<input type="file" id="fileInput" className="hidden" onChange={() => {}} />
 						</div>
 
@@ -273,7 +278,9 @@ const FileList: React.FC<FileListProps> = () => {
 									<FileCard
 										folder
 										metadata={{ path: "..", created_at: new Date().toISOString(), deleted_at: null }}
-										onLeftClick={() => changeCurrentWorkingDirectory(currentWorkingDirectory.split("/").slice(0, -1).join("/") || "/")}
+										onLeftClick={() =>
+											changeCurrentWorkingDirectory(currentWorkingDirectory.split("/").slice(0, -1).join("/") || "/")
+										}
 									/>
 								)}
 

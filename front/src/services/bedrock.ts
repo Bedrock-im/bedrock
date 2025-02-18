@@ -318,7 +318,6 @@ export default class BedrockService {
 		return EncryptionService.decryptFile(encryptedBuffer, bufferKey, bufferIv);
 	}
 
-
 	private decryptFilesPaths(files: EncryptedFileEntry[]): FileEntry[] {
 		return files.map(({ post_hash, path }) => ({
 			post_hash,

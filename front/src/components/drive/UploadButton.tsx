@@ -20,15 +20,10 @@ const UploadButton = ({ onCreateFolder, getInputProps }: { onCreateFolder: () =>
 					align="center"
 					sideOffset={8}
 				>
-					<button
-						onClick={onCreateFolder}
-						className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-md"
-					>
+					<button onClick={onCreateFolder} className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-md">
 						<FolderPlus size={18} className="text-blue-500" /> Create Folder
 					</button>
-					<label
-						className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-md cursor-pointer"
-					>
+					<label className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-md cursor-pointer">
 						<Upload size={18} className="text-green-500" /> Upload File
 						<input {...getInputProps()} className="hidden" />
 					</label>

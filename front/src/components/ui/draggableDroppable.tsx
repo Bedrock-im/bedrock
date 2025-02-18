@@ -3,15 +3,19 @@ import { useDraggable, useDroppable, DragEndEvent } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
 const DraggableDroppable = ({
-															id,
-															children,
-															onDrop
-														}: {
-	id: string,
-	children: React.ReactNode,
-	onDrop?: (event: DragEndEvent) => void
+	id,
+	children,
+}: {
+	id: string;
+	children: React.ReactNode;
+	onDrop?: (event: DragEndEvent) => void;
 }) => {
-	const { attributes, listeners, setNodeRef: setDraggableRef, transform } = useDraggable({
+	const {
+		attributes,
+		listeners,
+		setNodeRef: setDraggableRef,
+		transform,
+	} = useDraggable({
 		id,
 	});
 

@@ -1,4 +1,4 @@
-import { NuqsAdapter } from 'nuqs/adapters/next/app'
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { ReactNode } from "react";
 
 import { AuthWrapper } from "@/components/AuthWrapper";
@@ -11,7 +11,7 @@ export default function DriveLayout({ children }: Readonly<{ children: ReactNode
 			<BedrockSidebar>
 				{children}
 				<NuqsAdapter>
-					<FileList pageType={"My files"}/>
+					<FileList pageType={"My files"} />
 				</NuqsAdapter>
 			</BedrockSidebar>
 		</AuthWrapper>
