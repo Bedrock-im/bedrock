@@ -3,7 +3,7 @@ import { Plus, FolderPlus, Upload } from "lucide-react";
 import React from "react";
 
 // eslint-disable-next-line
-const UploadButton = ({ onCreateFolder, getInputProps }: { onCreateFolder: () => void; getInputProps: any}) => {
+const UploadButton = ({ onCreateFolder, getInputProps }: { onCreateFolder: () => void; getInputProps: any }) => {
 	return (
 		<Popover.Root>
 			<Popover.Trigger asChild>
