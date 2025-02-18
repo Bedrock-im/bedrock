@@ -1,7 +1,9 @@
 import * as Popover from "@radix-ui/react-popover";
 import { Plus, FolderPlus, Upload } from "lucide-react";
+import React from "react";
 
-const UploadButton = ({ onCreateFolder, getInputProps }: { onCreateFolder: () => void; getInputProps: any }) => {
+// eslint-disable-next-line
+const UploadButton = ({ onCreateFolder, getInputProps }: { onCreateFolder: () => void; getInputProps: any}) => {
 	return (
 		<Popover.Root>
 			<Popover.Trigger asChild>

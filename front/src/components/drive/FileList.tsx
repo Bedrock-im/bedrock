@@ -5,7 +5,6 @@ import React, { useEffect, useState } from "react";
 
 import { DrivePageTitle } from "@/components/drive/DrivePageTitle";
 import FileCard from "@/components/drive/FileCard";
-
 import useBedrockFileUploadDropzone from "@/hooks/useBedrockFileUploadDropzone";
 import { useAccountStore } from "@/stores/account";
 import { useDriveStore } from "@/stores/drive";
