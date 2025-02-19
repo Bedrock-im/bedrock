@@ -198,4 +198,25 @@ export class AlephService {
 			).content,
 		) as z.infer<T>;
 	}
+
+	async updatePost<S extends z.ZodTypeAny, T extends z.infer<S>>(
+		type: string,
+		hash: string,
+		addresses: string[] = [this.account.address],
+		schema: S,
+		update_content: (content: T) => T,
+	) {
+		const currentContent = await this.fetchPost(type, schema, addresses, hash);
+		console.log("Got current content", currentContent);
+		const content = update_content(currentContent);
+		console.log("Updated content", content);
+
+		return await this.subAccountClient.createPost({
+			ref: hash,
+			postType: "amend",
+			content,
+			channel: ALEPH_GENERAL_CHANNEL,
+			address: this.account.address,
+		});
+	}
 }

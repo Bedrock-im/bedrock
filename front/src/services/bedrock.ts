@@ -249,6 +249,56 @@ export default class BedrockService {
 		}));
 	}
 
+	async softDeleteFile(fileInfo: Pick<FileFullInfos, "post_hash">, deletionDatetime: Date): Promise<void> {
+		const { post_hash } = FileFullInfosSchema.pick({ post_hash: true }).parse(fileInfo);
+
+		await this.alephService.updatePost(
+			FILE_POST_TYPE,
+			post_hash,
+			undefined,
+			EncryptedFileMetaSchema,
+			({ deleted_at: _, ...rest }) => {
+				const key = Buffer.from(
+					EncryptionService.decryptEcies(rest.key, this.alephService.encryptionPrivateKey.secret),
+					"hex",
+				);
+				const iv = Buffer.from(
+					EncryptionService.decryptEcies(rest.iv, this.alephService.encryptionPrivateKey.secret),
+					"hex",
+				);
+				return {
+					deleted_at: EncryptionService.encrypt(deletionDatetime.toISOString(), key, iv),
+					...rest,
+				};
+			},
+		);
+	}
+
+	async restoreFile(fileInfo: Pick<FileFullInfos, "post_hash">): Promise<void> {
+		const { post_hash } = FileFullInfosSchema.pick({ post_hash: true }).parse(fileInfo);
+
+		await this.alephService.updatePost(
+			FILE_POST_TYPE,
+			post_hash,
+			undefined,
+			EncryptedFileMetaSchema,
+			({ deleted_at: _, ...rest }) => {
+				const key = Buffer.from(
+					EncryptionService.decryptEcies(rest.key, this.alephService.encryptionPrivateKey.secret),
+					"hex",
+				);
+				const iv = Buffer.from(
+					EncryptionService.decryptEcies(rest.iv, this.alephService.encryptionPrivateKey.secret),
+					"hex",
+				);
+				return {
+					deleted_at: EncryptionService.encrypt("null", key, iv),
+					...rest,
+				};
+			},
+		);
+	}
+
 	async hardDeleteFiles(...fileInfos: Pick<FileFullInfos, "store_hash" | "path">[]): Promise<void> {
 		fileInfos = z.array(FileFullInfosSchema.pick({ store_hash: true, path: true })).parse(fileInfos); // Validate the input because fileEntry can be built without using the parse method
 
