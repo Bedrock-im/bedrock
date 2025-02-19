@@ -19,6 +19,7 @@ export type FileCardProps = {
 	onRename?: () => void;
 	onMove?: () => void;
 	onDownload?: () => void;
+	onHardDelete?: () => void;
 	onRestore?: () => void;
 } & (FileCardFileProps | FileCardFolderProps);
 

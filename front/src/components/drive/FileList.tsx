@@ -17,7 +17,7 @@ type SortOrder = "asc" | "desc";
 type FileListProps = {
 	files: DriveFile[];
 	folders: DriveFolder[];
-	actions: Set<"rename" | "download" | "delete" | "move" | "restore">;
+	actions: Set<"rename" | "download" | "delete" | "move" | "restore" | "hardDelete">;
 };
 
 const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
@@ -164,7 +164,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 		}
 	};
 
-	const handleDelete = (path: string, folder: boolean) => {
+	const handleSoftDelete = (path: string, folder: boolean) => {
 		if (folder) {
 			const filesToDelete = deleteFolder(path);
 			bedrockService?.hardDeleteFiles(...filesToDelete);
@@ -172,6 +172,20 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 			const deletionDatetime = new Date();
 			const hash = softDeleteFile(path, deletionDatetime);
 			if (hash) bedrockService?.softDeleteFile({ post_hash: hash }, deletionDatetime);
+		}
+	};
+
+	const handleHardDelete = (path: string, folder: boolean) => {
+		if (folder) {
+			const filesToDelete = deleteFolder(path);
+			bedrockService?.hardDeleteFiles(...filesToDelete);
+		} else {
+			const fileToDelete = files.find((file) => file.path === path);
+			if (!fileToDelete) {
+				console.error("File not found:", path);
+				return;
+			}
+			bedrockService?.hardDeleteFiles(fileToDelete);
 		}
 	};
 
@@ -264,7 +278,8 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 										selected={selectedItems.has(folder.path)}
 										onLeftClick={() => handleGoToDirectory(folder.path)}
 										onRename={actions.has("rename") ? () => handleRename(folder.path, true) : undefined}
-										onDelete={actions.has("delete") ? () => handleDelete(folder.path, true) : undefined}
+										onDelete={actions.has("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
+										onHardDelete={actions.has("hardDelete") ? () => handleHardDelete(folder.path, true) : undefined}
 										onMove={actions.has("move") ? () => handleMove(folder.path, true) : undefined}
 									/>
 								))}
@@ -276,7 +291,8 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 										selected={selectedItems.has(file.path)}
 										onLeftClick={() => handleLeftClick(file.path)}
 										onRename={actions.has("rename") ? () => handleRename(file.path, false) : undefined}
-										onDelete={actions.has("delete") ? () => handleDelete(file.path, false) : undefined}
+										onDelete={actions.has("delete") ? () => handleSoftDelete(file.path, false) : undefined}
+										onHardDelete={actions.has("hardDelete") ? () => handleHardDelete(file.path, true) : undefined}
 										onMove={actions.has("move") ? () => handleMove(file.path, false) : undefined}
 										onDownload={actions.has("download") ? () => handleDownloadFile(file) : undefined}
 										onRestore={actions.has("restore") ? () => handleRestoreFile(file.path) : undefined}
