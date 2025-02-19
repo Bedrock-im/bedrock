@@ -31,7 +31,8 @@ const FileList: React.FC<FileListProps> = () => {
 		folders,
 		setFiles,
 		setFolders,
-		deleteFile,
+		softDeleteFile,
+		restoreFile,
 		addFolder,
 		deleteFolder,
 		moveFile,
@@ -201,8 +202,9 @@ const FileList: React.FC<FileListProps> = () => {
 			const filesToDelete = deleteFolder(path);
 			bedrockService?.hardDeleteFiles(...filesToDelete);
 		} else {
-			const hash = deleteFile(path);
-			if (hash) bedrockService?.hardDeleteFiles({ path, store_hash: hash });
+			const deletionDatetime = new Date();
+			const hash = softDeleteFile(path, deletionDatetime);
+			if (hash) bedrockService?.softDeleteFile({ post_hash: hash }, deletionDatetime);
 		}
 	};
 
@@ -220,6 +222,11 @@ const FileList: React.FC<FileListProps> = () => {
 			const filesToMove = moveFolder(path, newPath);
 			filesToMove.map(([oldFile, newFile]) => bedrockService?.moveFile(oldFile.path, newFile.path));
 		}
+	};
+
+	const handleRestoreFile = (path: string) => {
+		const hash = restoreFile(path);
+		if (hash) bedrockService?.restoreFile({ post_hash: hash });
 	};
 
 	const handleGoBackOneDirectory = () => {
@@ -306,6 +313,8 @@ const FileList: React.FC<FileListProps> = () => {
 										onDelete={() => handleDelete(file.path, false)}
 										onMove={() => handleMove(file.path, false)}
 										onDownload={() => handleDownloadFile(file.path)}
+										onRestore={() => handleRestoreFile(file.path)}
+										restoreButton
 									/>
 								))}
 							</div>

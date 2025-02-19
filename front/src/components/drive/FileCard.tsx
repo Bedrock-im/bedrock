@@ -1,4 +1,4 @@
-import { Edit, FileText, FolderIcon, Move, Trash, FileDown } from "lucide-react";
+import { ArchiveRestore, Edit, FileDown, FileText, FolderIcon, Move, Trash } from "lucide-react";
 import React from "react";
 
 import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
@@ -24,6 +24,8 @@ export type FileCardProps = {
 
 type FileCardFileProps = {
 	folder?: false;
+	onRestore?: () => void;
+	restoreButton?: boolean;
 	metadata: DriveFile;
 };
 
@@ -32,17 +34,18 @@ type FileCardFolderProps = {
 	metadata: DriveFolder;
 };
 
-const FileCard = ({
-	folder,
-	selected = false,
-	onLeftClick,
-	onDoubleClick,
-	onDelete,
-	onMove,
-	onRename,
-	onDownload,
-	metadata,
-}: FileCardProps) => {
+const FileCard = (props: FileCardProps) => {
+	const {
+		folder,
+		selected = false,
+		onLeftClick,
+		onDoubleClick,
+		onDelete,
+		onMove,
+		onRename,
+		onDownload,
+		metadata,
+	} = props;
 	return (
 		<ContextMenu>
 			<ContextMenuTrigger>
@@ -52,7 +55,11 @@ const FileCard = ({
 					onDoubleClick={() => onDoubleClick?.()}
 				>
 					<CardTitle className="flex items-center">
-						{folder ? <FolderIcon /> : <FileText />}
+						{folder ? (
+							<FolderIcon className={`${metadata.deleted_at ? "text-red-400" : "text-blue-600"}`} />
+						) : (
+							<FileText className={`${metadata.deleted_at ? "text-red-400" : "text-blue-600"}`} />
+						)}
 						<span>{metadata.path.split("/").pop()}</span>
 					</CardTitle>
 					{folder ? (
@@ -88,6 +95,12 @@ const FileCard = ({
 					<FileDown />
 					<ContextMenuLabel>Download</ContextMenuLabel>
 				</ContextMenuItem>
+				{!props.folder && props.restoreButton && (
+					<ContextMenuItem className="flex space-x-4" onClick={() => props.onRestore?.()}>
+						<ArchiveRestore />
+						<ContextMenuLabel>Restore</ContextMenuLabel>
+					</ContextMenuItem>
+				)}
 			</ContextMenuContent>
 		</ContextMenu>
 	);

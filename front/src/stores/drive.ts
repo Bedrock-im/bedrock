@@ -7,8 +7,8 @@ type DriveStoreState = {
 	folders: DriveFolder[];
 };
 
-export type DriveFile = Omit<FileFullInfos, "post_hash" | "key" | "iv">;
-export type DriveFolder = Omit<DriveFile, "store_hash" | "size">;
+export type DriveFile = FileFullInfos;
+export type DriveFolder = Omit<DriveFile, "store_hash" | "post_hash" | "size" | "key" | "iv">;
 
 type DriveStoreActions = {
 	currentWorkingDirectory: string;
@@ -17,7 +17,9 @@ type DriveStoreActions = {
 	addFile: (file: DriveFile) => void;
 	addFiles: (files: DriveFile[]) => void;
 	addFolder: (folder: DriveFolder) => void;
-	deleteFile: (id: string) => string | undefined;
+	hardDeleteFile: (path: string) => string | undefined;
+	softDeleteFile: (path: string, deletionDate: Date) => string | undefined;
+	restoreFile: (path: string) => string | undefined;
 	deleteFolder: (path: string) => DriveFile[];
 	moveFile: (oldPath: string, newPath: string) => void;
 	moveFolder: (oldPath: string, newPath: string) => [DriveFile, DriveFile][];
@@ -32,10 +34,38 @@ export const useDriveStore = create<DriveStoreState & DriveStoreActions>((set, g
 	addFile: (file) => set((state) => ({ files: [...state.files, file] })),
 	addFiles: (files) => set((state) => ({ files: [...state.files, ...files] })),
 	addFolder: (folder) => set((state) => ({ folders: [...state.folders, folder] })),
-	deleteFile: (path) => {
+	hardDeleteFile: (path) => {
 		const storeHash = getState().files.find((file) => file.path === path)?.store_hash;
 		set((state) => ({ files: state.files.filter((file) => file.path !== path) }));
 		return storeHash;
+	},
+	softDeleteFile: (path, deletionDate) => {
+		const postHash = getState().files.find((file) => file.path === path)?.post_hash;
+		set((state) => ({
+			files: state.files.map((file) =>
+				file.path === path
+					? {
+							...file,
+							deleted_at: deletionDate.toISOString(),
+						}
+					: file,
+			),
+		}));
+		return postHash;
+	},
+	restoreFile: (path) => {
+		const hash = getState().files.find((file) => file.path === path)?.post_hash;
+		set((state) => ({
+			files: state.files.map((file) =>
+				file.path === path
+					? {
+							...file,
+							deleted_at: null,
+						}
+					: file,
+			),
+		}));
+		return hash;
 	},
 	deleteFolder: (path) => {
 		const filesToDelete = getState().files.filter((file) => file.path.startsWith(path));
