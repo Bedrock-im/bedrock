@@ -56,9 +56,9 @@ const FileCard = (props: FileCardProps) => {
 				>
 					<CardTitle className="flex items-center">
 						{folder ? (
-							<FolderIcon className={`${metadata.deleted_at ? "text-red-400" : "text-blue-600"}`} />
+							<FolderIcon className={metadata.deleted_at ? "text-red-400" : undefined} />
 						) : (
-							<FileText className={`${metadata.deleted_at ? "text-red-400" : "text-blue-600"}`} />
+							<FileText className={metadata.deleted_at ? "text-red-400" : undefined} />
 						)}
 						<span>{metadata.path.split("/").pop()}</span>
 					</CardTitle>
