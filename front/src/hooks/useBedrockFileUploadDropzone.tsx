@@ -26,7 +26,14 @@ export default function useBedrockFileUploadDropzone(options: DropzoneOptions) {
 				success: (savedFiles) => `Successfully saved ${savedFiles.length} files`,
 				error: (err) => `Failed to save files: ${err}`,
 			});
-			addFiles(awaitedFileInfos);
+			const awaitedFileEntries = await fileEntries.catch(() => []);
+			addFiles(
+				awaitedFileInfos.map(({ path, ...fileInfo }) => ({
+					...fileInfo,
+					path,
+					post_hash: awaitedFileEntries.find((entry) => entry.path === path)!.post_hash,
+				})),
+			);
 		},
 		[currentWorkingDirectory, bedrockService, addFiles],
 	);
