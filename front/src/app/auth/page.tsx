@@ -16,11 +16,7 @@ export default function Auth() {
 	const { isOpen: isPrivyModalOpen } = useModalStatus();
 
 	const handleBack = useCallback(() => {
-		if (window.history.length > 1) {
-			router.back();
-		} else {
-			router.push("/");
-		}
+		router.replace("/");
 	}, [router]);
 
 	useEffect(() => {

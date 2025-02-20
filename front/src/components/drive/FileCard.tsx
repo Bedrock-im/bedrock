@@ -1,8 +1,9 @@
 import { filesize } from "filesize";
-import { ArchiveRestore, Edit, FileDown, FileText, FolderIcon, Move, Trash } from "lucide-react";
+import { ArchiveRestore, Download, Edit, FileDown, FileText, FolderIcon, Move, Trash } from "lucide-react";
 import React from "react";
 
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
 	ContextMenu,
 	ContextMenuContent,
@@ -10,11 +11,16 @@ import {
 	ContextMenuLabel,
 	ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { TableCell, TableRow } from "@/components/ui/table";
 import { DriveFile, DriveFolder } from "@/stores/drive";
 
 export type FileCardProps = {
+	isNew?: boolean;
+	clicked?: boolean;
 	selected?: boolean;
+	setSelected?: () => void;
 	onLeftClick?: () => void;
+	onDoubleClick?: () => void;
 	onDelete?: () => void;
 	onRename?: () => void;
 	onMove?: () => void;
@@ -33,9 +39,13 @@ type FileCardFolderProps = {
 };
 
 const FileCard = ({
+	isNew,
 	folder,
+	clicked = false,
 	selected = false,
+	setSelected,
 	onLeftClick,
+	onDoubleClick,
 	onDelete,
 	onMove,
 	onRename,
@@ -43,12 +53,51 @@ const FileCard = ({
 	onRestore,
 	metadata,
 }: FileCardProps) => {
+	if (isNew) {
+		return (
+			<TableRow
+				onClick={(e) => {
+					e.stopPropagation();
+					if (onLeftClick) onLeftClick();
+				}}
+				onDoubleClick={onDoubleClick}
+				className={clicked ? "bg-secondary/30 hover:bg-secondary/40" : ""}
+			>
+				<TableCell>
+					<Checkbox
+						disabled={!setSelected}
+						checked={selected}
+						onClick={(e) => {
+							e.stopPropagation();
+							if (setSelected) setSelected();
+						}}
+					/>
+				</TableCell>
+				<TableCell>
+					<div className="flex items-center font-bold gap-2">
+						{folder ? (
+							<FolderIcon className={metadata.deleted_at ? "text-red-400" : undefined} />
+						) : (
+							<FileText className={metadata.deleted_at ? "text-red-400" : undefined} />
+						)}
+						{metadata.path.split("/").pop()}
+					</div>
+				</TableCell>
+				<TableCell>{folder ? "" : filesize(metadata.size)}</TableCell>
+				<TableCell>{new Date(metadata.created_at).toLocaleString()}</TableCell>
+				<TableCell className="flex justify-end items-center gap-2 mt-1">
+					{!folder && <Download size={16} />}
+					<Trash size={16} />
+				</TableCell>
+			</TableRow>
+		);
+	}
+
 	return (
 		<ContextMenu>
 			<ContextMenuTrigger>
 				<Card
 					className={`grid grid-cols-4 gap-3 p-2.5 mb-1.5 hover:bg-gray-100 hover:shadow-lg transition ${selected ? "selected" : ""}`}
-					onClick={onLeftClick}
 				>
 					<CardTitle className="flex items-center">
 						{folder ? (

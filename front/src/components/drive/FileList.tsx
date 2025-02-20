@@ -4,8 +4,12 @@ import { LoaderIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
 import React, { useEffect, useState } from "react";
 
+import CurrentPath from "@/components/drive/CurrentPath";
 import { DrivePageTitle } from "@/components/drive/DrivePageTitle";
 import FileCard from "@/components/drive/FileCard";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import useBedrockFileUploadDropzone from "@/hooks/useBedrockFileUploadDropzone";
 import { useAccountStore } from "@/stores/account";
 import { DriveFile, DriveFolder, useDriveStore } from "@/stores/drive";
@@ -28,6 +32,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 	const [sortOrder, setSortOrder] = useQueryState("order", { defaultValue: "asc" as SortOrder });
 	const [countItem, setCountItem] = useState<number>(0);
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+	const [clickedItem, setClickedItem] = useState<string>();
 	const { setFiles, setFolders, softDeleteFile, restoreFile, addFolder, deleteFolder, moveFile, moveFolder } =
 		useDriveStore();
 	const { bedrockService } = useAccountStore();
@@ -210,6 +215,18 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 		setCurrentWorkingDirectory(path);
 	};
 
+	const selectItem = (path: string) => {
+		setSelectedItems((prev) => {
+			const updated = new Set(prev);
+			if (updated.has(path)) {
+				updated.delete(path);
+			} else {
+				updated.add(path);
+			}
+			return updated;
+		});
+	};
+
 	if (!bedrockService) {
 		return (
 			<div className="flex items-center justify-center h-screen">
@@ -219,76 +236,119 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 	}
 
 	return (
-		<div className="flex flex-col h-screen bg-gray-200">
-			<>
-				<div className="flex justify-between items-center m-2 gap-4">
-					<UploadButton onCreateFolder={handleCreateFolder} getInputProps={getInputProps} />
-					<input type="file" id="fileInput" className="hidden" onChange={() => {}} />
-					<input
-						type="text"
-						placeholder="Search files and folders..."
-						value={searchQuery}
-						onChange={(e) => setSearchQuery(e.target.value || null)}
-						className="p-2 border border-gray-300 rounded-lg w-full"
-					/>
+		<div className="flex flex-col h-screen bg-gray-200" onClick={() => setClickedItem(undefined)}>
+			<div className="flex justify-between items-center m-2 gap-4">
+				<UploadButton onCreateFolder={handleCreateFolder} getInputProps={getInputProps} />
+				<input type="file" id="fileInput" className="hidden" onChange={() => {}} />
+				<input
+					type="text"
+					placeholder="Search files and folders..."
+					value={searchQuery}
+					onChange={(e) => setSearchQuery(e.target.value || null)}
+					className="p-2 border border-gray-300 rounded-lg w-full"
+				/>
+			</div>
+
+			<Card className="m-2 pb-2 gap-y-4">
+				<div className="m-4 mt-2">
+					<CurrentPath path={currentWorkingDirectory} setPath={setCurrentWorkingDirectory} />
+					<Separator orientation="horizontal" />
 				</div>
-				<div className="flex-1 p-4 w-full">
-					<DrivePageTitle cwd={currentWorkingDirectory} selectedItemsCount={countItem} onDelete={() => {}} />
-					<div className="flex flex-col flex-1 w-full overflow-hidden">
-						<div className="grid grid-cols-4 gap-4 mb-4 font-semibold text-gray-600">
-							<div onClick={() => handleSort("path")} className="cursor-pointer">
-								Name {sortColumn === "path" && (sortOrder === "asc" ? "↑" : "↓")}
-							</div>
-							<div onClick={() => handleSort("size")} className="cursor-pointer">
-								Size {sortColumn === "size" && (sortOrder === "asc" ? "↑" : "↓")}
-							</div>
-							<div onClick={() => handleSort("created_at")} className="cursor-pointer">
-								Created At {sortColumn === "created_at" && (sortOrder === "asc" ? "↑" : "↓")}
-							</div>
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead className="w-[40px]"></TableHead>
+							<TableHead>Name</TableHead>
+							<TableHead>Size</TableHead>
+							<TableHead>Created At</TableHead>
+							<TableHead className="text-right">Actions</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{folders.map((folder) => (
+							<FileCard
+								key={folder.path}
+								isNew
+								folder
+								metadata={folder}
+								clicked={clickedItem === folder.path}
+								selected={selectedItems.has(folder.path)}
+								setSelected={() => selectItem(folder.path)}
+								onLeftClick={() => setClickedItem(folder.path)}
+								onDoubleClick={() => handleGoToDirectory(folder.path)}
+							/>
+						))}
+						{files.map((file) => (
+							<FileCard
+								key={file.path}
+								isNew
+								metadata={file}
+								clicked={clickedItem === file.path}
+								selected={selectedItems.has(file.path)}
+								setSelected={() => selectItem(file.path)}
+								onLeftClick={() => setClickedItem(file.path)}
+							/>
+						))}
+					</TableBody>
+				</Table>
+			</Card>
+
+			<div className="flex-1 p-4 w-full">
+				<DrivePageTitle cwd={currentWorkingDirectory} selectedItemsCount={countItem} onDelete={() => {}} />
+				<div className="flex flex-col flex-1 w-full overflow-hidden">
+					<div className="grid grid-cols-4 gap-4 mb-4 font-semibold text-gray-600">
+						<div onClick={() => handleSort("path")} className="cursor-pointer">
+							Name {sortColumn === "path" && (sortOrder === "asc" ? "↑" : "↓")}
 						</div>
-
-						<div className="overflow-y-auto">
-							{currentWorkingDirectory !== "/" && (
-								<FileCard
-									folder
-									metadata={{ path: "..", created_at: new Date().toISOString(), deleted_at: null }}
-									onLeftClick={() =>
-										setCurrentWorkingDirectory(currentWorkingDirectory.split("/").slice(0, -1).join("/") || "/")
-									}
-								/>
-							)}
-
-							{/*TODO: concat both lists and show them together, so it can be sorted by name*/}
-							{folders.map((folder) => (
-								<FileCard
-									metadata={folder}
-									folder
-									key={folder.path}
-									selected={selectedItems.has(folder.path)}
-									onLeftClick={() => handleGoToDirectory(folder.path)}
-									onRename={actions.has("rename") ? () => handleRename(folder.path, true) : undefined}
-									onDelete={actions.has("delete") ? () => handleDelete(folder.path, true) : undefined}
-									onMove={actions.has("move") ? () => handleMove(folder.path, true) : undefined}
-								/>
-							))}
-
-							{files.map((file) => (
-								<FileCard
-									metadata={file}
-									key={file.path}
-									selected={selectedItems.has(file.path)}
-									onLeftClick={() => handleLeftClick(file.path)}
-									onRename={actions.has("rename") ? () => handleRename(file.path, false) : undefined}
-									onDelete={actions.has("delete") ? () => handleDelete(file.path, false) : undefined}
-									onMove={actions.has("move") ? () => handleMove(file.path, false) : undefined}
-									onDownload={actions.has("download") ? () => handleDownloadFile(file) : undefined}
-									onRestore={actions.has("restore") ? () => handleRestoreFile(file.path) : undefined}
-								/>
-							))}
+						<div onClick={() => handleSort("size")} className="cursor-pointer">
+							Size {sortColumn === "size" && (sortOrder === "asc" ? "↑" : "↓")}
+						</div>
+						<div onClick={() => handleSort("created_at")} className="cursor-pointer">
+							Created At {sortColumn === "created_at" && (sortOrder === "asc" ? "↑" : "↓")}
 						</div>
 					</div>
+
+					<div className="overflow-y-auto">
+						{currentWorkingDirectory !== "/" && (
+							<FileCard
+								folder
+								metadata={{ path: "..", created_at: new Date().toISOString(), deleted_at: null }}
+								onLeftClick={() =>
+									setCurrentWorkingDirectory(currentWorkingDirectory.split("/").slice(0, -1).join("/") || "/")
+								}
+							/>
+						)}
+
+						{/*TODO: concat both lists and show them together, so it can be sorted by name*/}
+						{folders.map((folder) => (
+							<FileCard
+								metadata={folder}
+								folder
+								key={folder.path}
+								selected={selectedItems.has(folder.path)}
+								onLeftClick={() => handleGoToDirectory(folder.path)}
+								onRename={actions.has("rename") ? () => handleRename(folder.path, true) : undefined}
+								onDelete={actions.has("delete") ? () => handleDelete(folder.path, true) : undefined}
+								onMove={actions.has("move") ? () => handleMove(folder.path, true) : undefined}
+							/>
+						))}
+
+						{files.map((file) => (
+							<FileCard
+								metadata={file}
+								key={file.path}
+								selected={selectedItems.has(file.path)}
+								onLeftClick={() => handleLeftClick(file.path)}
+								onRename={actions.has("rename") ? () => handleRename(file.path, false) : undefined}
+								onDelete={actions.has("delete") ? () => handleDelete(file.path, false) : undefined}
+								onMove={actions.has("move") ? () => handleMove(file.path, false) : undefined}
+								onDownload={actions.has("download") ? () => handleDownloadFile(file) : undefined}
+								onRestore={actions.has("restore") ? () => handleRestoreFile(file.path) : undefined}
+							/>
+						))}
+					</div>
 				</div>
-			</>
+			</div>
 		</div>
 	);
 };
