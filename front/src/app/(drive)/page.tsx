@@ -19,6 +19,7 @@ export default function Home() {
 			file.path.toLowerCase().includes(searchQuery.toLowerCase()) &&
 			file.deleted_at === null,
 	);
+
 	const filteredFolders = folders.filter(
 		(folder) =>
 			folder.path.match(cwdRegex) &&
@@ -26,6 +27,7 @@ export default function Home() {
 			folder.path.toLowerCase().includes(searchQuery.toLowerCase()) &&
 			folder.deleted_at === null,
 	);
+
 	return (
 		<section>
 			<header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
