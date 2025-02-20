@@ -1,3 +1,4 @@
+import { filesize } from "filesize";
 import { ArchiveRestore, Edit, FileDown, FileText, FolderIcon, Move, Trash } from "lucide-react";
 import React from "react";
 
@@ -51,8 +52,8 @@ const FileCard = (props: FileCardProps) => {
 			<ContextMenuTrigger>
 				<Card
 					className={`grid grid-cols-4 gap-3 p-2.5 mb-1.5 hover:bg-gray-100 hover:shadow-lg transition ${selected ? "selected" : ""}`}
-					onClick={() => onLeftClick?.()}
-					onDoubleClick={() => onDoubleClick?.()}
+					onClick={onLeftClick}
+					onDoubleClick={onDoubleClick}
 				>
 					<CardTitle className="flex items-center">
 						{folder ? (
@@ -69,7 +70,7 @@ const FileCard = (props: FileCardProps) => {
 						</>
 					) : (
 						<>
-							<CardContent>{metadata.size} KB</CardContent>
+							<CardContent>{filesize(metadata.size)}</CardContent>
 							<CardContent>{new Date(metadata.created_at).toLocaleString()}</CardContent>
 						</>
 					)}
