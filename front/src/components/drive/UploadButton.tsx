@@ -8,10 +8,10 @@ const UploadButton = ({ onCreateFolder, getInputProps }: { onCreateFolder: () =>
 		<Popover.Root>
 			<Popover.Trigger asChild>
 				<button
-					className="bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-blue-300 flex items-center justify-center"
+					className="bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all transform hover:scale-100 scale-90 focus:outline-none focus:ring-4 focus:ring-blue-300 flex items-center justify-center"
 					aria-label="Add"
 				>
-					<Plus size={28} className="transition-transform duration-300 transform group-hover:rotate-90" />
+					<Plus size={16} className="transition-transform duration-300 transform group-hover:rotate-90" />
 				</button>
 			</Popover.Trigger>
 
