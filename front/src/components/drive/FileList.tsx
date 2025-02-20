@@ -314,7 +314,6 @@ const FileList: React.FC<FileListProps> = () => {
 										onMove={() => handleMove(file.path, false)}
 										onDownload={() => handleDownloadFile(file.path)}
 										onRestore={() => handleRestoreFile(file.path)}
-										restoreButton
 									/>
 								))}
 							</div>

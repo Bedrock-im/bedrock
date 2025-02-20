@@ -77,26 +77,27 @@ const FileCard = (props: FileCardProps) => {
 				</Card>
 			</ContextMenuTrigger>
 			<ContextMenuContent>
-				<ContextMenuLabel>Actions</ContextMenuLabel>
-				<ContextMenuSeparator />
-				<ContextMenuItem className="flex space-x-4" onClick={() => onDelete?.()}>
-					<Trash />
-					<ContextMenuLabel>Delete</ContextMenuLabel>
-				</ContextMenuItem>
-				<ContextMenuItem className="flex space-x-4" onClick={() => onRename?.()}>
-					<Edit />
-					<ContextMenuLabel>Rename</ContextMenuLabel>
-				</ContextMenuItem>
-				<ContextMenuItem className="flex space-x-4" onClick={() => onMove?.()}>
-					<Move />
-					<ContextMenuLabel>Move</ContextMenuLabel>
-				</ContextMenuItem>
-				<ContextMenuItem className="flex space-x-4" onClick={() => onDownload?.()}>
+				<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={() => onDownload?.()}>
 					<FileDown />
 					<ContextMenuLabel>Download</ContextMenuLabel>
 				</ContextMenuItem>
+				<ContextMenuSeparator />
+				<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={() => onRename?.()}>
+					<Edit />
+					<ContextMenuLabel>Rename</ContextMenuLabel>
+				</ContextMenuItem>
+				<ContextMenuSeparator />
+				<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={() => onMove?.()}>
+					<Move />
+					<ContextMenuLabel>Move</ContextMenuLabel>
+				</ContextMenuItem>
+				<ContextMenuSeparator />
+				<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={() => onDelete?.()}>
+					<Trash />
+					<ContextMenuLabel>Delete</ContextMenuLabel>
+				</ContextMenuItem>
 				{!props.folder && props.restoreButton && (
-					<ContextMenuItem className="flex space-x-4" onClick={() => props.onRestore?.()}>
+					<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={() => props.onRestore?.()}>
 						<ArchiveRestore />
 						<ContextMenuLabel>Restore</ContextMenuLabel>
 					</ContextMenuItem>
