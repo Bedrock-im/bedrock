@@ -2,7 +2,7 @@
 
 import { LoaderIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import CurrentPath from "@/components/drive/CurrentPath";
 import FileCard from "@/components/drive/FileCard";
@@ -77,6 +77,26 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 			}
 		})();
 	}, [bedrockService, setFolders, setFiles]);
+
+	const { sortedFiles, sortedFolders } = useMemo(
+		() => ({
+			sortedFiles: files.sort((a, b) => {
+				if (sortColumn === "size") {
+					return (a.size - b.size) * (sortOrder === "asc" ? 1 : -1);
+				} else if (sortColumn === "created_at") {
+					return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * (sortOrder === "asc" ? 1 : -1);
+				}
+				return a.path.localeCompare(b.path) * (sortOrder === "asc" ? 1 : -1);
+			}),
+			sortedFolders: folders.sort((a, b) => {
+				if (sortColumn === "created_at") {
+					return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * (sortOrder === "asc" ? 1 : -1);
+				}
+				return a.path.localeCompare(b.path) * (sortOrder === "asc" ? 1 : -1);
+			}),
+		}),
+		[files, folders, sortColumn, sortOrder],
+	);
 
 	const handleDownloadFile = async (file: DriveFile) => {
 		if (!bedrockService) return;
@@ -164,10 +184,12 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 		}
 	};
 
+	/*
 	const handleRestoreFile = (path: string) => {
 		const hash = restoreFile(path);
 		if (hash) bedrockService?.restoreFile({ post_hash: hash });
 	};
+	 */
 
 	const selectItem = (path: string) => {
 		setSelectedItems((prev) => {
@@ -268,10 +290,9 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 					</TableHeader>
 					<TableBody>
 						{/* TODO: concat both lists and show them together, so it can be sorted by name */}
-						{folders.map((folder) => (
+						{sortedFolders.map((folder) => (
 							<FileCard
 								key={folder.path}
-								isNew
 								folder
 								metadata={folder}
 								clicked={clickedItem === folder.path}
@@ -279,17 +300,21 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 								setSelected={() => selectItem(folder.path)}
 								onLeftClick={() => setClickedItem(folder.path)}
 								onDoubleClick={() => setCurrentWorkingDirectory(folder.path + "/")}
+								onDelete={actions.has("delete") ? () => handleDelete(folder.path, true) : undefined}
 							/>
 						))}
-						{files.map((file) => (
+						{sortedFiles.map((file) => (
 							<FileCard
 								key={file.path}
-								isNew
 								metadata={file}
 								clicked={clickedItem === file.path}
 								selected={selectedItems.has(file.path)}
 								setSelected={() => selectItem(file.path)}
 								onLeftClick={() => setClickedItem(file.path)}
+								onDownload={actions.has("download") ? () => handleDownloadFile(file) : undefined}
+								onRename={actions.has("rename") ? () => handleRename(file.path, false) : undefined}
+								onMove={actions.has("move") ? () => handleMove(file.path, false) : undefined}
+								onDelete={actions.has("delete") ? () => handleDelete(file.path, false) : undefined}
 							/>
 						))}
 					</TableBody>
