@@ -1,31 +1,22 @@
 import { filesize } from "filesize";
-import { ArchiveRestore, Download, Edit, FileDown, FileText, FolderIcon, Move, Trash } from "lucide-react";
+import { Download, Edit, FileText, FolderIcon, Move, Trash } from "lucide-react";
 import React from "react";
 
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import ActionIcon from "@/components/drive/ActionIcon";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-	ContextMenu,
-	ContextMenuContent,
-	ContextMenuItem,
-	ContextMenuLabel,
-	ContextMenuTrigger,
-} from "@/components/ui/context-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { DriveFile, DriveFolder } from "@/stores/drive";
 
 export type FileCardProps = {
-	isNew?: boolean;
 	clicked?: boolean;
 	selected?: boolean;
 	setSelected?: () => void;
 	onLeftClick?: () => void;
 	onDoubleClick?: () => void;
-	onDelete?: () => void;
+	onDownload?: () => void;
 	onRename?: () => void;
 	onMove?: () => void;
-	onDownload?: () => void;
-	onRestore?: () => void;
+	onDelete?: () => void;
 } & (FileCardFileProps | FileCardFolderProps);
 
 type FileCardFileProps = {
@@ -39,60 +30,59 @@ type FileCardFolderProps = {
 };
 
 const FileCard = ({
-	isNew,
+	metadata,
 	folder,
 	clicked = false,
 	selected = false,
 	setSelected,
 	onLeftClick,
 	onDoubleClick,
-	onDelete,
-	onMove,
-	onRename,
 	onDownload,
-	onRestore,
-	metadata,
+	onRename,
+	onMove,
+	onDelete,
 }: FileCardProps) => {
-	if (isNew) {
-		return (
-			<TableRow
-				onClick={(e) => {
-					e.stopPropagation();
-					if (onLeftClick) onLeftClick();
-				}}
-				onDoubleClick={onDoubleClick}
-				className={clicked ? "bg-secondary/30 hover:bg-secondary/40" : ""}
-			>
-				<TableCell>
-					<Checkbox
-						disabled={!setSelected}
-						checked={selected}
-						onClick={(e) => {
-							e.stopPropagation();
-							if (setSelected) setSelected();
-						}}
-					/>
-				</TableCell>
-				<TableCell>
-					<div className="flex items-center font-bold gap-2">
-						{folder ? (
-							<FolderIcon className={metadata.deleted_at ? "text-red-400" : undefined} />
-						) : (
-							<FileText className={metadata.deleted_at ? "text-red-400" : undefined} />
-						)}
-						{metadata.path.split("/").pop()}
-					</div>
-				</TableCell>
-				<TableCell>{folder ? "" : filesize(metadata.size)}</TableCell>
-				<TableCell>{new Date(metadata.created_at).toLocaleString()}</TableCell>
-				<TableCell className="flex justify-end items-center gap-2 mt-1">
-					{!folder && <Download size={16} />}
-					<Trash size={16} />
-				</TableCell>
-			</TableRow>
-		);
-	}
+	return (
+		<TableRow
+			onClick={(e) => {
+				e.stopPropagation();
+				if (onLeftClick) onLeftClick();
+			}}
+			onDoubleClick={onDoubleClick}
+			className={clicked ? "bg-secondary/30 hover:bg-secondary/40" : ""}
+		>
+			<TableCell>
+				<Checkbox
+					disabled={!setSelected}
+					checked={selected}
+					onClick={(e) => {
+						e.stopPropagation();
+						if (setSelected) setSelected();
+					}}
+				/>
+			</TableCell>
+			<TableCell>
+				<div className="flex items-center font-bold gap-2">
+					{folder ? (
+						<FolderIcon className={metadata.deleted_at ? "text-red-400" : undefined} />
+					) : (
+						<FileText className={metadata.deleted_at ? "text-red-400" : undefined} />
+					)}
+					{metadata.path.split("/").pop()}
+				</div>
+			</TableCell>
+			<TableCell>{folder ? "" : filesize(metadata.size)}</TableCell>
+			<TableCell>{new Date(metadata.created_at).toLocaleString()}</TableCell>
+			<TableCell className="flex justify-end items-center gap-2 mt-1">
+				{onDownload && <ActionIcon Icon={Download} onClick={onDownload} tooltip="Download" />}
+				{onRename && <ActionIcon Icon={Edit} onClick={onRename} tooltip="Rename" />}
+				{onMove && <ActionIcon Icon={Move} onClick={onMove} tooltip="Move" />}
+				{onDelete && <ActionIcon Icon={Trash} onClick={onDelete} tooltip="Delete" />}
+			</TableCell>
+		</TableRow>
+	);
 
+	/*
 	return (
 		<ContextMenu>
 			<ContextMenuTrigger>
@@ -121,7 +111,6 @@ const FileCard = ({
 				</Card>
 			</ContextMenuTrigger>
 			<ContextMenuContent>
-				{/*TODO: add some <ContextMenuSeparator /> between the existing elements*/}
 
 				{onDownload && (
 					<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={onDownload}>
@@ -160,6 +149,7 @@ const FileCard = ({
 			</ContextMenuContent>
 		</ContextMenu>
 	);
+	*/
 };
 
 export default FileCard;
