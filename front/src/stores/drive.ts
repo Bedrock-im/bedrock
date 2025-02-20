@@ -11,7 +11,6 @@ export type DriveFile = FileFullInfos;
 export type DriveFolder = Omit<DriveFile, "store_hash" | "post_hash" | "size" | "key" | "iv">;
 
 type DriveStoreActions = {
-	currentWorkingDirectory: string;
 	setFiles: (files: DriveFile[]) => void;
 	setFolders: (folders: DriveFolder[]) => void;
 	addFile: (file: DriveFile) => void;
@@ -23,7 +22,6 @@ type DriveStoreActions = {
 	deleteFolder: (path: string) => DriveFile[];
 	moveFile: (oldPath: string, newPath: string) => void;
 	moveFolder: (oldPath: string, newPath: string) => [DriveFile, DriveFile][];
-	changeCurrentWorkingDirectory: (newDirectory: string) => void;
 };
 
 export const useDriveStore = create<DriveStoreState & DriveStoreActions>((set, getState) => ({
@@ -108,7 +106,4 @@ export const useDriveStore = create<DriveStoreState & DriveStoreActions>((set, g
 		}));
 		return filesToMove.map((file) => [file, { ...file, path: newPath + file.path.slice(oldPath.length) }] as const);
 	},
-	currentWorkingDirectory: "/",
-	changeCurrentWorkingDirectory: (newDirectory) =>
-		set({ currentWorkingDirectory: newDirectory.endsWith("/") ? newDirectory : newDirectory + "/" }),
 }));

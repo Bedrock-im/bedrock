@@ -7,53 +7,32 @@ import { DrivePageTitle } from "@/components/drive/DrivePageTitle";
 import FileCard from "@/components/drive/FileCard";
 import useBedrockFileUploadDropzone from "@/hooks/useBedrockFileUploadDropzone";
 import { useAccountStore } from "@/stores/account";
-import { useDriveStore } from "@/stores/drive";
+import { DriveFile, DriveFolder, useDriveStore } from "@/stores/drive";
 
 import UploadButton from "./UploadButton";
 
 type SortColumn = "path" | "size" | "created_at";
 type SortOrder = "asc" | "desc";
-type PageType = "My files" | "Trash | Shared";
 
-export type FileListProps = {
-	pageType: PageType;
+type FileListProps = {
+	files: DriveFile[];
+	folders: DriveFolder[];
+	actions: Set<"rename" | "download" | "delete" | "move" | "restore">;
 };
 
-const FileList: React.FC<FileListProps> = () => {
-	const [searchQuery, setSearchQuery] = useQueryState("name", { defaultValue: "" });
-	const [, setCurrentWorkingDirectoryUrl] = useQueryState("cwd", { defaultValue: "/" });
-	const [sortColumn, setSortColumn] = useState<SortColumn>("path");
-	const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
+	const [searchQuery, setSearchQuery] = useQueryState("search", { defaultValue: "" });
+	const [currentWorkingDirectory, setCurrentWorkingDirectory] = useQueryState("cwd", { defaultValue: "/" });
+	const [sortColumn, setSortColumn] = useQueryState("sort", { defaultValue: "path" as SortColumn });
+	const [sortOrder, setSortOrder] = useQueryState("order", { defaultValue: "asc" as SortOrder });
 	const [countItem, setCountItem] = useState<number>(0);
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-	const {
-		files,
-		folders,
-		setFiles,
-		setFolders,
-		softDeleteFile,
-		restoreFile,
-		addFolder,
-		deleteFolder,
-		moveFile,
-		moveFolder,
-		currentWorkingDirectory,
-		changeCurrentWorkingDirectory,
-	} = useDriveStore();
+	const { setFiles, setFolders, softDeleteFile, restoreFile, addFolder, deleteFolder, moveFile, moveFolder } =
+		useDriveStore();
 	const { bedrockService } = useAccountStore();
 	const { getInputProps } = useBedrockFileUploadDropzone({});
 
 	let clickTimeout: NodeJS.Timeout | null = null;
-	const cwdRegex = `^${currentWorkingDirectory.replace("/", "\\/")}[^ \\/]+$`;
-	const filteredFiles = files.filter(
-		(file) => file.path.match(cwdRegex) && file.path.toLowerCase().includes(searchQuery.toLowerCase()),
-	);
-	const filteredFolders = folders.filter(
-		(folder) =>
-			folder.path.match(cwdRegex) &&
-			folder.path !== currentWorkingDirectory && // Don't show the current directory
-			folder.path.toLowerCase().includes(searchQuery.toLowerCase()),
-	);
 
 	useEffect(() => {
 		if (!bedrockService) {
@@ -104,30 +83,17 @@ const FileList: React.FC<FileListProps> = () => {
 		}
 	};
 
-	const handleDownloadFile = async (filePath: string) => {
+	const handleDownloadFile = async (file: DriveFile) => {
 		if (!bedrockService) return;
 
 		try {
-			const fileEntries = await bedrockService.fetchFileEntries();
-			const file = fileEntries.find((entry) => entry.path === filePath);
-
-			if (!file) {
-				console.error("File not found:", filePath);
-				return;
-			}
-
-			const fileData = await bedrockService.fetchFilesMetaFromEntries(file);
-			const buffer = await bedrockService.downloadFileFromStoreHash(
-				fileData[0].store_hash,
-				fileData[0].key,
-				fileData[0].iv,
-			);
+			const buffer = await bedrockService.downloadFileFromStoreHash(file.store_hash, file.key, file.iv);
 			const blob = new Blob([buffer], { type: "application/octet-stream" });
 			const url = URL.createObjectURL(blob);
 
 			const link = document.createElement("a");
 			link.href = url;
-			link.download = filePath.split("/").pop() || "downloaded-file";
+			link.download = file.path.split("/").pop() || "downloaded-file";
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);
@@ -142,10 +108,11 @@ const FileList: React.FC<FileListProps> = () => {
 
 		const newFolderPath = `${currentWorkingDirectory}/${folderName}`;
 
-		if (folders.some((folder) => folder.path === newFolderPath)) {
-			alert("This folder already exists!");
-			return;
-		}
+		// TODO: this check should be moved to the drive or bedrock service to check against all files, not just those passed to this component
+		// if (folders.some((folder) => folder.path === newFolderPath)) {
+		// 	alert("This folder already exists!");
+		// 	return;
+		// }
 
 		const newFolder = {
 			path: newFolderPath,
@@ -231,8 +198,7 @@ const FileList: React.FC<FileListProps> = () => {
 
 	const handleGoBackOneDirectory = () => {
 		const newPath = currentWorkingDirectory.slice(0, -1).split("/").slice(0, -1).join("/") || "/";
-		changeCurrentWorkingDirectory(newPath);
-		setCurrentWorkingDirectoryUrl(newPath);
+		setCurrentWorkingDirectory(newPath);
 	};
 
 	const handleGoToDirectory = (path: string) => {
@@ -240,8 +206,7 @@ const FileList: React.FC<FileListProps> = () => {
 			handleGoBackOneDirectory();
 			return;
 		}
-		changeCurrentWorkingDirectory(path);
-		setCurrentWorkingDirectoryUrl(path);
+		setCurrentWorkingDirectory(path);
 	};
 
 	return (
@@ -264,7 +229,7 @@ const FileList: React.FC<FileListProps> = () => {
 							<input type="file" id="fileInput" className="hidden" onChange={() => {}} />
 						</div>
 
-						<DrivePageTitle selectedItemsCount={countItem} onDelete={() => {}} />
+						<DrivePageTitle cwd={currentWorkingDirectory} selectedItemsCount={countItem} onDelete={() => {}} />
 
 						<div className="flex flex-col flex-1 w-full overflow-hidden">
 							<div className="grid grid-cols-4 gap-4 mb-4 font-semibold text-gray-600">
@@ -285,35 +250,36 @@ const FileList: React.FC<FileListProps> = () => {
 										folder
 										metadata={{ path: "..", created_at: new Date().toISOString(), deleted_at: null }}
 										onLeftClick={() =>
-											changeCurrentWorkingDirectory(currentWorkingDirectory.split("/").slice(0, -1).join("/") || "/")
+											setCurrentWorkingDirectory(currentWorkingDirectory.split("/").slice(0, -1).join("/") || "/")
 										}
 									/>
 								)}
 
-								{filteredFolders.map((folder) => (
+								{/*TODO: concat both lists and show them together, so it can be sorted by name*/}
+								{folders.map((folder) => (
 									<FileCard
 										metadata={folder}
 										folder
 										key={folder.path}
 										selected={selectedItems.has(folder.path)}
 										onLeftClick={() => handleGoToDirectory(folder.path)}
-										onRename={() => handleRename(folder.path, true)}
-										onDelete={() => handleDelete(folder.path, true)}
-										onMove={() => handleMove(folder.path, true)}
+										onRename={actions.has("rename") ? () => handleRename(folder.path, true) : undefined}
+										onDelete={actions.has("delete") ? () => handleDelete(folder.path, true) : undefined}
+										onMove={actions.has("move") ? () => handleMove(folder.path, true) : undefined}
 									/>
 								))}
 
-								{filteredFiles.map((file) => (
+								{files.map((file) => (
 									<FileCard
 										metadata={file}
 										key={file.path}
 										selected={selectedItems.has(file.path)}
 										onLeftClick={() => handleLeftClick(file.path)}
-										onRename={() => handleRename(file.path, false)}
-										onDelete={() => handleDelete(file.path, false)}
-										onMove={() => handleMove(file.path, false)}
-										onDownload={() => handleDownloadFile(file.path)}
-										onRestore={() => handleRestoreFile(file.path)}
+										onRename={actions.has("rename") ? () => handleRename(file.path, false) : undefined}
+										onDelete={actions.has("delete") ? () => handleDelete(file.path, false) : undefined}
+										onMove={actions.has("move") ? () => handleMove(file.path, false) : undefined}
+										onDownload={actions.has("download") ? () => handleDownloadFile(file) : undefined}
+										onRestore={actions.has("restore") ? () => handleRestoreFile(file.path) : undefined}
 									/>
 								))}
 							</div>
@@ -322,6 +288,7 @@ const FileList: React.FC<FileListProps> = () => {
 				</>
 			) : (
 				<div className="flex items-center justify-center h-screen">
+					{/*TODO: add a real loader*/}
 					<div className="text-2xl font-semibold">Loading...</div>
 				</div>
 			)}

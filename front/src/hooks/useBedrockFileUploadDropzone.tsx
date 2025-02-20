@@ -1,3 +1,4 @@
+import { useQueryState } from "nuqs";
 import { useCallback } from "react";
 import { DropzoneOptions, useDropzone } from "react-dropzone";
 import { toast } from "sonner";
@@ -7,7 +8,8 @@ import { useDriveStore } from "@/stores/drive";
 
 export default function useBedrockFileUploadDropzone(options: DropzoneOptions) {
 	const bedrockService = useAccountStore((state) => state.bedrockService);
-	const { addFiles, currentWorkingDirectory } = useDriveStore();
+	const { addFiles } = useDriveStore();
+	const [currentWorkingDirectory] = useQueryState("cwd", { defaultValue: "/" });
 
 	const onDrop = useCallback(
 		async (acceptedFiles: File[]) => {
