@@ -15,8 +15,5 @@
   "workspaces": [
     "front",
     "docs"
-  ],
-  "dependencies": {
-    "filesize": "^10.1.6"
-  }
+  ]
 }

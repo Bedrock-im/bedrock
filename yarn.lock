@@ -9489,7 +9489,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "bedrock@workspace:."
   dependencies:
-    filesize: "npm:^10.1.6"
     typescript: "npm:^5.6.3"
   languageName: unknown
   linkType: soft
@@ -12673,6 +12672,7 @@ __metadata:
     eslint-config-next: "npm:14.2.15"
     eslint-plugin-perfectionist: "npm:^3.9.1"
     eslint-plugin-storybook: "npm:^0.9.0"
+    filesize: "npm:^10.1.6"
     jest: "npm:^29.7.0"
     jest-environment-jsdom: "npm:^29.7.0"
     lucide-react: "npm:^0.453.0"
