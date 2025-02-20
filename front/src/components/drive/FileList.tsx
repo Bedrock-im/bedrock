@@ -278,7 +278,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 										selected={selectedItems.has(folder.path)}
 										onLeftClick={() => handleGoToDirectory(folder.path)}
 										onRename={actions.has("rename") ? () => handleRename(folder.path, true) : undefined}
-										onDelete={actions.has("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
+										onSoftDelete={actions.has("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
 										onHardDelete={actions.has("hardDelete") ? () => handleHardDelete(folder.path, true) : undefined}
 										onMove={actions.has("move") ? () => handleMove(folder.path, true) : undefined}
 									/>
@@ -291,7 +291,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 										selected={selectedItems.has(file.path)}
 										onLeftClick={() => handleLeftClick(file.path)}
 										onRename={actions.has("rename") ? () => handleRename(file.path, false) : undefined}
-										onDelete={actions.has("delete") ? () => handleSoftDelete(file.path, false) : undefined}
+										onSoftDelete={actions.has("delete") ? () => handleSoftDelete(file.path, false) : undefined}
 										onHardDelete={actions.has("hardDelete") ? () => handleHardDelete(file.path, true) : undefined}
 										onMove={actions.has("move") ? () => handleMove(file.path, false) : undefined}
 										onDownload={actions.has("download") ? () => handleDownloadFile(file) : undefined}

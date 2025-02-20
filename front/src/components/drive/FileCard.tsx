@@ -15,7 +15,7 @@ import { DriveFile, DriveFolder } from "@/stores/drive";
 export type FileCardProps = {
 	selected?: boolean;
 	onLeftClick?: () => void;
-	onDelete?: () => void;
+	onSoftDelete?: () => void;
 	onRename?: () => void;
 	onMove?: () => void;
 	onDownload?: () => void;
@@ -37,11 +37,12 @@ const FileCard = ({
 	folder,
 	selected = false,
 	onLeftClick,
-	onDelete,
+	onSoftDelete,
 	onMove,
 	onRename,
 	onDownload,
 	onRestore,
+	onHardDelete,
 	metadata,
 }: FileCardProps) => {
 	return (
@@ -96,10 +97,17 @@ const FileCard = ({
 					</ContextMenuItem>
 				)}
 
-				{onDelete && (
-					<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={onDelete}>
+				{onSoftDelete && (
+					<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={onSoftDelete}>
 						<Trash />
 						<ContextMenuLabel>Delete</ContextMenuLabel>
+					</ContextMenuItem>
+				)}
+
+				{onHardDelete && (
+					<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={onHardDelete}>
+						<Trash />
+						<ContextMenuLabel>Definitive delete</ContextMenuLabel>
 					</ContextMenuItem>
 				)}
 
