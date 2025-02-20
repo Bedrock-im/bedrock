@@ -2,13 +2,12 @@ import { filesize } from "filesize";
 import { ArchiveRestore, Edit, FileDown, FileText, FolderIcon, Move, Trash } from "lucide-react";
 import React from "react";
 
-import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import {
 	ContextMenu,
 	ContextMenuContent,
 	ContextMenuItem,
 	ContextMenuLabel,
-	ContextMenuSeparator,
 	ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { DriveFile, DriveFolder } from "@/stores/drive";
@@ -16,17 +15,15 @@ import { DriveFile, DriveFolder } from "@/stores/drive";
 export type FileCardProps = {
 	selected?: boolean;
 	onLeftClick?: () => void;
-	onDoubleClick?: () => void;
 	onDelete?: () => void;
 	onRename?: () => void;
 	onMove?: () => void;
 	onDownload?: () => void;
+	onRestore?: () => void;
 } & (FileCardFileProps | FileCardFolderProps);
 
 type FileCardFileProps = {
 	folder?: false;
-	onRestore?: () => void;
-	restoreButton?: boolean;
 	metadata: DriveFile;
 };
 
@@ -35,25 +32,23 @@ type FileCardFolderProps = {
 	metadata: DriveFolder;
 };
 
-const FileCard = (props: FileCardProps) => {
-	const {
-		folder,
-		selected = false,
-		onLeftClick,
-		onDoubleClick,
-		onDelete,
-		onMove,
-		onRename,
-		onDownload,
-		metadata,
-	} = props;
+const FileCard = ({
+	folder,
+	selected = false,
+	onLeftClick,
+	onDelete,
+	onMove,
+	onRename,
+	onDownload,
+	onRestore,
+	metadata,
+}: FileCardProps) => {
 	return (
 		<ContextMenu>
 			<ContextMenuTrigger>
 				<Card
 					className={`grid grid-cols-4 gap-3 p-2.5 mb-1.5 hover:bg-gray-100 hover:shadow-lg transition ${selected ? "selected" : ""}`}
 					onClick={onLeftClick}
-					onDoubleClick={onDoubleClick}
 				>
 					<CardTitle className="flex items-center">
 						{folder ? (
@@ -74,31 +69,41 @@ const FileCard = (props: FileCardProps) => {
 							<CardContent>{new Date(metadata.created_at).toLocaleString()}</CardContent>
 						</>
 					)}
-					<CardFooter>Owner</CardFooter>
 				</Card>
 			</ContextMenuTrigger>
 			<ContextMenuContent>
-				<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={() => onDownload?.()}>
-					<FileDown />
-					<ContextMenuLabel>Download</ContextMenuLabel>
-				</ContextMenuItem>
-				<ContextMenuSeparator />
-				<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={() => onRename?.()}>
-					<Edit />
-					<ContextMenuLabel>Rename</ContextMenuLabel>
-				</ContextMenuItem>
-				<ContextMenuSeparator />
-				<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={() => onMove?.()}>
-					<Move />
-					<ContextMenuLabel>Move</ContextMenuLabel>
-				</ContextMenuItem>
-				<ContextMenuSeparator />
-				<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={() => onDelete?.()}>
-					<Trash />
-					<ContextMenuLabel>Delete</ContextMenuLabel>
-				</ContextMenuItem>
-				{!props.folder && props.restoreButton && (
-					<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={() => props.onRestore?.()}>
+				{/*TODO: add some <ContextMenuSeparator /> between the existing elements*/}
+
+				{onDownload && (
+					<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={onDownload}>
+						<FileDown />
+						<ContextMenuLabel>Download</ContextMenuLabel>
+					</ContextMenuItem>
+				)}
+
+				{onRename && (
+					<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={onRename}>
+						<Edit />
+						<ContextMenuLabel>Rename</ContextMenuLabel>
+					</ContextMenuItem>
+				)}
+
+				{onMove && (
+					<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={onMove}>
+						<Move />
+						<ContextMenuLabel>Move</ContextMenuLabel>
+					</ContextMenuItem>
+				)}
+
+				{onDelete && (
+					<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={onDelete}>
+						<Trash />
+						<ContextMenuLabel>Delete</ContextMenuLabel>
+					</ContextMenuItem>
+				)}
+
+				{onRestore && (
+					<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={onRestore}>
 						<ArchiveRestore />
 						<ContextMenuLabel>Restore</ContextMenuLabel>
 					</ContextMenuItem>

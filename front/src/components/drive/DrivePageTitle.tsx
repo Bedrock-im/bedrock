@@ -1,22 +1,18 @@
 import { Trash } from "lucide-react";
 import React from "react";
 
-import { useDriveStore } from "@/stores/drive";
-
 export type DrivePageTitleProps = {
+	cwd: string;
 	selectedItemsCount: number;
-	onDelete: () => void; // Callback pour la suppression
+	onDelete: () => void;
 };
 
-export const DrivePageTitle: React.FC<DrivePageTitleProps> = ({ selectedItemsCount, onDelete }) => {
-	const { currentWorkingDirectory } = useDriveStore();
+export const DrivePageTitle: React.FC<DrivePageTitleProps> = ({ selectedItemsCount, onDelete, cwd }) => {
 	return (
 		<div className="drive-page-title">
 			<div className="flex items-center space-x-4">
 				<h1 className="text-2xl font-semibold">
-					{selectedItemsCount > 0
-						? `${selectedItemsCount} item${selectedItemsCount > 1 ? "s" : ""} selected`
-						: currentWorkingDirectory}
+					{selectedItemsCount > 0 ? `${selectedItemsCount} item${selectedItemsCount > 1 ? "s" : ""} selected` : cwd}
 				</h1>
 				{selectedItemsCount > 0 && (
 					<button
