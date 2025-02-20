@@ -2,7 +2,7 @@
 
 import { useLogin, useModalStatus } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useAccount } from "wagmi";
 
 import { authBackground } from "@/components/auth/background";
@@ -12,8 +12,16 @@ export default function Auth() {
 	const router = useRouter();
 	const account = useAccount();
 
-	const { login } = useLogin({ onComplete: () => router.push("/") });
+	const { login } = useLogin({ onComplete: () => handleBack });
 	const { isOpen: isPrivyModalOpen } = useModalStatus();
+
+	const handleBack = useCallback(() => {
+		if (window.history.length > 1) {
+			router.back();
+		} else {
+			router.push("/");
+		}
+	}, [router]);
 
 	useEffect(() => {
 		if (!isPrivyModalOpen) {
@@ -23,11 +31,11 @@ export default function Auth() {
 
 	useEffect(() => {
 		if (account.isConnected) {
-			router.push("/");
+			handleBack();
 			return;
 		}
 		authBackground(canvasRef);
-	}, [account, router]);
+	}, [account, router, handleBack]);
 
 	return (
 		<div className="fixed inset-0 bg-gradient-to-br from-blue-900 to-indigo-900">
