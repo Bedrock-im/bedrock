@@ -5,9 +5,10 @@ import { useQueryState } from "nuqs";
 import React, { useEffect, useState } from "react";
 
 import CurrentPath from "@/components/drive/CurrentPath";
-import { DrivePageTitle } from "@/components/drive/DrivePageTitle";
 import FileCard from "@/components/drive/FileCard";
+import SortOption from "@/components/drive/SortOption";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import useBedrockFileUploadDropzone from "@/hooks/useBedrockFileUploadDropzone";
@@ -30,15 +31,12 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 	const [currentWorkingDirectory, setCurrentWorkingDirectory] = useQueryState("cwd", { defaultValue: "/" });
 	const [sortColumn, setSortColumn] = useQueryState("sort", { defaultValue: "path" as SortColumn });
 	const [sortOrder, setSortOrder] = useQueryState("order", { defaultValue: "asc" as SortOrder });
-	const [countItem, setCountItem] = useState<number>(0);
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 	const [clickedItem, setClickedItem] = useState<string>();
 	const { setFiles, setFolders, softDeleteFile, restoreFile, addFolder, deleteFolder, moveFile, moveFolder } =
 		useDriveStore();
 	const { bedrockService } = useAccountStore();
 	const { getInputProps } = useBedrockFileUploadDropzone({});
-
-	let clickTimeout: NodeJS.Timeout | null = null;
 
 	useEffect(() => {
 		if (!bedrockService) {
@@ -80,15 +78,6 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 		})();
 	}, [bedrockService, setFolders, setFiles]);
 
-	const handleSort = (column: SortColumn) => {
-		if (sortColumn === column) {
-			setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-		} else {
-			setSortColumn(column);
-			setSortOrder("asc");
-		}
-	};
-
 	const handleDownloadFile = async (file: DriveFile) => {
 		if (!bedrockService) return;
 
@@ -129,28 +118,6 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 		addFolder(newFolder);
 
 		alert(`The folder "${folderName}" has been created locally. It will only be saved if a file is moved inside.`);
-	};
-
-	const handleLeftClick = (path: string) => {
-		if (clickTimeout) clearTimeout(clickTimeout);
-
-		clickTimeout = setTimeout(() => {
-			setSelectedItems((prevSelectedItems) => {
-				const updatedSelectedItems = new Set(prevSelectedItems);
-
-				if (updatedSelectedItems.has(path)) {
-					updatedSelectedItems.delete(path);
-					setCountItem(countItem - 1);
-				} else {
-					updatedSelectedItems.add(path);
-					setCountItem(countItem + 1);
-				}
-
-				return updatedSelectedItems;
-			});
-
-			clickTimeout = null;
-		}, 200);
 	};
 
 	const handleRename = (path: string, folder: boolean) => {
@@ -202,19 +169,6 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 		if (hash) bedrockService?.restoreFile({ post_hash: hash });
 	};
 
-	const handleGoBackOneDirectory = () => {
-		const newPath = currentWorkingDirectory.slice(0, -1).split("/").slice(0, -1).join("/") || "/";
-		setCurrentWorkingDirectory(newPath);
-	};
-
-	const handleGoToDirectory = (path: string) => {
-		if (path === "..") {
-			handleGoBackOneDirectory();
-			return;
-		}
-		setCurrentWorkingDirectory(path);
-	};
-
 	const selectItem = (path: string) => {
 		setSelectedItems((prev) => {
 			const updated = new Set(prev);
@@ -223,6 +177,19 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 			} else {
 				updated.add(path);
 			}
+			return updated;
+		});
+	};
+
+	const selectAll = () => {
+		setSelectedItems(() => {
+			if (selectedItems.size === files.length + folders.length) {
+				return new Set();
+			}
+
+			const updated = new Set<string>();
+			files.forEach((file) => updated.add(file.path));
+			folders.forEach((folder) => updated.add(folder.path));
 			return updated;
 		});
 	};
@@ -257,14 +224,50 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 				<Table>
 					<TableHeader>
 						<TableRow>
-							<TableHead className="w-[40px]"></TableHead>
-							<TableHead>Name</TableHead>
-							<TableHead>Size</TableHead>
-							<TableHead>Created At</TableHead>
+							<TableHead className="w-[40px]">
+								<Checkbox
+									checked={selectedItems.size === files.length + folders.length}
+									onClick={(e) => {
+										e.stopPropagation();
+										selectAll();
+									}}
+								/>
+							</TableHead>
+							<TableHead>
+								<SortOption
+									option="path"
+									name="Name"
+									sortColumn={sortColumn}
+									sortOrder={sortOrder}
+									setSortColumn={setSortColumn}
+									setSortOrder={setSortOrder}
+								/>
+							</TableHead>
+							<TableHead>
+								<SortOption
+									option="size"
+									name="Size"
+									sortColumn={sortColumn}
+									sortOrder={sortOrder}
+									setSortColumn={setSortColumn}
+									setSortOrder={setSortOrder}
+								/>
+							</TableHead>
+							<TableHead>
+								<SortOption
+									option="created_at"
+									name="Created At"
+									sortColumn={sortColumn}
+									sortOrder={sortOrder}
+									setSortColumn={setSortColumn}
+									setSortOrder={setSortOrder}
+								/>
+							</TableHead>
 							<TableHead className="text-right">Actions</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
+						{/* TODO: concat both lists and show them together, so it can be sorted by name */}
 						{folders.map((folder) => (
 							<FileCard
 								key={folder.path}
@@ -275,7 +278,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 								selected={selectedItems.has(folder.path)}
 								setSelected={() => selectItem(folder.path)}
 								onLeftClick={() => setClickedItem(folder.path)}
-								onDoubleClick={() => handleGoToDirectory(folder.path)}
+								onDoubleClick={() => setCurrentWorkingDirectory(folder.path + "/")}
 							/>
 						))}
 						{files.map((file) => (
@@ -292,63 +295,6 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 					</TableBody>
 				</Table>
 			</Card>
-
-			<div className="flex-1 p-4 w-full">
-				<DrivePageTitle cwd={currentWorkingDirectory} selectedItemsCount={countItem} onDelete={() => {}} />
-				<div className="flex flex-col flex-1 w-full overflow-hidden">
-					<div className="grid grid-cols-4 gap-4 mb-4 font-semibold text-gray-600">
-						<div onClick={() => handleSort("path")} className="cursor-pointer">
-							Name {sortColumn === "path" && (sortOrder === "asc" ? "↑" : "↓")}
-						</div>
-						<div onClick={() => handleSort("size")} className="cursor-pointer">
-							Size {sortColumn === "size" && (sortOrder === "asc" ? "↑" : "↓")}
-						</div>
-						<div onClick={() => handleSort("created_at")} className="cursor-pointer">
-							Created At {sortColumn === "created_at" && (sortOrder === "asc" ? "↑" : "↓")}
-						</div>
-					</div>
-
-					<div className="overflow-y-auto">
-						{currentWorkingDirectory !== "/" && (
-							<FileCard
-								folder
-								metadata={{ path: "..", created_at: new Date().toISOString(), deleted_at: null }}
-								onLeftClick={() =>
-									setCurrentWorkingDirectory(currentWorkingDirectory.split("/").slice(0, -1).join("/") || "/")
-								}
-							/>
-						)}
-
-						{/*TODO: concat both lists and show them together, so it can be sorted by name*/}
-						{folders.map((folder) => (
-							<FileCard
-								metadata={folder}
-								folder
-								key={folder.path}
-								selected={selectedItems.has(folder.path)}
-								onLeftClick={() => handleGoToDirectory(folder.path)}
-								onRename={actions.has("rename") ? () => handleRename(folder.path, true) : undefined}
-								onDelete={actions.has("delete") ? () => handleDelete(folder.path, true) : undefined}
-								onMove={actions.has("move") ? () => handleMove(folder.path, true) : undefined}
-							/>
-						))}
-
-						{files.map((file) => (
-							<FileCard
-								metadata={file}
-								key={file.path}
-								selected={selectedItems.has(file.path)}
-								onLeftClick={() => handleLeftClick(file.path)}
-								onRename={actions.has("rename") ? () => handleRename(file.path, false) : undefined}
-								onDelete={actions.has("delete") ? () => handleDelete(file.path, false) : undefined}
-								onMove={actions.has("move") ? () => handleMove(file.path, false) : undefined}
-								onDownload={actions.has("download") ? () => handleDownloadFile(file) : undefined}
-								onRestore={actions.has("restore") ? () => handleRestoreFile(file.path) : undefined}
-							/>
-						))}
-					</div>
-				</div>
-			</div>
 		</div>
 	);
 };

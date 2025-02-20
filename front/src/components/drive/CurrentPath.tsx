@@ -22,7 +22,7 @@ export default function CurrentPath({ path, setPath }: CurrentPathProps) {
 						<BreadcrumbSeparator />
 						<BreadcrumbItem
 							className="hover:cursor-pointer hover:text-primary"
-							onClick={() => setPath("/" + folders.slice(0, index + 1).join("/"))}
+							onClick={() => setPath("/" + folders.slice(0, index + 1).join("/") + "/")}
 						>
 							{folder}
 						</BreadcrumbItem>
