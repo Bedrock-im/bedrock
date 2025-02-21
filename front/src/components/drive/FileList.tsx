@@ -160,7 +160,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 	const handleSoftDelete = (path: string, folder: boolean) => {
 		if (folder) {
 			const filesToDelete = deleteFolder(path);
-			bedrockService?.hardDeleteFiles(...filesToDelete);
+			bedrockService?.softDeleteFile(...filesToDelete);
 		} else {
 			const deletionDatetime = new Date();
 			const hash = softDeleteFile(path, deletionDatetime);
