@@ -3,7 +3,6 @@
 import { useQueryState } from "nuqs";
 
 import FileList from "@/components/drive/FileList";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useDriveStore } from "@/stores/drive";
 
 export default function Home() {
@@ -29,17 +28,10 @@ export default function Home() {
 	);
 
 	return (
-		<section>
-			<header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-				<div className="flex items-center gap-2 px-4">
-					<SidebarTrigger />
-				</div>
-			</header>
-			<FileList
-				files={filteredFiles}
-				folders={filteredFolders}
-				actions={new Set(["download", "rename", "move", "delete"] as const)}
-			/>
-		</section>
+		<FileList
+			files={filteredFiles}
+			folders={filteredFolders}
+			actions={new Set(["download", "rename", "move", "delete"] as const)}
+		/>
 	);
 }

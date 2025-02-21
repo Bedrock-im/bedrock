@@ -19,22 +19,22 @@ import {
 const items = [
 	{
 		name: "My files",
-		url: "#",
+		url: "/",
 		icon: FolderIcon,
 	},
 	{
 		name: "Shared with me",
-		url: "#",
+		url: "/",
 		icon: Share2,
 	},
 	{
 		name: "Contacts",
-		url: "#",
+		url: "/contacts",
 		icon: Users,
 	},
 	{
 		name: "Trash",
-		url: "#",
+		url: "/",
 		icon: Trash2,
 	},
 ];
