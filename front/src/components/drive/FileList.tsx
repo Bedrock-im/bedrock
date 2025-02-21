@@ -198,7 +198,6 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 		}
 	};
 
-
 	const handleRestoreFile = (path: string) => {
 		const hash = restoreFile(path);
 		if (hash) bedrockService?.restoreFile({ post_hash: hash });
