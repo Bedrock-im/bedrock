@@ -19,7 +19,7 @@ import {
 const items = [
 	{
 		name: "My files",
-		url: "#",
+		url: "/",
 		icon: FolderIcon,
 	},
 	{
@@ -34,7 +34,7 @@ const items = [
 	},
 	{
 		name: "Trash",
-		url: "#",
+		url: "/trash",
 		icon: Trash2,
 	},
 ];
