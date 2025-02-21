@@ -121,7 +121,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 		const folderName = prompt("Enter folder name");
 		if (!folderName) return;
 
-		const newFolderPath = `${currentWorkingDirectory}/${folderName}`;
+		const newFolderPath = `${currentWorkingDirectory}${folderName}`;
 
 		// TODO: this check should be moved to the drive or bedrock service to check against all files, not just those passed to this component
 		// if (folders.some((folder) => folder.path === newFolderPath)) {
