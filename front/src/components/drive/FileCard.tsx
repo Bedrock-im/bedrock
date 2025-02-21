@@ -1,5 +1,5 @@
 import { filesize } from "filesize";
-import { Download, Edit, FileText, FolderIcon, Move, Trash } from "lucide-react";
+import { Download, Edit, FileText, FolderIcon, Move, Trash, ArchiveRestore } from "lucide-react";
 import React from "react";
 
 import ActionIcon from "@/components/drive/ActionIcon";
@@ -12,11 +12,13 @@ export type FileCardProps = {
 	selected?: boolean;
 	setSelected?: () => void;
 	onLeftClick?: () => void;
+	onDelete?: () => void;
 	onDoubleClick?: () => void;
 	onDownload?: () => void;
 	onRename?: () => void;
 	onMove?: () => void;
-	onDelete?: () => void;
+	onHardDelete?: () => void;
+	onRestore?: () => void;
 } & (FileCardFileProps | FileCardFolderProps);
 
 type FileCardFileProps = {
@@ -37,10 +39,12 @@ const FileCard = ({
 	setSelected,
 	onLeftClick,
 	onDoubleClick,
+	onDelete,
 	onDownload,
 	onRename,
 	onMove,
-	onDelete,
+	onRestore,
+	onHardDelete,
 }: FileCardProps) => {
 	return (
 		<TableRow
@@ -78,6 +82,8 @@ const FileCard = ({
 				{onRename && <ActionIcon Icon={Edit} onClick={onRename} tooltip="Rename" />}
 				{onMove && <ActionIcon Icon={Move} onClick={onMove} tooltip="Move" />}
 				{onDelete && <ActionIcon Icon={Trash} onClick={onDelete} tooltip="Delete" />}
+				{onHardDelete && <ActionIcon Icon={Trash} onClick={onHardDelete} tooltip="Definitive delete" />}
+				{onRestore && <ActionIcon Icon={ArchiveRestore} onClick={onRestore} tooltip="Restore" />}
 			</TableCell>
 		</TableRow>
 	);
@@ -133,10 +139,17 @@ const FileCard = ({
 					</ContextMenuItem>
 				)}
 
-				{onDelete && (
-					<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={onDelete}>
+				{onSoftDelete && (
+					<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={onSoftDelete}>
 						<Trash />
 						<ContextMenuLabel>Delete</ContextMenuLabel>
+					</ContextMenuItem>
+				)}
+
+				{onHardDelete && (
+					<ContextMenuItem className="flex space-x-4 cursor-pointer" onClick={onHardDelete}>
+						<Trash />
+						<ContextMenuLabel>Definitive delete</ContextMenuLabel>
 					</ContextMenuItem>
 				)}
 

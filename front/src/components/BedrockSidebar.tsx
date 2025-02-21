@@ -34,7 +34,7 @@ const items = [
 	},
 	{
 		name: "Trash",
-		url: "/",
+		url: "/trash",
 		icon: Trash2,
 	},
 ];

@@ -23,7 +23,7 @@ type SortOrder = "asc" | "desc";
 type FileListProps = {
 	files: DriveFile[];
 	folders: DriveFolder[];
-	actions: Set<"rename" | "download" | "delete" | "move" | "restore">;
+	actions: Set<"rename" | "download" | "delete" | "move" | "restore" | "hardDelete">;
 };
 
 const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
@@ -33,7 +33,8 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 	const [sortOrder, setSortOrder] = useQueryState("order", { defaultValue: "asc" as SortOrder });
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 	const [clickedItem, setClickedItem] = useState<string>();
-	const { setFiles, setFolders, softDeleteFile, addFolder, deleteFolder, moveFile, moveFolder } = useDriveStore();
+	const { setFiles, setFolders, softDeleteFile, addFolder, deleteFolder, moveFile, moveFolder, restoreFile } =
+		useDriveStore();
 	const { bedrockService } = useAccountStore();
 	const { getInputProps } = useBedrockFileUploadDropzone({});
 
@@ -156,7 +157,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 		}
 	};
 
-	const handleDelete = (path: string, folder: boolean) => {
+	const handleSoftDelete = (path: string, folder: boolean) => {
 		if (folder) {
 			const filesToDelete = deleteFolder(path);
 			bedrockService?.hardDeleteFiles(...filesToDelete);
@@ -164,6 +165,20 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 			const deletionDatetime = new Date();
 			const hash = softDeleteFile(path, deletionDatetime);
 			if (hash) bedrockService?.softDeleteFile({ post_hash: hash }, deletionDatetime);
+		}
+	};
+
+	const handleHardDelete = (path: string, folder: boolean) => {
+		if (folder) {
+			const filesToDelete = deleteFolder(path);
+			bedrockService?.hardDeleteFiles(...filesToDelete);
+		} else {
+			const fileToDelete = files.find((file) => file.path === path);
+			if (!fileToDelete) {
+				console.error("File not found:", path);
+				return;
+			}
+			bedrockService?.hardDeleteFiles(fileToDelete);
 		}
 	};
 
@@ -183,12 +198,10 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 		}
 	};
 
-	/*
 	const handleRestoreFile = (path: string) => {
 		const hash = restoreFile(path);
 		if (hash) bedrockService?.restoreFile({ post_hash: hash });
 	};
-	 */
 
 	const selectItem = (path: string) => {
 		setSelectedItems((prev) => {
@@ -299,7 +312,9 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 								setSelected={() => selectItem(folder.path)}
 								onLeftClick={() => setClickedItem(folder.path)}
 								onDoubleClick={() => setCurrentWorkingDirectory(folder.path + "/")}
-								onDelete={actions.has("delete") ? () => handleDelete(folder.path, true) : undefined}
+								onDelete={actions.has("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
+								onHardDelete={actions.has("hardDelete") ? () => handleHardDelete(folder.path, true) : undefined}
+								onRestore={actions.has("restore") ? () => handleRestoreFile(folder.path) : undefined}
 							/>
 						))}
 						{sortedFiles.map((file) => (
@@ -313,7 +328,9 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 								onDownload={actions.has("download") ? () => handleDownloadFile(file) : undefined}
 								onRename={actions.has("rename") ? () => handleRename(file.path, false) : undefined}
 								onMove={actions.has("move") ? () => handleMove(file.path, false) : undefined}
-								onDelete={actions.has("delete") ? () => handleDelete(file.path, false) : undefined}
+								onDelete={actions.has("delete") ? () => handleSoftDelete(file.path, false) : undefined}
+								onHardDelete={actions.has("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
+								onRestore={actions.has("restore") ? () => handleRestoreFile(file.path) : undefined}
 							/>
 						))}
 					</TableBody>
