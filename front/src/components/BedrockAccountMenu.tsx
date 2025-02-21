@@ -2,6 +2,7 @@
 
 import { useLogout, usePrivy } from "@privy-io/react-auth";
 import { BadgeCheck, Bell, ChevronsUpDown, LogOut, WrenchIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useAccount, useDisconnect, useEnsAvatar, useEnsName } from "wagmi";
 
 import { Avatar } from "@/components/ui/avatar";
@@ -38,6 +39,7 @@ const BedrockAccountAvatar = () => {
 export const BedrockAccountMenu = () => {
 	const { disconnect } = useDisconnect();
 	const { logout } = useLogout();
+	const router = useRouter();
 
 	return (
 		<DropdownMenu>
@@ -67,7 +69,7 @@ export const BedrockAccountMenu = () => {
 						<BadgeCheck />
 						Account
 					</DropdownMenuItem>
-					<DropdownMenuItem>
+					<DropdownMenuItem onClick={() => router.push("/settings")}>
 						<WrenchIcon />
 						Settings
 					</DropdownMenuItem>

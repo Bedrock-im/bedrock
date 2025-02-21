@@ -5,6 +5,9 @@ import { z } from "zod";
 import { AlephService } from "@/services/aleph";
 import { EncryptionService } from "@/services/encryption";
 
+const zodEncryptedHexString = z
+	.string()
+	.regex(/^[a-f0-9]+$/, { message: "Invalid data, it should be encrypted and in hex format." });
 export const FileEntrySchema = z.object({
 	path: z.string().regex(/^(\/[A-Za-z0-9-_+.]+)+$/, {
 		message: "Invalid URI format. It should start with '/', contain valid path segments and do not end with a '/'.",
@@ -15,7 +18,7 @@ export const FileEntrySchema = z.object({
 });
 
 export const EncryptedFileEntrySchema = z.object({
-	path: z.string().regex(/^[a-f0-9]+$/, { message: "Invalid data, it should be encrypted and in hex format." }),
+	path: zodEncryptedHexString,
 	post_hash: z.string().regex(/^[a-f0-9]{64}$/, {
 		message: "Invalid hash format. It should be a 64-character hexadecimal string.",
 	}),
@@ -37,12 +40,12 @@ export const FileMetaSchema = z.object({
 });
 
 export const EncryptedFileMetaSchema = z.object({
-	key: z.string().regex(/^[a-f0-9]+$/, { message: "Invalid data, it should be encrypted and in hex format." }),
-	iv: z.string().regex(/^[a-f0-9]+$/, { message: "Invalid data, it should be encrypted and in hex format." }),
-	store_hash: z.string().regex(/^[a-f0-9]+$/, { message: "Invalid data, it should be encrypted and in hex format." }),
-	size: z.string().regex(/^[a-f0-9]+$/, { message: "Invalid data, it should be encrypted and in hex format." }),
-	created_at: z.string().regex(/^[a-f0-9]+$/, { message: "Invalid data, it should be encrypted and in hex format." }),
-	deleted_at: z.string().regex(/^[a-f0-9]+$/, { message: "Invalid data, it should be encrypted and in hex format." }),
+	key: zodEncryptedHexString,
+	iv: zodEncryptedHexString,
+	store_hash: zodEncryptedHexString,
+	size: zodEncryptedHexString,
+	created_at: zodEncryptedHexString,
+	deleted_at: zodEncryptedHexString,
 });
 
 export const FileFullInfosSchema = FileEntrySchema.merge(FileMetaSchema);
@@ -56,8 +59,23 @@ export const EncryptedFileEntriesSchema = z.object({
 	files: z.array(EncryptedFileEntrySchema).default([]),
 });
 
+export const ContactSchema = z.object({
+	name: z.string(),
+	public_key: z.string(),
+});
+
+export const EncryptedContactSchema = z.object({
+	name: zodEncryptedHexString,
+	public_key: zodEncryptedHexString,
+});
+
+export const EncryptedContactsAggregate = z.object({
+	contacts: z.array(EncryptedContactSchema),
+});
+
 const FILE_ENTRIES_AGGREGATE_KEY = "bedrock_file_entries";
 const FILE_POST_TYPE = "bedrock_file";
+const CONTACTS_AGGREGATE_KEY = "bedrock_contacts";
 
 export type FileEntry = z.infer<typeof FileEntrySchema>;
 export type FileMeta = z.infer<typeof FileMetaSchema>;
@@ -65,9 +83,16 @@ export type EncryptedFileEntry = z.infer<typeof EncryptedFileEntrySchema>;
 export type EncryptedFileMeta = z.infer<typeof EncryptedFileMetaSchema>;
 export type FileFullInfos = z.infer<typeof FileFullInfosSchema>;
 export type EncryptedFileEntriesSchema = z.infer<typeof EncryptedFileEntriesSchema>;
+export type ContactSchema = z.infer<typeof ContactSchema>;
+export type EncryptedContactSchema = z.infer<typeof EncryptedContactSchema>;
+export type EncryptedContactsAggregate = z.infer<typeof EncryptedContactsAggregate>;
 
 export default class BedrockService {
 	constructor(private alephService: AlephService) {}
+
+	get alephPublicKey(): string {
+		return this.alephService.encryptionPrivateKey.publicKey.compressed.toString("hex");
+	}
 
 	async setup(): Promise<void> {
 		try {
@@ -81,6 +106,25 @@ export default class BedrockService {
 				throw err;
 			}
 		}
+
+		try {
+			await this.fetchContacts();
+		} catch (err) {
+			if (err instanceof MessageNotFoundError) {
+				// New user with no contacts yet
+				const emptyContacts: EncryptedContactsAggregate = { contacts: [] };
+				await this.alephService.createAggregate(CONTACTS_AGGREGATE_KEY, emptyContacts);
+			}
+		}
+	}
+
+	async resetData(): Promise<void> {
+		// TODO: also forget the POST, STORE files etc
+		const emptyFileEntries: EncryptedFileEntriesSchema = { files: [] };
+		await this.alephService.createAggregate(FILE_ENTRIES_AGGREGATE_KEY, emptyFileEntries);
+
+		const emptyContacts: EncryptedContactsAggregate = { contacts: [] };
+		await this.alephService.createAggregate(CONTACTS_AGGREGATE_KEY, emptyContacts);
 	}
 
 	async uploadFiles(directoryPath: string, ...files: File[]): Promise<Omit<FileFullInfos, "post_hash">[]> {
@@ -186,15 +230,20 @@ export default class BedrockService {
 		return newFiles;
 	}
 
-	fileExists(files: FileEntry[], path: string): boolean {
-		return files.some((entry) => entry.path === path);
-	}
-
 	async fetchFileEntries(): Promise<FileEntry[]> {
 		return (await this.alephService.fetchAggregate(FILE_ENTRIES_AGGREGATE_KEY, EncryptedFileEntriesSchema)).files.map(
 			({ post_hash, path }) => ({
 				post_hash,
 				path: EncryptionService.decryptEcies(path, this.alephService.encryptionPrivateKey.secret),
+			}),
+		);
+	}
+
+	async fetchContacts(): Promise<ContactSchema[]> {
+		return (await this.alephService.fetchAggregate(CONTACTS_AGGREGATE_KEY, EncryptedContactsAggregate)).contacts.map(
+			(contact) => ({
+				name: EncryptionService.decryptEcies(contact.name, this.alephService.encryptionPrivateKey.secret),
+				public_key: EncryptionService.decryptEcies(contact.public_key, this.alephService.encryptionPrivateKey.secret),
 			}),
 		);
 	}
@@ -340,6 +389,35 @@ export default class BedrockService {
 		});
 	}
 
+	async downloadFileFromStoreHash(storeHash: string, key: string, iv: string): Promise<Buffer> {
+		const encryptedBuffer = await this.alephService.downloadFile(storeHash);
+		const bufferKey = Buffer.from(key, "hex");
+		const bufferIv = Buffer.from(iv, "hex");
+		return EncryptionService.decryptFile(encryptedBuffer, bufferKey, bufferIv);
+	}
+
+	async createContact(name: string, public_key: string): Promise<void> {
+		await this.alephService.updateAggregate(CONTACTS_AGGREGATE_KEY, EncryptedContactsAggregate, ({ contacts }) => {
+			// TODO: add duplication check
+			return {
+				contacts: [
+					...contacts,
+					{
+						name: EncryptionService.encryptEcies(name, this.alephService.encryptionPrivateKey.publicKey.compressed),
+						public_key: EncryptionService.encryptEcies(
+							public_key,
+							this.alephService.encryptionPrivateKey.publicKey.compressed,
+						),
+					},
+				],
+			};
+		});
+	}
+
+	private fileExists(files: FileEntry[], path: string): boolean {
+		return files.some((entry) => entry.path === path);
+	}
+
 	private async postFile({
 		key,
 		iv,
@@ -359,13 +437,6 @@ export default class BedrockService {
 			deleted_at: EncryptionService.encrypt(deleted_at ?? "null", bufferKey, bufferIv),
 		});
 		return item_hash;
-	}
-
-	async downloadFileFromStoreHash(storeHash: string, key: string, iv: string): Promise<Buffer> {
-		const encryptedBuffer = await this.alephService.downloadFile(storeHash);
-		const bufferKey = Buffer.from(key, "hex");
-		const bufferIv = Buffer.from(iv, "hex");
-		return EncryptionService.decryptFile(encryptedBuffer, bufferKey, bufferIv);
 	}
 
 	private decryptFilesPaths(files: EncryptedFileEntry[]): FileEntry[] {

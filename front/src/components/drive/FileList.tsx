@@ -33,8 +33,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 	const [sortOrder, setSortOrder] = useQueryState("order", { defaultValue: "asc" as SortOrder });
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 	const [clickedItem, setClickedItem] = useState<string>();
-	const { setFiles, setFolders, softDeleteFile, restoreFile, addFolder, deleteFolder, moveFile, moveFolder } =
-		useDriveStore();
+	const { setFiles, setFolders, softDeleteFile, addFolder, deleteFolder, moveFile, moveFolder } = useDriveStore();
 	const { bedrockService } = useAccountStore();
 	const { getInputProps } = useBedrockFileUploadDropzone({});
 

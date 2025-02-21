@@ -24,12 +24,12 @@ const items = [
 	},
 	{
 		name: "Shared with me",
-		url: "#",
+		url: "/",
 		icon: Share2,
 	},
 	{
 		name: "Contacts",
-		url: "#",
+		url: "/contacts",
 		icon: Users,
 	},
 	{
