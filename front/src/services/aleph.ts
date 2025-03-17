@@ -135,10 +135,8 @@ export class AlephService {
 		});
 	}
 
-	async fetchAggregate<T extends z.ZodTypeAny>(key: string, schema: T) {
-		const { success, data, error } = schema.safeParse(
-			await this.subAccountClient.fetchAggregate(this.account.address, key),
-		);
+	async fetchAggregate<T extends z.ZodTypeAny>(key: string, schema: T, owner: string = this.account.address) {
+		const { success, data, error } = schema.safeParse(await this.subAccountClient.fetchAggregate(owner, key));
 		if (!success) throw new Error(`Invalid data from Aleph: ${error.message}`);
 		return data as z.infer<T>;
 	}
@@ -146,10 +144,10 @@ export class AlephService {
 	async updateAggregate<S extends z.ZodTypeAny, T extends z.infer<S>>(
 		key: string,
 		schema: S,
-		update_content: (content: T) => T,
+		update_content: (content: T) => Promise<T>,
 	): Promise<AggregateMessage<T>> {
 		const currentContent = await this.fetchAggregate(key, schema);
-		const newContent = update_content(currentContent);
+		const newContent = await update_content(currentContent);
 
 		return await this.createAggregate(key, newContent);
 	}

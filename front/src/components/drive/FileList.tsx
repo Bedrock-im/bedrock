@@ -70,6 +70,8 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 							path,
 							created_at: new Date().toISOString(),
 							deleted_at: null,
+							shared_with: [],
+							shared_keys: {},
 						})),
 				]);
 			} catch (error) {
@@ -129,10 +131,12 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 		// 	return;
 		// }
 
-		const newFolder = {
+		const newFolder: DriveFolder = {
 			path: newFolderPath,
 			created_at: new Date().toISOString(),
 			deleted_at: null,
+			shared_with: [],
+			shared_keys: {},
 		};
 
 		addFolder(newFolder);
