@@ -1,9 +1,8 @@
 "use client";
 
-import { useLogout, usePrivy } from "@privy-io/react-auth";
 import { BadgeCheck, Bell, ChevronsUpDown, LogOut, WrenchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useAccount, useDisconnect, useEnsAvatar, useEnsName } from "wagmi";
+import { useActiveAccount, useActiveWallet, useDisconnect } from "thirdweb/react";
 
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -19,27 +18,31 @@ import { SidebarMenuButton } from "@/components/ui/sidebar";
 import { shrinkEthAddress } from "@/utils/ethereum";
 
 const BedrockAccountAvatar = () => {
-	const account = useAccount();
-	const { user: privyUser } = usePrivy();
-	const { data: ensName } = useEnsName({ address: account.address });
-	const { data: ensAvatar } = useEnsAvatar({ name: ensName ?? "" });
+	const account = useActiveAccount();
+
+	if (account === undefined) {
+		return null;
+	}
 
 	return (
 		<>
 			{/*TODO: add default avatar picture*/}
-			<Avatar className="h-8 w-8 rounded-lg" src={ensAvatar ?? undefined} alt="CN" />
+			<Avatar className="h-8 w-8 rounded-lg" alt="CN" />
 			<div className="grid flex-1 text-left text-sm leading-tight">
-				<span className="truncate font-semibold">{ensName ?? shrinkEthAddress(account.address ?? "")}</span>
-				{privyUser?.email?.address && <span className="truncate text-xs">{privyUser?.email?.address}</span>}
+				<span className="truncate font-semibold">{shrinkEthAddress(account.address ?? "")}</span>
 			</div>
 		</>
 	);
 };
 
 export const BedrockAccountMenu = () => {
+	const wallet = useActiveWallet();
 	const { disconnect } = useDisconnect();
-	const { logout } = useLogout();
 	const router = useRouter();
+
+	if (wallet === undefined) {
+		return null;
+	}
 
 	return (
 		<DropdownMenu>
@@ -79,13 +82,7 @@ export const BedrockAccountMenu = () => {
 					</DropdownMenuItem>
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
-				<DropdownMenuItem
-					onClick={async () => {
-						disconnect();
-						await logout();
-					}}
-					className="cursor-pointer"
-				>
+				<DropdownMenuItem onClick={() => disconnect(wallet)} className="cursor-pointer">
 					<LogOut />
 					Log out
 				</DropdownMenuItem>
