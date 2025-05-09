@@ -66,14 +66,15 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
       - name: Install dependencies
         run: yarn install --immutable
+      - name: Create .env file
+        run: |
+          echo "NEXT_PUBLIC_THIRDWEB_CLIENT_ID=${{ secrets.FRONT_NEXT_PUBLIC_THIRDWEB_CLIENT_ID }}" >> front/.env
       - name: Build
         run: yarn workspace front build
-        env:
-          NEXT_PUBLIC_PRIVY_APP_ID: ${{ secrets.FRONT_NEXT_PUBLIC_PRIVY_APP_ID }}
 
       - name: Deploy preview on Aleph
         if: ${{ github.event_name == 'pull_request' }}
-        uses: aleph-im/web3-hosting-action@v0.1.1
+        uses: aleph-im/web3-hosting-action@v1.0.0
         with:
           path: 'front/out'
 

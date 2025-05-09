@@ -30,6 +30,7 @@ export class AlephService {
 		const encryptionPrivateKey = PrivateKey.fromHex(privateKey);
 
 		const subAccount = importAccountFromPrivateKey(privateKey);
+		// @ts-expect-error undefined window.ethereum
 		const account = await getAccountFromProvider(window.ethereum);
 		const accountClient = new AuthenticatedAlephHttpClient(account, env.ALEPH_API_URL);
 		const subAccountClient = new AuthenticatedAlephHttpClient(subAccount, env.ALEPH_API_URL);

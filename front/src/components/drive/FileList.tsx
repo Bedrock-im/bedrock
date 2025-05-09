@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import useBedrockFileUploadDropzone from "@/hooks/useBedrockFileUploadDropzone";
+import useBedrockFileUploadDropzone from "@/hooks/use-bedrock-file-upload-dropzone";
 import { useAccountStore } from "@/stores/account";
 import { DriveFile, DriveFolder, useDriveStore } from "@/stores/drive";
 
