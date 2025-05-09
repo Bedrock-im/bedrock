@@ -17,9 +17,14 @@ export function Watchers({ children }: WatchersProps) {
 		onAccountChange(account).then();
 	}, [account, onAccountChange]);
 
-	wallet?.subscribe("accountChanged", (account) => {
-		onAccountChange(account).then();
-	});
+	useEffect(() => {
+		const unsubscribe = wallet?.subscribe("accountChanged", (account) => {
+			onAccountChange(account).then();
+		});
 
+		return () => {
+			unsubscribe?.();
+		};
+	}, [wallet, onAccountChange]);
 	return <>{children}</>;
 }
