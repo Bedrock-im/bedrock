@@ -15,5 +15,8 @@
   "workspaces": [
     "front",
     "docs"
-  ]
+  ],
+  "dependencies": {
+    "ts-node": "^10.9.2"
+  }
 }
