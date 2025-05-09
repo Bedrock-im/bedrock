@@ -1,12 +1,7 @@
 "use client";
+import { ReactNode, useEffect } from "react";
+import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 
-import { signMessage } from "@wagmi/core";
-import { ReactNode, useCallback, useEffect } from "react";
-import { useAccount, useAccountEffect } from "wagmi";
-
-import { wagmiConfig } from "@/config/wagmi";
-import { AlephService, BEDROCK_MESSAGE } from "@/services/aleph";
-import BedrockService from "@/services/bedrock";
 import { useAccountStore } from "@/stores/account";
 
 type WatchersProps = {
@@ -14,36 +9,16 @@ type WatchersProps = {
 };
 
 export function Watchers({ children }: WatchersProps) {
-	const account = useAccount();
-	const accountStore = useAccountStore();
-
-	const initAccount = useCallback(async () => {
-		const hash = await signMessage(wagmiConfig, { message: BEDROCK_MESSAGE });
-		const alephService = await AlephService.initialize(hash);
-		if (alephService === undefined) {
-			return;
-		}
-
-		const bedrockService = new BedrockService(alephService);
-		await bedrockService.setup();
-
-		accountStore.connect(bedrockService);
-	}, [accountStore]);
+	const account = useActiveAccount();
+	const wallet = useActiveWallet();
+	const onAccountChange = useAccountStore((state) => state.onAccountChange);
 
 	useEffect(() => {
-		if (account.isConnected && !accountStore.bedrockService) {
-			initAccount();
-		}
-	}, [account, accountStore, initAccount]);
+		onAccountChange(account).then();
+	}, [account, onAccountChange]);
 
-	useAccountEffect({
-		async onConnect() {
-			// TODO: add some local storage persistance with user settings choice
-			await initAccount();
-		},
-		onDisconnect() {
-			accountStore.onDisconnect();
-		},
+	wallet?.subscribe("accountChanged", (account) => {
+		onAccountChange(account).then();
 	});
 
 	return <>{children}</>;
