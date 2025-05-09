@@ -20,7 +20,7 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
 	title: "Bedrock",
-	description: "TODO",
+	description: "Your private workspace by design, not by promise.",
 };
 
 export default function RootLayout({
