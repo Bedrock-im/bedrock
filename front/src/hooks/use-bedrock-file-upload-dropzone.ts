@@ -22,7 +22,11 @@ export default function useBedrockFileUploadDropzone(options: DropzoneOptions) {
 			});
 			const awaitedFileInfos = await fileInfos.catch(() => []);
 			if (awaitedFileInfos.length === 0) return;
-			const fileEntries = bedrockService.saveFiles(...awaitedFileInfos);
+			const safeFileInfos = awaitedFileInfos.map((info) => ({
+				...info,
+				shared_keys: info.shared_keys ?? {},
+			}));
+			const fileEntries = bedrockService.saveFiles(...safeFileInfos);
 			toast.promise(fileEntries, {
 				loading: `Saving ${awaitedFileInfos.length} files...`,
 				success: (savedFiles) => `Successfully saved ${savedFiles.length} files`,
