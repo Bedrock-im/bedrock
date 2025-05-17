@@ -5,6 +5,7 @@ import { FileFullInfos } from "@/services/bedrock";
 type DriveStoreState = {
 	files: DriveFile[];
 	folders: DriveFolder[];
+	sharedFiles: DriveFile[];
 };
 
 export type DriveFile = FileFullInfos;
@@ -13,6 +14,7 @@ export type DriveFolder = Omit<DriveFile, "store_hash" | "post_hash" | "size" | 
 type DriveStoreActions = {
 	setFiles: (files: DriveFile[]) => void;
 	setFolders: (folders: DriveFolder[]) => void;
+	setSharedFiles: (sharedFiles: DriveFile[]) => void;
 	addFile: (file: DriveFile) => void;
 	addFiles: (files: DriveFile[]) => void;
 	addFolder: (folder: DriveFolder) => void;
@@ -27,8 +29,10 @@ type DriveStoreActions = {
 export const useDriveStore = create<DriveStoreState & DriveStoreActions>((set, getState) => ({
 	files: [],
 	folders: [],
+	sharedFiles: [],
 	setFiles: (files) => set({ files }),
 	setFolders: (folders) => set({ folders }),
+	setSharedFiles: (sharedFiles) => set({ sharedFiles }),
 	addFile: (file) => set((state) => ({ files: [...state.files, file] })),
 	addFiles: (files) => set((state) => ({ files: [...state.files, ...files] })),
 	addFolder: (folder) => set((state) => ({ folders: [...state.folders, folder] })),

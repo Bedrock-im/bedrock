@@ -306,8 +306,6 @@ export default class BedrockService {
 			}),
 		);
 
-		if (results.length === 0) return Promise.reject("No files were fetched");
-
 		return results
 			.filter((result): result is PromiseFulfilledResult<FileFullInfos> => {
 				if (result.status === "rejected") {
@@ -593,11 +591,21 @@ export default class BedrockService {
 		);
 	}
 
-	async fetchFilesSharedByContact(contact: Pick<ContactSchema, "address" | "public_key">): Promise<FileEntry[]> {
+	async fetchFilesSharedByContact(contact: Pick<ContactSchema, "address" | "public_key">): Promise<FileFullInfos[]> {
 		const fileEntries = (
 			await this.alephService.fetchAggregate(FILE_ENTRIES_AGGREGATE_KEY, EncryptedFileEntriesSchema)
 		).files
 			.filter(({ shared_with }) => shared_with.includes(contact.public_key))
+			.map(({ path: _, ...rest }) => ({ path: "/", ...rest }));
+
+		return this.fetchFilesMetaFromEntries(...fileEntries);
+	}
+
+	async fetchFilesShared(): Promise<FileFullInfos[]> {
+		const fileEntries = (
+			await this.alephService.fetchAggregate(FILE_ENTRIES_AGGREGATE_KEY, EncryptedFileEntriesSchema)
+		).files
+			.filter(({ shared_with }) => shared_with.includes(this.alephPublicKey))
 			.map(({ path: _, ...rest }) => ({ path: "/", ...rest }));
 
 		return this.fetchFilesMetaFromEntries(...fileEntries);
