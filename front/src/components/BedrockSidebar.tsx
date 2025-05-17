@@ -1,3 +1,5 @@
+"use client";
+
 import { Command, FolderIcon, Share2, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { ReactNode } from "react";
