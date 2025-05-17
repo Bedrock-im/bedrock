@@ -132,15 +132,6 @@ export default class BedrockService {
 		}
 	}
 
-	async resetData(): Promise<void> {
-		// TODO: also forget the POST, STORE files etc
-		const emptyFileEntries: EncryptedFileEntriesSchema = { files: [] };
-		await this.alephService.createAggregate(FILE_ENTRIES_AGGREGATE_KEY, emptyFileEntries);
-
-		const emptyContacts: EncryptedContactsAggregate = { contacts: [] };
-		await this.alephService.createAggregate(CONTACTS_AGGREGATE_KEY, emptyContacts);
-	}
-
 	async uploadFiles(directoryPath: string, ...files: File[]): Promise<Omit<FileFullInfos, "post_hash">[]> {
 		const uploadedFiles = await this.fetchFileEntries();
 		const results = await Promise.allSettled(
@@ -318,9 +309,21 @@ export default class BedrockService {
 			.map((result) => result.value);
 	}
 
+	async resetData(): Promise<void> {
+		// TODO: also forget the POST, STORE files etc
+		await this.resetFiles();
+		await this.resetContacts();
+	}
+
 	async resetFiles(): Promise<void> {
 		await this.alephService.updateAggregate(FILE_ENTRIES_AGGREGATE_KEY, EncryptedFileEntriesSchema, async () => ({
 			files: [],
+		}));
+	}
+
+	async resetContacts(): Promise<void> {
+		await this.alephService.updateAggregate(CONTACTS_AGGREGATE_KEY, EncryptedContactsAggregate, async () => ({
+			contacts: [],
 		}));
 	}
 
