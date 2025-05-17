@@ -39,18 +39,23 @@ export default function Contacts() {
 			return;
 		}
 
-		const publicKey = prompt("Enter new contact Public Key");
+		const address = prompt("Enter new contact address");
+		if (!address) {
+			return;
+		}
+
+		const publicKey = prompt("Enter new contact public key");
 		if (!publicKey) {
 			return;
 		}
 
 		try {
-			await bedrockService?.createContact(name, publicKey, publicKey);
+			await bedrockService?.createContact(name, address, publicKey);
 			setContacts([
 				...contacts,
 				{
 					name,
-					address: publicKey,
+					address: address,
 					public_key: publicKey,
 				},
 			]);

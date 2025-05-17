@@ -1,5 +1,5 @@
 import { filesize } from "filesize";
-import { Download, Edit, FileText, FolderIcon, Move, Trash, ArchiveRestore } from "lucide-react";
+import { Download, Edit, FileText, FolderIcon, Move, Share2, Trash, ArchiveRestore } from "lucide-react";
 import React from "react";
 
 import ActionIcon from "@/components/drive/ActionIcon";
@@ -13,6 +13,7 @@ export type FileCardProps = {
 	setSelected?: () => void;
 	onLeftClick?: () => void;
 	onDelete?: () => void;
+	onShare?: () => void;
 	onDoubleClick?: () => void;
 	onDownload?: () => void;
 	onRename?: () => void;
@@ -42,6 +43,7 @@ const FileCard = ({
 	onDelete,
 	onDownload,
 	onRename,
+	onShare,
 	onMove,
 	onRestore,
 	onHardDelete,
@@ -79,6 +81,7 @@ const FileCard = ({
 			<TableCell>{new Date(metadata.created_at).toLocaleString()}</TableCell>
 			<TableCell className="flex justify-end items-center gap-2 mt-1">
 				{onDownload && <ActionIcon Icon={Download} onClick={onDownload} tooltip="Download" />}
+				{onShare && <ActionIcon Icon={Share2} onClick={onShare} tooltip="Share" />}
 				{onRename && <ActionIcon Icon={Edit} onClick={onRename} tooltip="Rename" />}
 				{onMove && <ActionIcon Icon={Move} onClick={onMove} tooltip="Move" />}
 				{onDelete && <ActionIcon Icon={Trash} onClick={onDelete} tooltip="Delete" />}
