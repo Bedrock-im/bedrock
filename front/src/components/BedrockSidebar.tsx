@@ -24,7 +24,7 @@ const items = [
 	},
 	{
 		name: "Shared with me",
-		url: "/",
+		url: "/shared",
 		icon: Share2,
 	},
 	{
