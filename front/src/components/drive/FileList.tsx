@@ -33,8 +33,17 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 	const [sortOrder, setSortOrder] = useQueryState("order", { defaultValue: "asc" as SortOrder });
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 	const [clickedItem, setClickedItem] = useState<string>();
-	const { setFiles, setFolders, softDeleteFile, addFolder, deleteFolder, moveFile, moveFolder, restoreFile } =
-		useDriveStore();
+	const {
+		setFiles,
+		setFolders,
+		setSharedFiles,
+		softDeleteFile,
+		addFolder,
+		deleteFolder,
+		moveFile,
+		moveFolder,
+		restoreFile,
+	} = useDriveStore();
 	const { bedrockService } = useAccountStore();
 	const { getInputProps } = useBedrockFileUploadDropzone({});
 
@@ -47,6 +56,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 			try {
 				const fileEntries = await bedrockService.fetchFileEntries();
 				const fullFiles = await bedrockService.fetchFilesMetaFromEntries(...fileEntries);
+				const sharedFiles = await bedrockService.fetchFilesShared();
 
 				const folderPaths = new Set<string>();
 
@@ -74,11 +84,12 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 							shared_keys: {},
 						})),
 				]);
+				setSharedFiles(sharedFiles);
 			} catch (error) {
 				console.error("Failed to fetch files:", error);
 			}
 		})();
-	}, [bedrockService, setFolders, setFiles]);
+	}, [bedrockService, setFolders, setFiles, setSharedFiles]);
 
 	const { sortedFiles, sortedFolders } = useMemo(
 		() => ({

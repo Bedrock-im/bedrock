@@ -1,6 +1,7 @@
 "use client";
-import { CheckIcon, CopyIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { CheckIcon, CopyIcon, Plus } from "lucide-react";
+import { useQueryState } from "nuqs";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ export default function Contacts() {
 
 	const [publicKey, setPublicKey] = useState<string>("");
 	const [contacts, setContacts] = useState<ContactSchema[]>([]);
+	const [_searchQuery, _setSearchQuery] = useQueryState("search", { defaultValue: "" });
 
 	const [isCopied, setIsCopied] = useState(false);
 
@@ -29,6 +31,30 @@ export default function Contacts() {
 				toast.error("Copy failed");
 			}
 		}
+	};
+
+	const handleAddContact = async () => {
+		const name = prompt("Enter new contact name");
+		if (!name) {
+			return;
+		}
+
+		const publicKey = prompt("Enter new contact Public Key");
+		if (!publicKey) {
+			return;
+		}
+
+		try {
+			await bedrockService?.createContact(name, publicKey, publicKey);
+			setContacts([
+				...contacts,
+				{
+					name,
+					address: publicKey,
+					public_key: publicKey,
+				},
+			]);
+		} catch (_error) {}
 	};
 
 	useEffect(() => {
@@ -50,23 +76,32 @@ export default function Contacts() {
 
 	return (
 		<>
-			<div className="max-w-md mx-auto p-4">
-				<label htmlFor="sensitive-input" className="block text-sm font-medium mb-2">
-					Public key
-				</label>
-				<div className="relative">
-					<Input type="text" id="public-key" value={publicKey} className="pr-10" disabled />
-					<Button
-						type="button"
-						variant="ghost"
-						size="icon"
-						className="absolute right-0 top-0 h-full px-3"
-						onClick={copyToClipboard}
-						disabled={!publicKey}
-						aria-label="Copy sensitive data to clipboard"
-					>
-						{isCopied ? <CheckIcon className="h-4 w-4 text-green-500" /> : <CopyIcon className="h-4 w-4" />}
-					</Button>
+			<div className="flex items-center m-2 gap-4">
+				<button
+					className="ml-2 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all transform hover:scale-100 scale-90 focus:outline-none focus:ring-4 focus:ring-blue-300 flex items-center justify-center"
+					aria-label="Add"
+					onClick={handleAddContact}
+				>
+					<Plus size={20} className="transition-transform duration-300 transform group-hover:rotate-90" />
+				</button>
+				<div className="w-full">
+					<label htmlFor="sensitive-input" className="block text-sm font-medium mb-2">
+						Your Public key
+					</label>
+					<div className="relative">
+						<Input type="text" id="public-key" value={publicKey} className="pr-10" disabled />
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon"
+							className="absolute right-0 top-0 h-full px-2"
+							onClick={copyToClipboard}
+							disabled={!publicKey}
+							aria-label="Copy sensitive data to clipboard"
+						>
+							{isCopied ? <CheckIcon className="h-4 w-4 text-green-500" /> : <CopyIcon className="h-4 w-4" />}
+						</Button>
+					</div>
 				</div>
 			</div>
 			<Card className="m-2 pb-2 gap-y-4">
