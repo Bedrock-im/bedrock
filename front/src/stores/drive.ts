@@ -1,11 +1,12 @@
 import { create } from "zustand";
 
-import { FileFullInfos } from "@/services/bedrock";
+import { ContactSchema, FileFullInfos } from "@/services/bedrock";
 
 type DriveStoreState = {
 	files: DriveFile[];
 	folders: DriveFolder[];
 	sharedFiles: DriveFile[];
+	contacts: ContactSchema[];
 };
 
 export type DriveFile = FileFullInfos;
@@ -15,6 +16,7 @@ type DriveStoreActions = {
 	setFiles: (files: DriveFile[]) => void;
 	setFolders: (folders: DriveFolder[]) => void;
 	setSharedFiles: (sharedFiles: DriveFile[]) => void;
+	setContacts: (contacts: ContactSchema[]) => void;
 	addFile: (file: DriveFile) => void;
 	addFiles: (files: DriveFile[]) => void;
 	addFolder: (folder: DriveFolder) => void;
@@ -30,9 +32,11 @@ export const useDriveStore = create<DriveStoreState & DriveStoreActions>((set, g
 	files: [],
 	folders: [],
 	sharedFiles: [],
+	contacts: [],
 	setFiles: (files) => set({ files }),
 	setFolders: (folders) => set({ folders }),
 	setSharedFiles: (sharedFiles) => set({ sharedFiles }),
+	setContacts: (contacts) => set({ contacts }),
 	addFile: (file) => set((state) => ({ files: [...state.files, file] })),
 	addFiles: (files) => set((state) => ({ files: [...state.files, ...files] })),
 	addFolder: (folder) => set((state) => ({ folders: [...state.folders, folder] })),
