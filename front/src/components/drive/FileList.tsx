@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import useBedrockFileUploadDropzone from "@/hooks/use-bedrock-file-upload-dropzone";
+import { FileFullInfos } from "@/services/bedrock";
 import { useAccountStore } from "@/stores/account";
 import { DriveFile, DriveFolder, useDriveStore } from "@/stores/drive";
 
@@ -23,7 +24,7 @@ type SortOrder = "asc" | "desc";
 type FileListProps = {
 	files: DriveFile[];
 	folders: DriveFolder[];
-	actions: Set<"rename" | "download" | "delete" | "move" | "restore" | "hardDelete">;
+	actions: Set<"rename" | "download" | "delete" | "share" | "move" | "restore" | "hardDelete">;
 };
 
 const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
@@ -37,11 +38,13 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 		setFiles,
 		setFolders,
 		setSharedFiles,
+		setContacts,
 		softDeleteFile,
 		addFolder,
 		deleteFolder,
 		moveFile,
 		moveFolder,
+		contacts,
 		restoreFile,
 	} = useDriveStore();
 	const { bedrockService } = useAccountStore();
@@ -57,6 +60,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 				const fileEntries = await bedrockService.fetchFileEntries();
 				const fullFiles = await bedrockService.fetchFilesMetaFromEntries(...fileEntries);
 				const sharedFiles = await bedrockService.fetchFilesShared();
+				const contacts = await bedrockService.fetchContacts();
 
 				const folderPaths = new Set<string>();
 
@@ -85,11 +89,12 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 						})),
 				]);
 				setSharedFiles(sharedFiles);
+				setContacts(contacts);
 			} catch (error) {
 				console.error("Failed to fetch files:", error);
 			}
 		})();
-	}, [bedrockService, setFolders, setFiles, setSharedFiles]);
+	}, [bedrockService, setFolders, setFiles, setSharedFiles, setContacts]);
 
 	const { sortedFiles, sortedFolders } = useMemo(
 		() => ({
@@ -211,6 +216,21 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 			const filesToMove = moveFolder(path, newPath);
 			filesToMove.map(([oldFile, newFile]) => bedrockService?.moveFile(oldFile.path, newFile.path));
 		}
+	};
+
+	const handleShare = (file: FileFullInfos) => {
+		const contactName = prompt("Enter the contact you want to share this file with:");
+		if (!contactName) {
+			return;
+		}
+
+		const contact = contacts.find((contact) => contact.name === contactName);
+		if (!contact) {
+			alert("Contact not found");
+			return;
+		}
+
+		bedrockService?.shareFileWithContact(file, contact.public_key);
 	};
 
 	const handleRestoreFile = (path: string) => {
@@ -341,6 +361,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 								setSelected={() => selectItem(file.path)}
 								onLeftClick={() => setClickedItem(file.path)}
 								onDownload={actions.has("download") ? () => handleDownloadFile(file) : undefined}
+								onShare={actions.has("share") ? () => handleShare(file) : undefined}
 								onRename={actions.has("rename") ? () => handleRename(file.path, false) : undefined}
 								onMove={actions.has("move") ? () => handleMove(file.path, false) : undefined}
 								onDelete={actions.has("delete") ? () => handleSoftDelete(file.path, false) : undefined}
