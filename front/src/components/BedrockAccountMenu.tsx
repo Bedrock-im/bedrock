@@ -6,16 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useActiveAccount, useActiveWallet, useDisconnect } from "thirdweb/react";
 
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import DeleteDialog from "@/components/drive/DeleteDialog";
 import { Avatar } from "@/components/ui/avatar";
 import {
 	DropdownMenu,
@@ -125,23 +116,14 @@ export const BedrockAccountMenu = () => {
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
-			<AlertDialog open={confirmDataResetDialogOpen}>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>Confirm data deletion</AlertDialogTitle>
-						<AlertDialogDescription>
-							This action cannot be undone. This will permanently delete your data from the service and all subsequent
-							storage locations.
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel onClick={() => setConfirmDataResetDialogOpen(false)}>Cancel</AlertDialogCancel>
-						<AlertDialogAction className="bg-red-500 hover:bg-red-100" onClick={handleDataDeletion}>
-							Confirm deletion
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
+			<DeleteDialog
+				title="Confirm data deletion"
+				description="This action cannot be undone. This will permanently delete your data from the service and all subsequent
+							storage locations."
+				onDelete={handleDataDeletion}
+				onOpenChange={(open) => setConfirmDataResetDialogOpen(open)}
+				open={confirmDataResetDialogOpen}
+			/>
 		</>
 	);
 };
