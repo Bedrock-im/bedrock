@@ -43,31 +43,31 @@ export const useKnowledgeBaseStore = create<KnowledgeBaseStoreState & KnowledgeB
 	],
 	setKnowledgeBases: (knowledgeBases) => set({ knowledgeBases }),
 	addKnowledgeBase: (knowledgeBase) => {
-			// First check for duplicate outside of set to throw exception
-			const state = useKnowledgeBaseStore.getState();
-			const nameExists = state.knowledgeBases.some(kb => kb.name === knowledgeBase.name);
-			if (nameExists) {
-				throw new Error(`A knowledge base with name "${knowledgeBase.name}" already exists`);
-			}
-			set((state) => ({ knowledgeBases: [...state.knowledgeBases, knowledgeBase] }));
-		},
+		// First check for duplicate outside of set to throw exception
+		const state = useKnowledgeBaseStore.getState();
+		const nameExists = state.knowledgeBases.some((kb) => kb.name === knowledgeBase.name);
+		if (nameExists) {
+			throw new Error(`A knowledge base with name "${knowledgeBase.name}" already exists`);
+		}
+		set((state) => ({ knowledgeBases: [...state.knowledgeBases, knowledgeBase] }));
+	},
 	removeKnowledgeBase: (knowledgeBaseName) =>
 		set((state) => ({ knowledgeBases: state.knowledgeBases.filter((kb) => kb.name !== knowledgeBaseName) })),
 	renameKnowledgeBase: (oldName, newName) => {
-			// Skip if names are the same
-			if (oldName === newName) return;
-			
-			// First check for duplicate outside of set to throw exception
-			const state = useKnowledgeBaseStore.getState();
-			const nameExists = state.knowledgeBases.some(kb => kb.name === newName);
-			if (nameExists) {
-				throw new Error(`A knowledge base with name "${newName}" already exists`);
-			}
-			
-			set((state) => ({
-				knowledgeBases: state.knowledgeBases.map((kb) => (kb.name === oldName ? { ...kb, name: newName } : kb)),
-			}));
-		},
+		// Skip if names are the same
+		if (oldName === newName) return;
+
+		// First check for duplicate outside of set to throw exception
+		const state = useKnowledgeBaseStore.getState();
+		const nameExists = state.knowledgeBases.some((kb) => kb.name === newName);
+		if (nameExists) {
+			throw new Error(`A knowledge base with name "${newName}" already exists`);
+		}
+
+		set((state) => ({
+			knowledgeBases: state.knowledgeBases.map((kb) => (kb.name === oldName ? { ...kb, name: newName } : kb)),
+		}));
+	},
 	addFilesToKnowledgeBase: (knowledgeBaseName, ...filePaths) =>
 		set((state) => ({
 			knowledgeBases: state.knowledgeBases.map((kb) =>
