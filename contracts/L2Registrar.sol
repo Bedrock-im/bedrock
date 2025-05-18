@@ -49,6 +49,9 @@ contract L2Registrar {
     /// @notice The coinType for the current chain (ENSIP-11)
     uint256 public immutable coinType;
 
+    /// @notice Mapping from address to registered username (label)
+    mapping(address => string) private usernames;
+
     /// @notice Initializes the registrar with a registry contract
     /// @param _registry Address of the L2Registry contract
     constructor(address _registry) {
@@ -86,6 +89,10 @@ contract L2Registrar {
             owner,
             new bytes[](0)
         );
+
+        // Save the username (label) for the address
+        usernames[owner] = label;
+
         emit NameRegistered(label, owner);
     }
 
@@ -110,6 +117,13 @@ contract L2Registrar {
             }
             return false;
         }
+    }
+
+    /// @notice Returns the registered username for an address, if any
+    /// @param user The address to look up
+    /// @return The associated username or an empty string if none
+    function getUsername(address user) external view returns (string memory) {
+        return usernames[user];
     }
 
     function _labelToNode(
