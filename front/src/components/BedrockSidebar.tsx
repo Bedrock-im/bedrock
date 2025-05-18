@@ -1,6 +1,6 @@
 "use client";
 
-import { Command, FolderIcon, Share2, Trash2, Users } from "lucide-react";
+import { Command, FolderIcon, Library, Share2, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { ReactNode } from "react";
 
@@ -33,6 +33,11 @@ const items = [
 		name: "Contacts",
 		url: "/contacts",
 		icon: Users,
+	},
+	{
+		name: "Knowledge Bases",
+		url: "/knowledge-bases",
+		icon: Library,
 	},
 	{
 		name: "Trash",
