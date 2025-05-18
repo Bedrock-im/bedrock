@@ -1,5 +1,5 @@
 "use client";
-import { Edit, FilePlus2, Search, Trash2 } from "lucide-react";
+import { Edit, FilePlus2, Plus, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -7,6 +7,16 @@ import ActionIcon from "@/components/drive/ActionIcon";
 import DeleteDialog from "@/components/drive/DeleteDialog";
 import KnowledgeBaseAskDialog from "@/components/drive/KnowledgeBaseAskDialog";
 import RenameDialog from "@/components/drive/RenameDialog";
+import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAccountStore } from "@/stores/account";
 import { useDriveStore } from "@/stores/drive";
@@ -16,9 +26,11 @@ export default function KnowledgeBases() {
 	const [openedAskKBModal, setOpenedAskKBModal] = useState<KnowledgeBase | null>(null);
 	const [openedRenameKBModal, setOpenedRenameKBModal] = useState<KnowledgeBase | null>(null);
 	const [openedDeleteKBModal, setOpenedDeleteKBModal] = useState<KnowledgeBase | null>(null);
+	const [openNewKBModal, setOpenNewKBModal] = useState(false);
+	const [newKBName, setNewKBName] = useState("");
 	const { bedrockService } = useAccountStore();
 	const { files } = useDriveStore();
-	const { knowledgeBases, renameKnowledgeBase, removeKnowledgeBase } = useKnowledgeBaseStore();
+	const { knowledgeBases, renameKnowledgeBase, removeKnowledgeBase, addKnowledgeBase } = useKnowledgeBaseStore();
 
 	const handleSearch = (base: KnowledgeBase) => {
 		if (openedAskKBModal !== null) return;
@@ -39,8 +51,36 @@ export default function KnowledgeBases() {
 		throw new Error("Function not implemented.");
 	};
 
+	const handleCreateKnowledgeBase = () => {
+		try {
+			if (!newKBName.trim()) {
+				toast.error("Knowledge base name cannot be empty");
+				return;
+			}
+
+			addKnowledgeBase({
+				name: newKBName.trim(),
+				filePaths: [],
+				created_at: new Date(),
+				updated_at: new Date(),
+			});
+
+			toast.success(`Knowledge base "${newKBName}" created successfully`);
+			setNewKBName("");
+			setOpenNewKBModal(false);
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : "Failed to create knowledge base");
+		}
+	};
+
 	return (
-		<section>
+		<section className="p-10">
+			<div className="flex justify-between items-center mb-4">
+				<h2 className="text-2xl font-bold">Knowledge Bases</h2>
+				<Button onClick={() => setOpenNewKBModal(true)} className="flex items-center gap-1">
+					<Plus className="h-4 w-4" /> New Knowledge Base
+				</Button>
+			</div>
 			<Table>
 				<TableHeader>
 					<TableRow>
@@ -109,6 +149,31 @@ export default function KnowledgeBases() {
 					description={`Are you sure you want to delete "${openedDeleteKBModal.name}"? This action cannot be undone.`}
 				/>
 			)}
+			<Dialog open={openNewKBModal} onOpenChange={setOpenNewKBModal}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Create New Knowledge Base</DialogTitle>
+						<DialogDescription>
+							Enter a name for your new knowledge base. You can add files to it later.
+						</DialogDescription>
+					</DialogHeader>
+					<div className="py-4">
+						<Input
+							value={newKBName}
+							onChange={(e) => setNewKBName(e.target.value)}
+							placeholder="Knowledge Base Name"
+							className="w-full"
+							onKeyDown={(e) => e.key === "Enter" && handleCreateKnowledgeBase()}
+						/>
+					</div>
+					<DialogFooter>
+						<Button variant="outline" onClick={() => setOpenNewKBModal(false)}>
+							Cancel
+						</Button>
+						<Button onClick={handleCreateKnowledgeBase}>Create</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</section>
 	);
 }
