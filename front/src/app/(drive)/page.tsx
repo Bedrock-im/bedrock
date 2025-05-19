@@ -31,7 +31,7 @@ export default function Home() {
 		<FileList
 			files={filteredFiles}
 			folders={filteredFolders}
-			actions={new Set(["download", "rename", "move", "delete"] as const)}
+			actions={new Set(["download", "share", "rename", "move", "delete"] as const)}
 		/>
 	);
 }
