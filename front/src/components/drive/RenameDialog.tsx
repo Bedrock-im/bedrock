@@ -29,11 +29,18 @@ export default function RenameDialog({
 	description = "Enter a new name",
 }: RenameDialogProps) {
 	const [newName, setNewName] = useState(name);
+	const [error, setError] = useState<string>();
 
 	const handleSave = () => {
-		if (newName.trim() !== "") {
-			onRename(newName);
-			onOpenChange(false);
+		const trimmedName = newName.trim();
+		if (trimmedName !== "") {
+			try {
+				onRename(trimmedName);
+				setError(undefined);
+				onOpenChange(false);
+			} catch (error) {
+				setError(error instanceof Error ? error.message : "Failed to rename knowledge item");
+			}
 		}
 	};
 
@@ -50,7 +57,15 @@ export default function RenameDialog({
 					<DialogDescription>{description}</DialogDescription>
 				</DialogHeader>
 				<div className="space-y-2 py-2">
-					<Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Enter new name" autoFocus />
+					<Input
+						value={newName}
+						onChange={(e) => setNewName(e.target.value)}
+						placeholder="Enter new name"
+						onKeyDown={(e) => e.key === "Enter" && handleSave()}
+						autoFocus
+						className={error ? "border-red-500" : ""}
+					/>
+					{error && <p className="text-sm font-medium text-red-500">{error}</p>}
 				</div>
 				<DialogFooter className="flex justify-end gap-2">
 					<Button variant="outline" onClick={handleCancel}>

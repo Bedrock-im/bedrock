@@ -123,13 +123,7 @@ export default function KnowledgeBases() {
 				<RenameDialog
 					name={openedRenameKBModal.name}
 					onOpenChange={(open) => !open && setOpenedRenameKBModal(null)}
-					onRename={(newName) => {
-						try {
-							renameKnowledgeBase(openedRenameKBModal.name, newName);
-						} catch (error) {
-							toast.error(error instanceof Error ? error.message : "Failed to rename knowledge base");
-						}
-					}}
+					onRename={(newName) => renameKnowledgeBase(openedRenameKBModal.name, newName)}
 					open={true}
 				/>
 			)}
