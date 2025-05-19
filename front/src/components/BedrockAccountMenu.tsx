@@ -15,10 +15,12 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuButton } from "@/components/ui/sidebar";
+import { useAccountStore } from "@/stores/account";
 import { shrinkEthAddress } from "@/utils/ethereum";
 
 const BedrockAccountAvatar = () => {
 	const account = useActiveAccount();
+	const username = useAccountStore((state) => state.username);
 
 	if (account === undefined) {
 		return null;
@@ -29,7 +31,7 @@ const BedrockAccountAvatar = () => {
 			{/*TODO: add default avatar picture*/}
 			<Avatar className="h-8 w-8 rounded-lg" alt="CN" />
 			<div className="grid flex-1 text-left text-sm leading-tight">
-				<span className="truncate font-semibold">{shrinkEthAddress(account.address ?? "")}</span>
+				<span className="truncate font-semibold">{username ? username : shrinkEthAddress(account.address ?? "")}</span>
 			</div>
 		</>
 	);

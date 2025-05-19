@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from web3 import Web3
 from dotenv import load_dotenv
@@ -21,9 +22,26 @@ contract = w3.eth.contract(address=Web3.to_checksum_address(CONTRACT_ADDRESS), a
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 class RegisterRequest(BaseModel):
     username: str
     address: str
+
+class CheckUsernameAvailableResponse(BaseModel):
+    username: str
+    available: bool
+
+class GetUsernameResponse(BaseModel):
+    username: str
+
+class RegisterUsernameResponse(BaseModel):
+    tx_hash: str
 
 @app.post("/register", description="Register an ENS subname")
 def register_username(req: RegisterRequest):
@@ -39,22 +57,22 @@ def register_username(req: RegisterRequest):
 
         signed_txn = w3.eth.account.sign_transaction(txn, private_key=PRIVATE_KEY)
         tx_hash = w3.eth.send_raw_transaction(signed_txn.raw_transaction)
-        return {"tx_hash": tx_hash.hex()}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/{address}", description="Get the ENS subname of an address")
-def get_username(address: str):
-    try:
-        result = contract.functions.getUsername(Web3.to_checksum_address(address)).call()
-        return {"username": result}
+        return RegisterUsernameResponse(tx_hash=tx_hash.hex())
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/available", description="Check if an ENS subname is available")
-def check_username_available(username: str = Query(..., min_length=1)):
+def check_username_available(username: str = Query(..., min_length=1)) -> CheckUsernameAvailableResponse:
     try:
         is_available = contract.functions.available(username).call()
-        return {"username": username, "available": is_available}
+        return CheckUsernameAvailableResponse(username=username, available=is_available)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/{address}", description="Get the ENS subname of an address")
+def get_username(address: str) -> GetUsernameResponse:
+    try:
+        result = contract.functions.getUsername(Web3.to_checksum_address(address)).call()
+        return GetUsernameResponse(username=result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
