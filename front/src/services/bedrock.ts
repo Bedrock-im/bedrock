@@ -152,6 +152,16 @@ export default class BedrockService {
 				await this.alephService.createAggregate(CONTACTS_AGGREGATE_KEY, emptyContacts);
 			}
 		}
+
+		try {
+			await this.fetchKnowledgeBases();
+		} catch (err) {
+			if (err instanceof MessageNotFoundError) {
+				// New user with no kbs yet
+				const emptyKnowledgeBases: EncryptedKnowledgeBasesAggregateSchema = { knowledge_bases: [] };
+				await this.alephService.createAggregate(KNOWLEDGE_BASES_AGGREGATE_KEY, emptyKnowledgeBases);
+			}
+		}
 	}
 
 	async uploadFiles(directoryPath: string, ...files: File[]): Promise<Omit<FileFullInfos, "post_hash">[]> {
@@ -348,6 +358,7 @@ export default class BedrockService {
 		// TODO: also forget the POST, STORE files etc
 		await this.resetFiles();
 		await this.resetContacts();
+		await this.resetKnowledgeBases();
 	}
 
 	async resetFiles(): Promise<void> {
