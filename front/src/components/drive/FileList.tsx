@@ -28,6 +28,8 @@ type FileListProps = {
 	defaultCwd?: string;
 	defaultSearchQuery?: string;
 	onSelectedItemPathsChange?: (selectedItemPaths: Set<string>) => void;
+	selectedPaths?: string[];
+	trash?: boolean;
 };
 
 const FileList: React.FC<FileListProps> = ({
@@ -37,12 +39,17 @@ const FileList: React.FC<FileListProps> = ({
 	defaultCwd = "/",
 	defaultSearchQuery = "",
 	onSelectedItemPathsChange,
+	selectedPaths = [],
+	trash = false,
 }) => {
 	const [searchQuery, setSearchQuery] = useQueryState("search", { defaultValue: defaultSearchQuery });
-	const [currentWorkingDirectory, setCurrentWorkingDirectory] = useQueryState("cwd", { defaultValue: defaultCwd });
+	const [currentWorkingDirectory, setCurrentWorkingDirectory] = useQueryState("cwd", {
+		defaultValue: defaultCwd,
+		history: "push",
+	});
 	const [sortColumn, setSortColumn] = useQueryState("sort", { defaultValue: "path" as SortColumn });
 	const [sortOrder, setSortOrder] = useQueryState("order", { defaultValue: "asc" as SortOrder });
-	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set(selectedPaths));
 	const [clickedItem, setClickedItem] = useState<string>();
 	const {
 		setFiles,
@@ -68,7 +75,7 @@ const FileList: React.FC<FileListProps> = ({
 		(file) =>
 			file.path.match(cwdRegex) &&
 			file.path.toLowerCase().includes(searchQuery.toLowerCase()) &&
-			file.deleted_at === null,
+			(trash ? file.deleted_at !== null : file.deleted_at === null),
 	);
 
 	const currentPathFolders = (propFolders ?? folders).filter(
@@ -76,7 +83,7 @@ const FileList: React.FC<FileListProps> = ({
 			folder.path.match(cwdRegex) &&
 			folder.path !== currentWorkingDirectory && // Don't show the current directory
 			folder.path.toLowerCase().includes(searchQuery.toLowerCase()) &&
-			folder.deleted_at === null,
+			(trash ? folder.deleted_at !== null : folder.deleted_at === null),
 	);
 
 	useEffect(() => {
@@ -288,7 +295,7 @@ const FileList: React.FC<FileListProps> = ({
 
 			const updated = new Set<string>(prev);
 			files.forEach((file) => updated.add(file.path));
-			folders.forEach((folder) => updated.add(folder.path));
+			folders.forEach((folder) => updated.add(folder.path + "/"));
 			onSelectedItemPathsChange?.(updated);
 			return updated;
 		});
@@ -303,7 +310,7 @@ const FileList: React.FC<FileListProps> = ({
 	}
 
 	return (
-		<div className="flex flex-col h-screen bg-gray-200" onClick={() => setClickedItem(undefined)}>
+		<div className="flex flex-col h-full bg-gray-200" onClick={() => setClickedItem(undefined)}>
 			<div className="flex justify-between items-center m-2 gap-4">
 				{actions.includes("upload") && (
 					<UploadButton onCreateFolder={handleCreateFolder} getInputProps={getInputProps} />
@@ -376,8 +383,8 @@ const FileList: React.FC<FileListProps> = ({
 								folder
 								metadata={folder}
 								clicked={clickedItem === folder.path}
-								selected={selectedItems.has(folder.path)}
-								setSelected={() => selectItem(folder.path)}
+								selected={selectedItems.has(folder.path + "/")}
+								setSelected={() => selectItem(folder.path + "/")}
 								onLeftClick={() => setClickedItem(folder.path)}
 								onDoubleClick={() => setCurrentWorkingDirectory(folder.path + "/")}
 								onDelete={actions.includes("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
