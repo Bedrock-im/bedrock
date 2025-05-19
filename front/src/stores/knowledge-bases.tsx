@@ -22,26 +22,7 @@ type KnowledgeBaseStoreActions = {
 };
 
 export const useKnowledgeBaseStore = create<KnowledgeBaseStoreState & KnowledgeBaseStoreActions>((set) => ({
-	knowledgeBases: [
-		{
-			name: "My Knowledge Base",
-			filePaths: ["/MNGLCUSTOM.zip"],
-			created_at: new Date(),
-			updated_at: new Date(),
-		},
-		{
-			name: "My Knowledge Base 2",
-			filePaths: ["/MNGLCUSTOM.zip"],
-			created_at: new Date(),
-			updated_at: new Date(),
-		},
-		{
-			name: "My Knowledge Base 3",
-			filePaths: ["/MNGLCUSTOM.zip"],
-			created_at: new Date(),
-			updated_at: new Date(),
-		},
-	],
+	knowledgeBases: [],
 	setKnowledgeBases: (knowledgeBases) => set({ knowledgeBases }),
 	addKnowledgeBase: (knowledgeBase) => {
 		// First check for duplicate outside of set to throw exception
