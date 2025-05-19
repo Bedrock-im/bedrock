@@ -22,14 +22,24 @@ type SortColumn = "path" | "size" | "created_at";
 type SortOrder = "asc" | "desc";
 
 type FileListProps = {
-	files: DriveFile[];
-	folders: DriveFolder[];
-	actions: Set<"rename" | "download" | "delete" | "share" | "move" | "restore" | "hardDelete">;
+	files?: DriveFile[];
+	folders?: DriveFolder[];
+	actions?: ("upload" | "rename" | "download" | "delete" | "share" | "move" | "restore" | "hardDelete")[];
+	defaultCwd?: string;
+	defaultSearchQuery?: string;
+	onSelectedItemPathsChange?: (selectedItemPaths: Set<string>) => void;
 };
 
-const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
-	const [searchQuery, setSearchQuery] = useQueryState("search", { defaultValue: "" });
-	const [currentWorkingDirectory, setCurrentWorkingDirectory] = useQueryState("cwd", { defaultValue: "/" });
+const FileList: React.FC<FileListProps> = ({
+	files: propFiles,
+	folders: propFolders,
+	actions = [],
+	defaultCwd = "/",
+	defaultSearchQuery = "",
+	onSelectedItemPathsChange,
+}) => {
+	const [searchQuery, setSearchQuery] = useQueryState("search", { defaultValue: defaultSearchQuery });
+	const [currentWorkingDirectory, setCurrentWorkingDirectory] = useQueryState("cwd", { defaultValue: defaultCwd });
 	const [sortColumn, setSortColumn] = useQueryState("sort", { defaultValue: "path" as SortColumn });
 	const [sortOrder, setSortOrder] = useQueryState("order", { defaultValue: "asc" as SortOrder });
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -37,18 +47,37 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 	const {
 		setFiles,
 		setFolders,
-		setSharedFiles,
-		setContacts,
 		softDeleteFile,
 		addFolder,
 		deleteFolder,
 		moveFile,
 		moveFolder,
-		contacts,
 		restoreFile,
+		files,
+		folders,
+		setSharedFiles,
+		setContacts,
+		contacts,
 	} = useDriveStore();
 	const { bedrockService } = useAccountStore();
 	const { getInputProps } = useBedrockFileUploadDropzone({});
+
+	const cwdRegex = `^${currentWorkingDirectory.replace("/", "\\/")}[^ \\/]+$`;
+
+	const currentPathFiles = (propFiles ?? files).filter(
+		(file) =>
+			file.path.match(cwdRegex) &&
+			file.path.toLowerCase().includes(searchQuery.toLowerCase()) &&
+			file.deleted_at === null,
+	);
+
+	const currentPathFolders = (propFolders ?? folders).filter(
+		(folder) =>
+			folder.path.match(cwdRegex) &&
+			folder.path !== currentWorkingDirectory && // Don't show the current directory
+			folder.path.toLowerCase().includes(searchQuery.toLowerCase()) &&
+			folder.deleted_at === null,
+	);
 
 	useEffect(() => {
 		if (!bedrockService) {
@@ -98,7 +127,7 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 
 	const { sortedFiles, sortedFolders } = useMemo(
 		() => ({
-			sortedFiles: files.sort((a, b) => {
+			sortedFiles: currentPathFiles.sort((a, b) => {
 				if (sortColumn === "size") {
 					return (a.size - b.size) * (sortOrder === "asc" ? 1 : -1);
 				} else if (sortColumn === "created_at") {
@@ -106,14 +135,14 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 				}
 				return a.path.localeCompare(b.path) * (sortOrder === "asc" ? 1 : -1);
 			}),
-			sortedFolders: folders.sort((a, b) => {
+			sortedFolders: currentPathFolders.sort((a, b) => {
 				if (sortColumn === "created_at") {
 					return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * (sortOrder === "asc" ? 1 : -1);
 				}
 				return a.path.localeCompare(b.path) * (sortOrder === "asc" ? 1 : -1);
 			}),
 		}),
-		[files, folders, sortColumn, sortOrder],
+		[currentPathFiles, currentPathFolders, sortColumn, sortOrder],
 	);
 
 	const handleDownloadFile = async (file: DriveFile) => {
@@ -246,19 +275,21 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 			} else {
 				updated.add(path);
 			}
+			onSelectedItemPathsChange?.(updated);
 			return updated;
 		});
 	};
 
 	const selectAll = () => {
-		setSelectedItems(() => {
-			if (selectedItems.size === files.length + folders.length) {
+		setSelectedItems((prev) => {
+			if (prev.size === files.length + folders.length) {
 				return new Set();
 			}
 
-			const updated = new Set<string>();
+			const updated = new Set<string>(prev);
 			files.forEach((file) => updated.add(file.path));
 			folders.forEach((folder) => updated.add(folder.path));
+			onSelectedItemPathsChange?.(updated);
 			return updated;
 		});
 	};
@@ -274,7 +305,9 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 	return (
 		<div className="flex flex-col h-screen bg-gray-200" onClick={() => setClickedItem(undefined)}>
 			<div className="flex justify-between items-center m-2 gap-4">
-				<UploadButton onCreateFolder={handleCreateFolder} getInputProps={getInputProps} />
+				{actions.includes("upload") && (
+					<UploadButton onCreateFolder={handleCreateFolder} getInputProps={getInputProps} />
+				)}
 				<input type="file" id="fileInput" className="hidden" onChange={() => {}} />
 				<input
 					type="text"
@@ -347,9 +380,9 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 								setSelected={() => selectItem(folder.path)}
 								onLeftClick={() => setClickedItem(folder.path)}
 								onDoubleClick={() => setCurrentWorkingDirectory(folder.path + "/")}
-								onDelete={actions.has("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
-								onHardDelete={actions.has("hardDelete") ? () => handleHardDelete(folder.path, true) : undefined}
-								onRestore={actions.has("restore") ? () => handleRestoreFile(folder.path) : undefined}
+								onDelete={actions.includes("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
+								onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(folder.path, true) : undefined}
+								onRestore={actions.includes("restore") ? () => handleRestoreFile(folder.path) : undefined}
 							/>
 						))}
 						{sortedFiles.map((file) => (
@@ -360,13 +393,13 @@ const FileList: React.FC<FileListProps> = ({ files, folders, actions }) => {
 								selected={selectedItems.has(file.path)}
 								setSelected={() => selectItem(file.path)}
 								onLeftClick={() => setClickedItem(file.path)}
-								onDownload={actions.has("download") ? () => handleDownloadFile(file) : undefined}
-								onShare={actions.has("share") ? () => handleShare(file) : undefined}
-								onRename={actions.has("rename") ? () => handleRename(file.path, false) : undefined}
-								onMove={actions.has("move") ? () => handleMove(file.path, false) : undefined}
-								onDelete={actions.has("delete") ? () => handleSoftDelete(file.path, false) : undefined}
-								onHardDelete={actions.has("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
-								onRestore={actions.has("restore") ? () => handleRestoreFile(file.path) : undefined}
+								onDownload={actions.includes("download") ? () => handleDownloadFile(file) : undefined}
+								onShare={actions.includes("share") ? () => handleShare(file) : undefined}
+								onRename={actions.includes("rename") ? () => handleRename(file.path, false) : undefined}
+								onMove={actions.includes("move") ? () => handleMove(file.path, false) : undefined}
+								onDelete={actions.includes("delete") ? () => handleSoftDelete(file.path, false) : undefined}
+								onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
+								onRestore={actions.includes("restore") ? () => handleRestoreFile(file.path) : undefined}
 							/>
 						))}
 					</TableBody>
