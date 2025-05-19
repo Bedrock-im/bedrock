@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 from web3 import Web3
 from dotenv import load_dotenv
@@ -25,7 +25,7 @@ class RegisterRequest(BaseModel):
     username: str
     address: str
 
-@app.post("/register")
+@app.post("/register", description="Register an ENS subname")
 def register_username(req: RegisterRequest):
     try:
         nonce = w3.eth.get_transaction_count(account.address)
@@ -43,10 +43,18 @@ def register_username(req: RegisterRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/username/{address}")
+@app.get("/{address}", description="Get the ENS subname of an address")
 def get_username(address: str):
     try:
         result = contract.functions.getUsername(Web3.to_checksum_address(address)).call()
         return {"username": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/available", description="Check if an ENS subname is available")
+def check_username_available(username: str = Query(..., min_length=1)):
+    try:
+        is_available = contract.functions.available(username).call()
+        return {"username": username, "available": is_available}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
