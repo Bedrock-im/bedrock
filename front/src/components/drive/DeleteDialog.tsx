@@ -35,13 +35,15 @@ export default function DeleteDialog({
 
 	return (
 		<AlertDialog open={open} onOpenChange={onOpenChange}>
-			<AlertDialogContent>
+			<AlertDialogContent onKeyDown={(e) => e.key === "Enter" && handleDelete()}>
 				<AlertDialogHeader>
 					<AlertDialogTitle>{title}</AlertDialogTitle>
 					<AlertDialogDescription>{description}</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>
-					<AlertDialogCancel onClick={() => onOpenChange(false)}>{cancelText}</AlertDialogCancel>
+					<AlertDialogCancel onClick={() => onOpenChange(false)} autoFocus>
+						{cancelText}
+					</AlertDialogCancel>
 					<AlertDialogAction className="bg-red-500 hover:bg-red-600" onClick={handleDelete}>
 						{confirmText}
 					</AlertDialogAction>
