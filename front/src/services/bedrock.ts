@@ -605,14 +605,14 @@ export default class BedrockService {
 					const decryptedName = EncryptionService.decryptEcies(kbName, this.alephService.encryptionPrivateKey.secret);
 					if (decryptedName !== name) {
 						return {
-							name,
+							name: kbName,
 							file_paths,
 							updated_at,
 							...rest,
 						};
 					}
 					return {
-						name,
+						name: kbName,
 						file_paths: file_paths.filter(
 							(kbFilePath) =>
 								EncryptionService.decryptEcies(
@@ -640,14 +640,14 @@ export default class BedrockService {
 					const decryptedName = EncryptionService.decryptEcies(kbName, this.alephService.encryptionPrivateKey.secret);
 					if (decryptedName !== name) {
 						return {
-							name,
+							name: kbName,
 							file_paths,
 							updated_at,
 							...rest,
 						};
 					}
 					return {
-						name,
+						name: kbName,
 						file_paths: [
 							...file_paths,
 							EncryptionService.encryptEcies(filePath, this.alephService.encryptionPrivateKey.publicKey.compressed),
