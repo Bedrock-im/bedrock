@@ -102,7 +102,7 @@ export const EncryptedKnowledgeBaseSchema = z.object({
 });
 
 export const EncryptedKnowledgeBasesAggregateSchema = z.object({
-	knowledge_bases: z.array(KnowledgeBaseSchema),
+	knowledge_bases: z.array(EncryptedKnowledgeBaseSchema),
 });
 
 const FILE_ENTRIES_AGGREGATE_KEY = "bedrock_file_entries";
@@ -561,14 +561,14 @@ export default class BedrockService {
 					const decryptedName = EncryptionService.decryptEcies(kbName, this.alephService.encryptionPrivateKey.secret);
 					if (decryptedName !== name) {
 						return {
-							name,
+							name: kbName,
 							file_paths,
 							updated_at,
 							...rest,
 						};
 					}
 					return {
-						name,
+						name: kbName,
 						file_paths: filePaths.map((filePath) =>
 							EncryptionService.encryptEcies(filePath, this.alephService.encryptionPrivateKey.publicKey.compressed),
 						),
