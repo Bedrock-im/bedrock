@@ -16,6 +16,7 @@ type KnowledgeBaseStoreActions = {
 	addKnowledgeBase: (knowledgeBase: KnowledgeBase) => void;
 	removeKnowledgeBase: (knowledgeBaseName: string) => void;
 	renameKnowledgeBase: (oldName: string, newName: string) => void;
+	setKnowledgeBaseFiles: (knowledgeBaseName: string, ...filePaths: string[]) => void;
 	addFilesToKnowledgeBase: (knowledgeBaseName: string, ...filePaths: string[]) => void;
 	removeFilesFromKnowledgeBase: (knowledgeBaseName: string, ...filePaths: string[]) => void;
 };
@@ -68,6 +69,10 @@ export const useKnowledgeBaseStore = create<KnowledgeBaseStoreState & KnowledgeB
 			knowledgeBases: state.knowledgeBases.map((kb) => (kb.name === oldName ? { ...kb, name: newName } : kb)),
 		}));
 	},
+	setKnowledgeBaseFiles: (knowledgeBaseName, ...filePaths) =>
+		set((state) => ({
+			knowledgeBases: state.knowledgeBases.map((kb) => (kb.name === knowledgeBaseName ? { ...kb, filePaths } : kb)),
+		})),
 	addFilesToKnowledgeBase: (knowledgeBaseName, ...filePaths) =>
 		set((state) => ({
 			knowledgeBases: state.knowledgeBases.map((kb) =>
