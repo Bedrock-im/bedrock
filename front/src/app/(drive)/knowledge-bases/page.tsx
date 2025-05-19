@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import ActionIcon from "@/components/drive/ActionIcon";
 import DeleteDialog from "@/components/drive/DeleteDialog";
 import KnowledgeBaseAskDialog from "@/components/drive/KnowledgeBaseAskDialog";
+import KnowledgeBaseFileSelector from "@/components/drive/KnowledgeBaseFileSelector";
 import RenameDialog from "@/components/drive/RenameDialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,11 +27,13 @@ export default function KnowledgeBases() {
 	const [openedAskKBModal, setOpenedAskKBModal] = useState<KnowledgeBase | null>(null);
 	const [openedRenameKBModal, setOpenedRenameKBModal] = useState<KnowledgeBase | null>(null);
 	const [openedDeleteKBModal, setOpenedDeleteKBModal] = useState<KnowledgeBase | null>(null);
+	const [openedModifyFileListKBModal, setOpenedModifyFileListKBModal] = useState<KnowledgeBase | null>(null);
 	const [openNewKBModal, setOpenNewKBModal] = useState(false);
 	const [newKBName, setNewKBName] = useState("");
 	const { bedrockService } = useAccountStore();
 	const { files } = useDriveStore();
-	const { knowledgeBases, renameKnowledgeBase, removeKnowledgeBase, addKnowledgeBase } = useKnowledgeBaseStore();
+	const { knowledgeBases, renameKnowledgeBase, removeKnowledgeBase, addKnowledgeBase, setKnowledgeBaseFiles } =
+		useKnowledgeBaseStore();
 
 	const handleSearch = (base: KnowledgeBase) => {
 		if (openedAskKBModal !== null) return;
@@ -47,8 +50,9 @@ export default function KnowledgeBases() {
 		setOpenedDeleteKBModal(base);
 	};
 
-	const handleAddFilesToBase = (base: KnowledgeBase) => {
-		throw new Error("Function not implemented.");
+	const handleModifyFileListToBase = (base: KnowledgeBase) => {
+		if (openedModifyFileListKBModal !== null) return;
+		setOpenedModifyFileListKBModal(base);
 	};
 
 	const handleCreateKnowledgeBase = () => {
@@ -107,7 +111,11 @@ export default function KnowledgeBases() {
 							<TableCell>{base.updated_at.toLocaleDateString()}</TableCell>
 							<TableCell className="flex justify-end items-center gap-2 mt-1">
 								<ActionIcon Icon={Search} tooltip="Search" onClick={() => handleSearch(base)} />
-								<ActionIcon Icon={FilePlus2} tooltip="Add files" onClick={() => handleAddFilesToBase(base)} />
+								<ActionIcon
+									Icon={FilePlus2}
+									tooltip="Modify file list"
+									onClick={() => handleModifyFileListToBase(base)}
+								/>
 								<ActionIcon Icon={Edit} tooltip="Rename" onClick={() => handleRenameBase(base)} />
 								<ActionIcon Icon={Trash2} tooltip="Delete" onClick={() => handleDeleteBase(base)} />
 							</TableCell>
@@ -118,6 +126,11 @@ export default function KnowledgeBases() {
 			<KnowledgeBaseAskDialog
 				knowledgeBase={openedAskKBModal}
 				onOpenChange={(open) => !open && setOpenedAskKBModal(null)}
+			/>
+			<KnowledgeBaseFileSelector
+				knowledgeBase={openedModifyFileListKBModal}
+				onOpenChange={(open) => !open && setOpenedModifyFileListKBModal(null)}
+				onSave={(newFilePaths) => setKnowledgeBaseFiles(openedModifyFileListKBModal?.name ?? "", ...newFilePaths)}
 			/>
 			{openedRenameKBModal && (
 				<RenameDialog
