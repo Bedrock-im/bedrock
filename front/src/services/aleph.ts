@@ -137,8 +137,9 @@ export class AlephService {
 	}
 
 	async fetchAggregate<T extends z.ZodTypeAny>(key: string, schema: T, owner: string = this.account.address) {
-		const { success, data, error } = schema.safeParse(await this.subAccountClient.fetchAggregate(owner, key));
-		if (!success) throw new Error(`Invalid data from Aleph: ${error.message}`);
+		const unparsedData = await this.subAccountClient.fetchAggregate(owner, key);
+		const { success, data, error } = schema.safeParse(unparsedData);
+		if (!success) throw new Error(`Invalid data from Aleph: ${error.message}, data was ${unparsedData}`);
 		return data as z.infer<T>;
 	}
 
