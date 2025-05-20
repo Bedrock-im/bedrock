@@ -87,19 +87,41 @@ export const EncryptedContactsAggregate = z.object({
 	contacts: z.array(EncryptedContactSchema),
 });
 
+export const KnowledgeBaseSchema = z.object({
+	name: z.string(),
+	file_paths: z.array(z.string()),
+	created_at: z.string().datetime(),
+	updated_at: z.string().datetime(),
+});
+
+export const EncryptedKnowledgeBaseSchema = z.object({
+	name: zodEncryptedHexString,
+	file_paths: z.array(zodEncryptedHexString),
+	created_at: zodEncryptedHexString,
+	updated_at: zodEncryptedHexString,
+});
+
+export const EncryptedKnowledgeBasesAggregateSchema = z.object({
+	knowledge_bases: z.array(EncryptedKnowledgeBaseSchema),
+});
+
 const FILE_ENTRIES_AGGREGATE_KEY = "bedrock_file_entries";
 const FILE_POST_TYPE = "bedrock_file";
 const CONTACTS_AGGREGATE_KEY = "bedrock_contacts";
+const KNOWLEDGE_BASES_AGGREGATE_KEY = "bedrock_knowledge_bases";
 
 export type FileEntry = z.infer<typeof FileEntrySchema>;
 export type FileMeta = z.infer<typeof FileMetaSchema>;
 export type EncryptedFileEntry = z.infer<typeof EncryptedFileEntrySchema>;
 export type EncryptedFileMeta = z.infer<typeof EncryptedFileMetaSchema>;
 export type FileFullInfos = z.infer<typeof FileFullInfosSchema>;
-export type EncryptedFileEntriesSchema = z.infer<typeof EncryptedFileEntriesSchema>;
-export type ContactSchema = z.infer<typeof ContactSchema>;
-export type EncryptedContactSchema = z.infer<typeof EncryptedContactSchema>;
+export type EncryptedFileEntriesAggregate = z.infer<typeof EncryptedFileEntriesSchema>;
+export type Contact = z.infer<typeof ContactSchema>;
+export type EncryptedContact = z.infer<typeof EncryptedContactSchema>;
 export type EncryptedContactsAggregate = z.infer<typeof EncryptedContactsAggregate>;
+export type KnowledgeBase = z.infer<typeof KnowledgeBaseSchema>;
+export type EncryptedKnowledgeBase = z.infer<typeof EncryptedKnowledgeBaseSchema>;
+export type EncryptedKnowledgeBasesAggregate = z.infer<typeof EncryptedKnowledgeBasesAggregateSchema>;
 
 export default class BedrockService {
 	constructor(private alephService: AlephService) {}
@@ -114,7 +136,7 @@ export default class BedrockService {
 		} catch (err) {
 			if (err instanceof MessageNotFoundError) {
 				// New user with no file entries yet
-				const emptyFileEntries: EncryptedFileEntriesSchema = { files: [] };
+				const emptyFileEntries: EncryptedFileEntriesAggregate = { files: [] };
 				await this.alephService.createAggregate(FILE_ENTRIES_AGGREGATE_KEY, emptyFileEntries);
 			} else {
 				throw err;
@@ -130,15 +152,16 @@ export default class BedrockService {
 				await this.alephService.createAggregate(CONTACTS_AGGREGATE_KEY, emptyContacts);
 			}
 		}
-	}
 
-	async resetData(): Promise<void> {
-		// TODO: also forget the POST, STORE files etc
-		const emptyFileEntries: EncryptedFileEntriesSchema = { files: [] };
-		await this.alephService.createAggregate(FILE_ENTRIES_AGGREGATE_KEY, emptyFileEntries);
-
-		const emptyContacts: EncryptedContactsAggregate = { contacts: [] };
-		await this.alephService.createAggregate(CONTACTS_AGGREGATE_KEY, emptyContacts);
+		try {
+			await this.fetchKnowledgeBases();
+		} catch (err) {
+			if (err instanceof MessageNotFoundError) {
+				// New user with no kbs yet
+				const emptyKnowledgeBases: EncryptedKnowledgeBasesAggregate = { knowledge_bases: [] };
+				await this.alephService.createAggregate(KNOWLEDGE_BASES_AGGREGATE_KEY, emptyKnowledgeBases);
+			}
+		}
 	}
 
 	async uploadFiles(directoryPath: string, ...files: File[]): Promise<Omit<FileFullInfos, "post_hash">[]> {
@@ -249,6 +272,19 @@ export default class BedrockService {
 		return newFiles;
 	}
 
+	async fetchKnowledgeBases(): Promise<KnowledgeBase[]> {
+		return (
+			await this.alephService.fetchAggregate(KNOWLEDGE_BASES_AGGREGATE_KEY, EncryptedKnowledgeBasesAggregateSchema)
+		).knowledge_bases.map(({ name, file_paths, created_at, updated_at }) => ({
+			name: EncryptionService.decryptEcies(name, this.alephService.encryptionPrivateKey.secret),
+			file_paths: file_paths.map((file_path) =>
+				EncryptionService.decryptEcies(file_path, this.alephService.encryptionPrivateKey.secret),
+			),
+			created_at: EncryptionService.decryptEcies(created_at, this.alephService.encryptionPrivateKey.secret),
+			updated_at: EncryptionService.decryptEcies(updated_at, this.alephService.encryptionPrivateKey.secret),
+		}));
+	}
+
 	async fetchFileEntries(): Promise<FileEntry[]> {
 		return (await this.alephService.fetchAggregate(FILE_ENTRIES_AGGREGATE_KEY, EncryptedFileEntriesSchema)).files.map(
 			({ post_hash, path, shared_with }) => ({
@@ -259,7 +295,7 @@ export default class BedrockService {
 		);
 	}
 
-	async fetchContacts(): Promise<ContactSchema[]> {
+	async fetchContacts(): Promise<Contact[]> {
 		return (await this.alephService.fetchAggregate(CONTACTS_AGGREGATE_KEY, EncryptedContactsAggregate)).contacts.map(
 			(contact) => ({
 				name: EncryptionService.decryptEcies(contact.name, this.alephService.encryptionPrivateKey.secret),
@@ -320,10 +356,33 @@ export default class BedrockService {
 			.map((result) => result.value);
 	}
 
+	async resetData(): Promise<void> {
+		// TODO: also forget the POST, STORE files etc
+		await this.resetFiles();
+		await this.resetContacts();
+		await this.resetKnowledgeBases();
+	}
+
 	async resetFiles(): Promise<void> {
 		await this.alephService.updateAggregate(FILE_ENTRIES_AGGREGATE_KEY, EncryptedFileEntriesSchema, async () => ({
 			files: [],
 		}));
+	}
+
+	async resetContacts(): Promise<void> {
+		await this.alephService.updateAggregate(CONTACTS_AGGREGATE_KEY, EncryptedContactsAggregate, async () => ({
+			contacts: [],
+		}));
+	}
+
+	async resetKnowledgeBases(): Promise<void> {
+		await this.alephService.updateAggregate(
+			KNOWLEDGE_BASES_AGGREGATE_KEY,
+			EncryptedKnowledgeBasesAggregateSchema,
+			async () => ({
+				knowledge_bases: [],
+			}),
+		);
 	}
 
 	async softDeleteFile(fileInfo: Pick<FileFullInfos, "post_hash">, deletionDatetime: Date): Promise<void> {
@@ -432,6 +491,176 @@ export default class BedrockService {
 		const bufferKey = Buffer.from(key, "hex");
 		const bufferIv = Buffer.from(iv, "hex");
 		return EncryptionService.decryptFile(encryptedBuffer, bufferKey, bufferIv);
+	}
+
+	async createKnowledgeBase(name: string) {
+		await this.alephService.updateAggregate(
+			KNOWLEDGE_BASES_AGGREGATE_KEY,
+			EncryptedKnowledgeBasesAggregateSchema,
+			async ({ knowledge_bases }) => {
+				const names = knowledge_bases.map(({ name }) =>
+					EncryptionService.decryptEcies(name, this.alephService.encryptionPrivateKey.secret),
+				);
+
+				if (names.includes(name)) {
+					throw new Error("This knowledge base name already exists");
+				}
+
+				return {
+					knowledge_bases: [
+						{
+							name: EncryptionService.encryptEcies(name, this.alephService.encryptionPrivateKey.publicKey.compressed),
+							file_paths: [],
+							created_at: EncryptionService.encryptEcies(
+								new Date().toISOString(),
+								this.alephService.encryptionPrivateKey.publicKey.compressed,
+							),
+							updated_at: EncryptionService.encryptEcies(
+								new Date().toISOString(),
+								this.alephService.encryptionPrivateKey.publicKey.compressed,
+							),
+						},
+						...knowledge_bases,
+					],
+				};
+			},
+		);
+	}
+
+	async deleteKnowledgeBase(name: string) {
+		await this.alephService.updateAggregate(
+			KNOWLEDGE_BASES_AGGREGATE_KEY,
+			EncryptedKnowledgeBasesAggregateSchema,
+			async ({ knowledge_bases }) => ({
+				knowledge_bases: knowledge_bases
+					.map(({ name, ...rest }) => ({
+						name: EncryptionService.decryptEcies(name, this.alephService.encryptionPrivateKey.secret),
+						...rest,
+					}))
+					.filter((kb) => kb.name !== name)
+					.map(({ name, ...rest }) => ({
+						name: EncryptionService.encryptEcies(name, this.alephService.encryptionPrivateKey.publicKey.compressed),
+						...rest,
+					})),
+			}),
+		);
+	}
+
+	async renameKnowledgeBase(oldName: string, newName: string) {
+		await this.alephService.updateAggregate(
+			KNOWLEDGE_BASES_AGGREGATE_KEY,
+			EncryptedKnowledgeBasesAggregateSchema,
+			async ({ knowledge_bases }) => ({
+				knowledge_bases: knowledge_bases.map(({ name, ...rest }) => {
+					const decryptedName = EncryptionService.decryptEcies(name, this.alephService.encryptionPrivateKey.secret);
+					return {
+						name:
+							decryptedName === oldName
+								? EncryptionService.encryptEcies(newName, this.alephService.encryptionPrivateKey.publicKey.compressed)
+								: name,
+						...rest,
+					};
+				}),
+			}),
+		);
+	}
+
+	async setKnowledgeBaseFiles(name: string, filePaths: string[]) {
+		await this.alephService.updateAggregate(
+			KNOWLEDGE_BASES_AGGREGATE_KEY,
+			EncryptedKnowledgeBasesAggregateSchema,
+			async ({ knowledge_bases }) => ({
+				knowledge_bases: knowledge_bases.map(({ name: kbName, file_paths, updated_at, ...rest }) => {
+					const decryptedName = EncryptionService.decryptEcies(kbName, this.alephService.encryptionPrivateKey.secret);
+					if (decryptedName !== name) {
+						return {
+							name: kbName,
+							file_paths,
+							updated_at,
+							...rest,
+						};
+					}
+					return {
+						name: kbName,
+						file_paths: filePaths.map((filePath) =>
+							EncryptionService.encryptEcies(filePath, this.alephService.encryptionPrivateKey.publicKey.compressed),
+						),
+						updated_at: EncryptionService.encryptEcies(
+							new Date().toISOString(),
+							this.alephService.encryptionPrivateKey.publicKey.compressed,
+						),
+						...rest,
+					};
+				}),
+			}),
+		);
+	}
+
+	async removeFileFromKnowledgeBase(name: string, filePath: string) {
+		await this.alephService.updateAggregate(
+			KNOWLEDGE_BASES_AGGREGATE_KEY,
+			EncryptedKnowledgeBasesAggregateSchema,
+			async ({ knowledge_bases }) => ({
+				knowledge_bases: knowledge_bases.map(({ name: kbName, file_paths, updated_at, ...rest }) => {
+					const decryptedName = EncryptionService.decryptEcies(kbName, this.alephService.encryptionPrivateKey.secret);
+					if (decryptedName !== name) {
+						return {
+							name: kbName,
+							file_paths,
+							updated_at,
+							...rest,
+						};
+					}
+					return {
+						name: kbName,
+						file_paths: file_paths.filter(
+							(kbFilePath) =>
+								EncryptionService.decryptEcies(
+									kbFilePath,
+									this.alephService.encryptionPrivateKey.publicKey.compressed,
+								) !== filePath,
+						),
+						updated_at: EncryptionService.encryptEcies(
+							new Date().toISOString(),
+							this.alephService.encryptionPrivateKey.publicKey.compressed,
+						),
+						...rest,
+					};
+				}),
+			}),
+		);
+	}
+
+	async addFileToKnowledgeBase(name: string, filePath: string) {
+		await this.alephService.updateAggregate(
+			KNOWLEDGE_BASES_AGGREGATE_KEY,
+			EncryptedKnowledgeBasesAggregateSchema,
+			async ({ knowledge_bases }) => ({
+				knowledge_bases: knowledge_bases.map(({ name: kbName, file_paths, updated_at, ...rest }) => {
+					const decryptedName = EncryptionService.decryptEcies(kbName, this.alephService.encryptionPrivateKey.secret);
+					if (decryptedName !== name) {
+						return {
+							name: kbName,
+							file_paths,
+							updated_at,
+							...rest,
+						};
+					}
+					return {
+						name: kbName,
+						file_paths: [
+							...file_paths,
+							EncryptionService.encryptEcies(filePath, this.alephService.encryptionPrivateKey.publicKey.compressed),
+						],
+						updated_at: EncryptionService.encryptEcies(
+							new Date().toISOString(),
+							this.alephService.encryptionPrivateKey.publicKey.compressed,
+						),
+						...rest,
+					};
+				}),
+			}),
+		);
 	}
 
 	async createContact(name: string, address: string, public_key: string): Promise<void> {
@@ -593,7 +822,7 @@ export default class BedrockService {
 		);
 	}
 
-	async fetchFilesSharedByContact(contact: Pick<ContactSchema, "address" | "public_key">): Promise<FileEntry[]> {
+	async fetchFilesSharedByContact(contact: Pick<Contact, "address" | "public_key">): Promise<FileEntry[]> {
 		const fileEntries = (
 			await this.alephService.fetchAggregate(FILE_ENTRIES_AGGREGATE_KEY, EncryptedFileEntriesSchema)
 		).files

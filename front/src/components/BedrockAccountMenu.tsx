@@ -1,9 +1,12 @@
 "use client";
 
-import { BadgeCheck, Bell, ChevronsUpDown, LogOut, WrenchIcon } from "lucide-react";
+import { BadgeCheck, Bell, ChevronsUpDown, LogOut, Trash2, WrenchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 import { useActiveAccount, useActiveWallet, useDisconnect } from "thirdweb/react";
 
+import DeleteDialog from "@/components/drive/DeleteDialog";
 import { Avatar } from "@/components/ui/avatar";
 import {
 	DropdownMenu,
@@ -15,6 +18,8 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuButton } from "@/components/ui/sidebar";
+import { useAccountStore } from "@/stores/account";
+import { useDriveStore } from "@/stores/drive";
 import { shrinkEthAddress } from "@/utils/ethereum";
 
 const BedrockAccountAvatar = () => {
@@ -36,57 +41,88 @@ const BedrockAccountAvatar = () => {
 };
 
 export const BedrockAccountMenu = () => {
+	const [confirmDataResetDialogOpen, setConfirmDataResetDialogOpen] = useState(false);
 	const wallet = useActiveWallet();
 	const { disconnect } = useDisconnect();
 	const router = useRouter();
+	const { bedrockService } = useAccountStore();
+	const { setFiles, setFolders } = useDriveStore();
 
-	if (wallet === undefined) {
+	if (wallet === undefined || bedrockService === null) {
 		return null;
 	}
 
+	const handleDataDeletion = async () => {
+		setConfirmDataResetDialogOpen(false);
+
+		try {
+			await bedrockService.resetData();
+			toast.success("All data has been deleted");
+			setFiles([]);
+			setFolders([]);
+		} catch (error) {
+			console.error("Failed to delete data:", error);
+			toast.error("Failed to delete data");
+		}
+	};
+
 	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<SidebarMenuButton
-					size="lg"
-					className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-				>
-					<BedrockAccountAvatar />
-					<ChevronsUpDown className="ml-auto size-4" />
-				</SidebarMenuButton>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent
-				className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-				side="bottom"
-				align="end"
-				sideOffset={4}
-			>
-				<DropdownMenuLabel className="p-0 font-normal">
-					<div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+		<>
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild>
+					<SidebarMenuButton
+						size="lg"
+						className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+					>
 						<BedrockAccountAvatar />
-					</div>
-				</DropdownMenuLabel>
-				<DropdownMenuSeparator />
-				<DropdownMenuGroup>
-					<DropdownMenuItem>
-						<BadgeCheck />
-						Account
+						<ChevronsUpDown className="ml-auto size-4" />
+					</SidebarMenuButton>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent
+					className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+					side="bottom"
+					align="end"
+					sideOffset={4}
+				>
+					<DropdownMenuLabel className="p-0 font-normal">
+						<div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+							<BedrockAccountAvatar />
+						</div>
+					</DropdownMenuLabel>
+					<DropdownMenuSeparator />
+					<DropdownMenuGroup>
+						<DropdownMenuItem>
+							<BadgeCheck />
+							Account
+						</DropdownMenuItem>
+						<DropdownMenuItem onClick={() => router.push("/settings")}>
+							<WrenchIcon />
+							Settings
+						</DropdownMenuItem>
+						<DropdownMenuItem>
+							<Bell />
+							Notifications
+						</DropdownMenuItem>
+					</DropdownMenuGroup>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem onClick={() => setConfirmDataResetDialogOpen(true)} className="text-red-500">
+						<Trash2 />
+						Delete my data
 					</DropdownMenuItem>
-					<DropdownMenuItem onClick={() => router.push("/settings")}>
-						<WrenchIcon />
-						Settings
+					<DropdownMenuItem onClick={() => disconnect(wallet)} className="cursor-pointer">
+						<LogOut />
+						Log out
 					</DropdownMenuItem>
-					<DropdownMenuItem>
-						<Bell />
-						Notifications
-					</DropdownMenuItem>
-				</DropdownMenuGroup>
-				<DropdownMenuSeparator />
-				<DropdownMenuItem onClick={() => disconnect(wallet)} className="cursor-pointer">
-					<LogOut />
-					Log out
-				</DropdownMenuItem>
-			</DropdownMenuContent>
-		</DropdownMenu>
+				</DropdownMenuContent>
+			</DropdownMenu>
+			<DeleteDialog
+				title="Confirm data deletion"
+				description="This action cannot be undone. This will permanently delete your data from the service and all subsequent
+							storage locations."
+				onDelete={handleDataDeletion}
+				onOpenChange={(open) => setConfirmDataResetDialogOpen(open)}
+				open={confirmDataResetDialogOpen}
+			/>
+		</>
 	);
 };
