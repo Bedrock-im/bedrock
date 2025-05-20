@@ -1,22 +1,26 @@
 import { Account } from "thirdweb/wallets";
 import { create } from "zustand";
 
+import { getUsernameAddressGet } from "@/apis/usernames";
 import { AlephService, BEDROCK_MESSAGE } from "@/services/aleph";
 import BedrockService from "@/services/bedrock";
 
 type AccountStoreState = {
 	isConnected: boolean;
 	bedrockService: BedrockService | null;
+	username: string | null;
 };
 
 type AccountStoreActions = {
 	onDisconnect: () => void;
 	onAccountChange: (account: Account | undefined) => Promise<void>;
+	setUsername: (username: string) => void;
 };
 
 export const useAccountStore = create<AccountStoreState & AccountStoreActions>((set, get) => ({
 	isConnected: false,
 	bedrockService: null,
+	username: null,
 	onAccountChange: async (account) => {
 		const state = get();
 
@@ -32,11 +36,38 @@ export const useAccountStore = create<AccountStoreState & AccountStoreActions>((
 			return;
 		}
 
-		const bedrockService = new BedrockService(alephService);
-		await bedrockService.setup();
-		set({ bedrockService, isConnected: true });
+		// Check if user has a username before setting isConnected
+		try {
+			const result = await getUsernameAddressGet({
+				path: { address: account.address },
+			});
+			const username = result.data?.username;
+
+			const bedrockService = new BedrockService(alephService);
+			await bedrockService.setup();
+
+			// Only mark as connected if a username exists
+			set({
+				bedrockService,
+				username: username || null,
+				isConnected: Boolean(username), // Only true if username exists
+			});
+		} catch (error) {
+			console.error("Error fetching username:", error);
+			set({ isConnected: false });
+		}
 	},
 	onDisconnect: () => {
-		set({ bedrockService: null, isConnected: false });
+		set({
+			bedrockService: null,
+			isConnected: false,
+			username: null,
+		});
+	},
+	setUsername: (username) => {
+		const state = get();
+		if (state.bedrockService) {
+			set({ username, isConnected: true });
+		}
 	},
 }));
