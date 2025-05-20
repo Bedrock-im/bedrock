@@ -115,13 +115,13 @@ export type FileMeta = z.infer<typeof FileMetaSchema>;
 export type EncryptedFileEntry = z.infer<typeof EncryptedFileEntrySchema>;
 export type EncryptedFileMeta = z.infer<typeof EncryptedFileMetaSchema>;
 export type FileFullInfos = z.infer<typeof FileFullInfosSchema>;
-export type EncryptedFileEntriesSchema = z.infer<typeof EncryptedFileEntriesSchema>;
-export type ContactSchema = z.infer<typeof ContactSchema>;
-export type EncryptedContactSchema = z.infer<typeof EncryptedContactSchema>;
+export type EncryptedFileEntriesAggregate = z.infer<typeof EncryptedFileEntriesSchema>;
+export type Contact = z.infer<typeof ContactSchema>;
+export type EncryptedContact = z.infer<typeof EncryptedContactSchema>;
 export type EncryptedContactsAggregate = z.infer<typeof EncryptedContactsAggregate>;
-export type KnowledgeBaseSchema = z.infer<typeof KnowledgeBaseSchema>;
-export type EncryptedKnowledgeBaseSchema = z.infer<typeof EncryptedKnowledgeBaseSchema>;
-export type EncryptedKnowledgeBasesAggregateSchema = z.infer<typeof EncryptedKnowledgeBasesAggregateSchema>;
+export type KnowledgeBase = z.infer<typeof KnowledgeBaseSchema>;
+export type EncryptedKnowledgeBase = z.infer<typeof EncryptedKnowledgeBaseSchema>;
+export type EncryptedKnowledgeBasesAggregate = z.infer<typeof EncryptedKnowledgeBasesAggregateSchema>;
 
 export default class BedrockService {
 	constructor(private alephService: AlephService) {}
@@ -136,7 +136,7 @@ export default class BedrockService {
 		} catch (err) {
 			if (err instanceof MessageNotFoundError) {
 				// New user with no file entries yet
-				const emptyFileEntries: EncryptedFileEntriesSchema = { files: [] };
+				const emptyFileEntries: EncryptedFileEntriesAggregate = { files: [] };
 				await this.alephService.createAggregate(FILE_ENTRIES_AGGREGATE_KEY, emptyFileEntries);
 			} else {
 				throw err;
@@ -158,7 +158,7 @@ export default class BedrockService {
 		} catch (err) {
 			if (err instanceof MessageNotFoundError) {
 				// New user with no kbs yet
-				const emptyKnowledgeBases: EncryptedKnowledgeBasesAggregateSchema = { knowledge_bases: [] };
+				const emptyKnowledgeBases: EncryptedKnowledgeBasesAggregate = { knowledge_bases: [] };
 				await this.alephService.createAggregate(KNOWLEDGE_BASES_AGGREGATE_KEY, emptyKnowledgeBases);
 			}
 		}
@@ -272,7 +272,7 @@ export default class BedrockService {
 		return newFiles;
 	}
 
-	async fetchKnowledgeBases(): Promise<KnowledgeBaseSchema[]> {
+	async fetchKnowledgeBases(): Promise<KnowledgeBase[]> {
 		return (
 			await this.alephService.fetchAggregate(KNOWLEDGE_BASES_AGGREGATE_KEY, EncryptedKnowledgeBasesAggregateSchema)
 		).knowledge_bases.map(({ name, file_paths, created_at, updated_at }) => ({
@@ -295,7 +295,7 @@ export default class BedrockService {
 		);
 	}
 
-	async fetchContacts(): Promise<ContactSchema[]> {
+	async fetchContacts(): Promise<Contact[]> {
 		return (await this.alephService.fetchAggregate(CONTACTS_AGGREGATE_KEY, EncryptedContactsAggregate)).contacts.map(
 			(contact) => ({
 				name: EncryptionService.decryptEcies(contact.name, this.alephService.encryptionPrivateKey.secret),
@@ -820,7 +820,7 @@ export default class BedrockService {
 		);
 	}
 
-	async fetchFilesSharedByContact(contact: Pick<ContactSchema, "address" | "public_key">): Promise<FileFullInfos[]> {
+	async fetchFilesSharedByContact(contact: Pick<Contact, "address" | "public_key">): Promise<FileFullInfos[]> {
 		const fileEntries = (
 			await this.alephService.fetchAggregate(FILE_ENTRIES_AGGREGATE_KEY, EncryptedFileEntriesSchema)
 		).files
