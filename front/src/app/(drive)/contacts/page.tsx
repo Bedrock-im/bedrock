@@ -8,14 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ContactSchema } from "@/services/bedrock";
+import { Contact } from "@/services/bedrock";
 import { useAccountStore } from "@/stores/account";
 
 export default function Contacts() {
 	const { bedrockService } = useAccountStore();
 
 	const [publicKey, setPublicKey] = useState<string>("");
-	const [contacts, setContacts] = useState<ContactSchema[]>([]);
+	const [contacts, setContacts] = useState<Contact[]>([]);
 	const [_searchQuery, _setSearchQuery] = useQueryState("search", { defaultValue: "" });
 
 	const [isCopied, setIsCopied] = useState(false);
