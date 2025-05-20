@@ -85,13 +85,13 @@ export default function KnowledgeBases() {
 				return;
 			}
 
+			await bedrockService?.createKnowledgeBase(trimmedName);
 			addKnowledgeBase({
 				name: trimmedName,
 				filePaths: [],
 				created_at: new Date(),
 				updated_at: new Date(),
 			});
-			await bedrockService?.createKnowledgeBase(trimmedName);
 
 			toast.success(`Knowledge base "${newKBName}" created successfully`);
 			setNewKBName("");
@@ -103,8 +103,8 @@ export default function KnowledgeBases() {
 
 	const handleDelete = async (kb: KnowledgeBase) => {
 		try {
-			removeKnowledgeBase(kb.name);
 			await bedrockService?.deleteKnowledgeBase(kb.name);
+			removeKnowledgeBase(kb.name);
 			toast.success(`Knowledge base "${kb.name}" deleted successfully`);
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Failed to delete knowledge base");
@@ -112,12 +112,12 @@ export default function KnowledgeBases() {
 	};
 
 	const handleRename = async (newName: string, kb: KnowledgeBase) => {
-		renameKnowledgeBase(kb.name, newName);
 		await bedrockService?.renameKnowledgeBase(kb.name, newName);
+		renameKnowledgeBase(kb.name, newName);
 	};
 	const handleFileSelection = async (newFilePaths: string[], kb: KnowledgeBase) => {
-		setKnowledgeBaseFiles(kb.name, ...newFilePaths);
 		await bedrockService?.setKnowledgeBaseFiles(kb.name, newFilePaths);
+		setKnowledgeBaseFiles(kb.name, ...newFilePaths);
 	};
 	return (
 		<section className="p-10">
