@@ -289,13 +289,13 @@ const FileList: React.FC<FileListProps> = ({
 
 	const selectAll = () => {
 		setSelectedItems((prev) => {
-			if (prev.size === files.length + folders.length) {
+			if (prev.size === currentPathFiles.length + currentPathFolders.length) {
 				return new Set();
 			}
 
 			const updated = new Set<string>(prev);
-			files.forEach((file) => updated.add(file.path));
-			folders.forEach((folder) => updated.add(folder.path + "/"));
+			currentPathFiles.forEach((file) => updated.add(file.path));
+			currentPathFolders.forEach((folder) => updated.add(folder.path + "/"));
 			onSelectedItemPathsChange?.(updated);
 			return updated;
 		});
