@@ -9,11 +9,14 @@ import aiohttp
 from eth_utils import keccak, to_bytes, to_hex
 
 load_dotenv()
-CONTRACT_ADDRESS = "0x30afcf8bddd96b3e2b0210f8f003aafd4a52f628"
+REGISTRAR_CONTRACT_ADDRESS = "0x30afcf8bddd96b3e2b0210f8f003aafd4a52f628"
+REGISTRY_CONTRACT_ADDRESS = "0x2565b1f8bfd174d3acb67fd1a377b8014350dc26"
 
 code_dir = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(code_dir, "abis/registrar.json"), "r") as abi_file:
-    CONTRACT_ABI = json.load(abi_file)
+    REGISTRAR_CONTRACT_ABI = json.load(abi_file)
+with open(os.path.join(code_dir, "abis/registry.json"), "r") as abi_file:
+    REGISTRY_CONTRACT_ABI = json.load(abi_file)
 
 PRIVATE_KEY = os.getenv("BEDROCK_PRIVATE_KEY")
 PINATA_JWT = os.getenv("PINATA_JWT")
@@ -21,7 +24,8 @@ BASE_RPC_URL = "https://mainnet.base.org"
 
 w3 = Web3(Web3.HTTPProvider(BASE_RPC_URL))
 account = w3.eth.account.from_key(PRIVATE_KEY)
-contract = w3.eth.contract(address=Web3.to_checksum_address(CONTRACT_ADDRESS), abi=CONTRACT_ABI)
+registrar_contract = w3.eth.contract(address=Web3.to_checksum_address(REGISTRAR_CONTRACT_ADDRESS), abi=REGISTRAR_CONTRACT_ABI)
+registry_contract = w3.eth.contract(address=Web3.to_checksum_address(REGISTRY_CONTRACT_ADDRESS), abi=REGISTRY_CONTRACT_ABI)
 
 app = FastAPI()
 
@@ -64,7 +68,7 @@ class TransactionResponse(BaseModel):
 def register_username(req: RegisterRequest) -> TransactionResponse:
     try:
         nonce = w3.eth.get_transaction_count(account.address)
-        txn = contract.functions.register(req.username, Web3.to_checksum_address(req.address)).build_transaction({
+        txn = registrar_contract.functions.register(req.username, Web3.to_checksum_address(req.address)).build_transaction({
             "from": account.address,
             "nonce": nonce,
             "gas": 300000,
@@ -81,7 +85,7 @@ def register_username(req: RegisterRequest) -> TransactionResponse:
 @app.get("/available", description="Check if an ENS subname is available")
 def check_username_available(username: str = Query(..., min_length=1)) -> CheckUsernameAvailableResponse:
     try:
-        is_available = contract.functions.available(username).call()
+        is_available = registrar_contract.functions.available(username).call()
         return CheckUsernameAvailableResponse(username=username, available=is_available)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -89,10 +93,26 @@ def check_username_available(username: str = Query(..., min_length=1)) -> CheckU
 @app.get("/{address}", description="Get the ENS subname of an address")
 def get_username(address: str) -> GetUsernameResponse:
     try:
-        result = contract.functions.getUsername(Web3.to_checksum_address(address)).call()
+        result = registrar_contract.functions.getUsername(Web3.to_checksum_address(address)).call()
         return GetUsernameResponse(username=result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/username/{username}/avatar", description="Get the avatar URL of a username")
+async def get_avatar(username: str) -> str:
+    try:
+        node = namehash(f"{username}.bedrock-app.eth")
+
+        avatar_url = registry_contract.functions.text(node, "avatar").call()
+        if avatar_url:
+            return avatar_url
+        else:
+            # Fallback URL if avatar not set
+            return f"https://avatars.jakerunzer.com/{username}"
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get avatar: {str(e)}")
+
 
 @app.post("/username/{username}/avatar", description="Create or update the avatar of a user (using ENS text records)")
 async def change_avatar(username: str, file: UploadFile = File(...)) -> TransactionResponse:
@@ -119,7 +139,7 @@ async def change_avatar(username: str, file: UploadFile = File(...)) -> Transact
 
     try:
         nonce = w3.eth.get_transaction_count(account.address)
-        txn = contract.functions.setText(
+        txn = registrar_contract.functions.setText(
             namehash(f"{username}.bedrock-app.eth"),            # label
             "avatar",                      # key
             image_url                      # value
