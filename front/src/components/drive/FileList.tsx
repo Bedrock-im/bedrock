@@ -3,6 +3,7 @@
 import { LoaderIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
 import React, { useEffect, useMemo, useState } from "react";
+import { DndContext, DragEndEvent } from "@dnd-kit/core"
 
 import CurrentPath from "@/components/drive/CurrentPath";
 import FileCard from "@/components/drive/FileCard";
@@ -309,6 +310,21 @@ const FileList: React.FC<FileListProps> = ({
 		);
 	}
 
+	const handleDragEnd = (event: DragEndEvent) => {
+		const { active, over } = event;
+		if (!active || !over) return;
+
+		const draggedPath = active.id.toString();
+		const targetFolderPath = over.id.toString();
+
+		if (draggedPath !== targetFolderPath) {
+			const newPath = `${targetFolderPath}/${draggedPath.split("/").pop()}`;
+			moveFile(draggedPath, newPath);
+			bedrockService?.moveFile(draggedPath, newPath);
+		}
+	};
+
+
 	return (
 		<div className="flex flex-col h-full bg-gray-200" onClick={() => setClickedItem(undefined)}>
 			<div className="flex justify-between items-center m-2 gap-4">
@@ -411,6 +427,88 @@ const FileList: React.FC<FileListProps> = ({
 						))}
 					</TableBody>
 				</Table>
+				<DndContext onDragEnd={handleDragEnd}>
+					<Table>
+						<TableHeader>
+							<TableRow>
+								<TableHead className="w-[40px]">
+									<Checkbox
+										checked={selectedItems.size === files.length + folders.length}
+										onClick={(e) => {
+											e.stopPropagation();
+											selectAll();
+										}}
+									/>
+								</TableHead>
+								<TableHead>
+									<SortOption
+										option="path"
+										name="Name"
+										sortColumn={sortColumn}
+										sortOrder={sortOrder}
+										setSortColumn={setSortColumn}
+										setSortOrder={setSortOrder}
+									/>
+								</TableHead>
+								<TableHead>
+									<SortOption
+										option="size"
+										name="Size"
+										sortColumn={sortColumn}
+										sortOrder={sortOrder}
+										setSortColumn={setSortColumn}
+										setSortOrder={setSortOrder}
+									/>
+								</TableHead>
+								<TableHead>
+									<SortOption
+										option="created_at"
+										name="Created At"
+										sortColumn={sortColumn}
+										sortOrder={sortOrder}
+										setSortColumn={setSortColumn}
+										setSortOrder={setSortOrder}
+									/>
+								</TableHead>
+								<TableHead className="text-right">Actions</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{/* TODO: concat both lists and show them together, so it can be sorted by name */}
+							{sortedFolders.map((folder) => (
+								<FileCard
+									key={folder.path}
+									folder
+									metadata={folder}
+									clicked={clickedItem === folder.path}
+									selected={selectedItems.has(folder.path)}
+									setSelected={() => selectItem(folder.path)}
+									onLeftClick={() => setClickedItem(folder.path)}
+									onDoubleClick={() => setCurrentWorkingDirectory(folder.path + "/")}
+									onDelete={actions.has("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
+									onHardDelete={actions.has("hardDelete") ? () => handleHardDelete(folder.path, true) : undefined}
+									onRestore={actions.has("restore") ? () => handleRestoreFile(folder.path) : undefined}
+								/>
+							))}
+							{sortedFiles.map((file) => (
+								<FileCard
+									key={file.path}
+									metadata={file}
+									clicked={clickedItem === file.path}
+									selected={selectedItems.has(file.path)}
+									setSelected={() => selectItem(file.path)}
+									onLeftClick={() => setClickedItem(file.path)}
+									onDownload={actions.has("download") ? () => handleDownloadFile(file) : undefined}
+									onRename={actions.has("rename") ? () => handleRename(file.path, false) : undefined}
+									onMove={actions.has("move") ? () => handleMove(file.path, false) : undefined}
+									onDelete={actions.has("delete") ? () => handleSoftDelete(file.path, false) : undefined}
+									onHardDelete={actions.has("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
+									onRestore={actions.has("restore") ? () => handleRestoreFile(file.path) : undefined}
+								/>
+							))}
+						</TableBody>
+					</Table>
+				</DndContext>
 			</Card>
 		</div>
 	);
