@@ -1,9 +1,9 @@
 "use client";
 
+import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { LoaderIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
 import React, { useEffect, useMemo, useState } from "react";
-import { DndContext, DragEndEvent } from "@dnd-kit/core"
 
 import CurrentPath from "@/components/drive/CurrentPath";
 import FileCard from "@/components/drive/FileCard";
@@ -323,7 +323,6 @@ const FileList: React.FC<FileListProps> = ({
 			bedrockService?.moveFile(draggedPath, newPath);
 		}
 	};
-
 
 	return (
 		<div className="flex flex-col h-full bg-gray-200" onClick={() => setClickedItem(undefined)}>

@@ -1,10 +1,4 @@
-import {
-	ContextMenu,
-	ContextMenuContent,
-	ContextMenuItem,
-	ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import { UniqueIdentifier, useDraggable, useDroppable } from "@dnd-kit/core";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { filesize } from "filesize";
 import {
@@ -21,6 +15,12 @@ import React from "react";
 
 import ActionIcon from "@/components/drive/ActionIcon";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+	ContextMenu,
+	ContextMenuContent,
+	ContextMenuItem,
+	ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { DriveFile, DriveFolder } from "@/stores/drive";
 
@@ -65,25 +65,15 @@ const FileCard = ({
 					  onRestore,
 					  onHardDelete,
 				  }: FileCardProps) => {
-	const draggable = !folder
-		? useDraggable({ id: metadata.path })
-		: {
-			attributes: {},
-			listeners: {},
-			setNodeRef: () => {},
-			transform: null,
-		};
+	const { attributes, listeners, setNodeRef: setDraggableRef, transform } = useDraggable({
+		id: metadata.path,
+		disabled: folder,
+	});
 
-	const { attributes, listeners, setNodeRef: setDraggableRef, transform } = draggable;
-
-	let isOver = false;
-	let setDroppableRef: (node: HTMLElement | null) => void = () => {};
-
-	if (folder) {
-		const droppable = useDroppable({ id: metadata.path as UniqueIdentifier });
-		isOver = droppable.isOver;
-		setDroppableRef = droppable.setNodeRef;
-	}
+	const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+		id: metadata.path,
+		disabled: !folder,
+	});
 
 	const style = {
 		transform: CSS.Translate.toString(transform) || undefined,
@@ -117,9 +107,9 @@ const FileCard = ({
 
 					<TableCell>
 						<div
-							className="flex items-center font-bold gap-2"
 							ref={!folder ? setDraggableRef : undefined}
 							{...(folder ? {} : { ...attributes, ...listeners })}
+							className="flex items-center font-bold gap-2"
 						>
 							{folder ? (
 								<FolderIcon className={metadata.deleted_at ? "text-red-400" : undefined} />
