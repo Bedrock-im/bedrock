@@ -8,7 +8,7 @@ export default function Shared() {
 
 	return (
 		<section>
-			<FileList files={sharedFiles} folders={[]} actions={new Set(["download"] as const)} />
+			<FileList files={sharedFiles} folders={[]} actions={["download"]} />
 		</section>
 	);
 }
