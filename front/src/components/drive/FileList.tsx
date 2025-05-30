@@ -345,87 +345,6 @@ const FileList: React.FC<FileListProps> = ({
 					<CurrentPath path={currentWorkingDirectory} setPath={setCurrentWorkingDirectory} />
 					<Separator orientation="horizontal" />
 				</div>
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHead className="w-[40px]">
-								<Checkbox
-									checked={selectedItems.size === files.length + folders.length}
-									onClick={(e) => {
-										e.stopPropagation();
-										selectAll();
-									}}
-								/>
-							</TableHead>
-							<TableHead>
-								<SortOption
-									option="path"
-									name="Name"
-									sortColumn={sortColumn}
-									sortOrder={sortOrder}
-									setSortColumn={setSortColumn}
-									setSortOrder={setSortOrder}
-								/>
-							</TableHead>
-							<TableHead>
-								<SortOption
-									option="size"
-									name="Size"
-									sortColumn={sortColumn}
-									sortOrder={sortOrder}
-									setSortColumn={setSortColumn}
-									setSortOrder={setSortOrder}
-								/>
-							</TableHead>
-							<TableHead>
-								<SortOption
-									option="created_at"
-									name="Created At"
-									sortColumn={sortColumn}
-									sortOrder={sortOrder}
-									setSortColumn={setSortColumn}
-									setSortOrder={setSortOrder}
-								/>
-							</TableHead>
-							<TableHead className="text-right">Actions</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{/* TODO: concat both lists and show them together, so it can be sorted by name */}
-						{sortedFolders.map((folder) => (
-							<FileCard
-								key={folder.path}
-								folder
-								metadata={folder}
-								clicked={clickedItem === folder.path}
-								selected={selectedItems.has(folder.path + "/")}
-								setSelected={() => selectItem(folder.path + "/")}
-								onLeftClick={() => setClickedItem(folder.path)}
-								onDoubleClick={() => setCurrentWorkingDirectory(folder.path + "/")}
-								onDelete={actions.includes("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
-								onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(folder.path, true) : undefined}
-								onRestore={actions.includes("restore") ? () => handleRestoreFile(folder.path) : undefined}
-							/>
-						))}
-						{sortedFiles.map((file) => (
-							<FileCard
-								key={file.path}
-								metadata={file}
-								clicked={clickedItem === file.path}
-								selected={selectedItems.has(file.path)}
-								setSelected={() => selectItem(file.path)}
-								onLeftClick={() => setClickedItem(file.path)}
-								onDownload={actions.includes("download") ? () => handleDownloadFile(file) : undefined}
-								onShare={actions.includes("share") ? () => handleShare(file) : undefined}
-								onRename={actions.includes("rename") ? () => handleRename(file.path, false) : undefined}
-								onMove={actions.includes("move") ? () => handleMove(file.path, false) : undefined}
-								onDelete={actions.includes("delete") ? () => handleSoftDelete(file.path, false) : undefined}
-								onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
-								onRestore={actions.includes("restore") ? () => handleRestoreFile(file.path) : undefined}
-							/>
-						))}
-					</TableBody>
-				</Table>
 				<DndContext onDragEnd={handleDragEnd}>
 					<Table>
 						<TableHeader>
@@ -480,8 +399,8 @@ const FileList: React.FC<FileListProps> = ({
 									folder
 									metadata={folder}
 									clicked={clickedItem === folder.path}
-									selected={selectedItems.has(folder.path)}
-									setSelected={() => selectItem(folder.path)}
+									selected={selectedItems.has(folder.path + "/")}
+									setSelected={() => selectItem(folder.path + "/")}
 									onLeftClick={() => setClickedItem(folder.path)}
 									onDoubleClick={() => setCurrentWorkingDirectory(folder.path + "/")}
 									onDelete={actions.includes("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
@@ -498,6 +417,7 @@ const FileList: React.FC<FileListProps> = ({
 									setSelected={() => selectItem(file.path)}
 									onLeftClick={() => setClickedItem(file.path)}
 									onDownload={actions.includes("download") ? () => handleDownloadFile(file) : undefined}
+									onShare={actions.includes("share") ? () => handleShare(file) : undefined}
 									onRename={actions.includes("rename") ? () => handleRename(file.path, false) : undefined}
 									onMove={actions.includes("move") ? () => handleMove(file.path, false) : undefined}
 									onDelete={actions.includes("delete") ? () => handleSoftDelete(file.path, false) : undefined}

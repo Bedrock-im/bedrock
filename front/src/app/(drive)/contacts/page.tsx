@@ -4,6 +4,7 @@ import { useQueryState } from "nuqs";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import CreateContactDialog from "@/components/drive/CreateContactDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,12 +12,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Contact } from "@/services/bedrock";
 import { useAccountStore } from "@/stores/account";
 
+export interface ContactFormData {
+	name: string;
+	address: string;
+	publicKey: string;
+}
+
 export default function Contacts() {
 	const { bedrockService } = useAccountStore();
 
 	const [publicKey, setPublicKey] = useState<string>("");
 	const [contacts, setContacts] = useState<Contact[]>([]);
 	const [_searchQuery, _setSearchQuery] = useQueryState("search", { defaultValue: "" });
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
 	const [isCopied, setIsCopied] = useState(false);
 
@@ -33,22 +41,7 @@ export default function Contacts() {
 		}
 	};
 
-	const handleAddContact = async () => {
-		const name = prompt("Enter new contact name");
-		if (!name) {
-			return;
-		}
-
-		const address = prompt("Enter new contact address");
-		if (!address) {
-			return;
-		}
-
-		const publicKey = prompt("Enter new contact public key");
-		if (!publicKey) {
-			return;
-		}
-
+	const createContact = async ({ name, address, publicKey }: ContactFormData) => {
 		try {
 			await bedrockService?.createContact(name, address, publicKey);
 			setContacts([
@@ -59,6 +52,7 @@ export default function Contacts() {
 					public_key: publicKey,
 				},
 			]);
+			setIsDialogOpen(false);
 		} catch (_error) {}
 	};
 
@@ -81,11 +75,12 @@ export default function Contacts() {
 
 	return (
 		<>
+			<CreateContactDialog isOpen={isDialogOpen} onOpenChange={setIsDialogOpen} createContact={createContact} />
 			<div className="flex items-center m-2 gap-4">
 				<button
 					className="ml-2 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all transform hover:scale-100 scale-90 focus:outline-none focus:ring-4 focus:ring-blue-300 flex items-center justify-center"
 					aria-label="Add"
-					onClick={handleAddContact}
+					onClick={() => setIsDialogOpen(true)}
 				>
 					<Plus size={20} className="transition-transform duration-300 transform group-hover:rotate-90" />
 				</button>

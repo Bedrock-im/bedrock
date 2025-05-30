@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from "@storybook/react";
+import { Meta, StoryObj } from "@storybook/nextjs";
 
 import { Tooltip, TooltipContent, TooltipProps, TooltipTrigger } from "@/components/ui/tooltip";
 
