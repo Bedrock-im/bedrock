@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from "@storybook/react";
+import { Meta, StoryObj } from "@storybook/nextjs";
 
 import { Label } from "@/components/ui/label";
 import { Switch, SwitchProps } from "@/components/ui/switch";
