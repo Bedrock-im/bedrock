@@ -73,7 +73,6 @@ export default function CreateContactDialog({ isOpen, onOpenChange, createContac
 					}
 					placeholder="Contact Public Key"
 					className="w-full"
-					onKeyDown={(e) => e.key === "Enter"}
 				/>
 				<DialogFooter>
 					<DialogClose asChild>
