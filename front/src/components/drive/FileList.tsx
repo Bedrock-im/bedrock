@@ -95,9 +95,12 @@ const FileList: React.FC<FileListProps> = ({
 		(async () => {
 			try {
 				const fileEntries = await bedrockService.fetchFileEntries();
-				const fullFiles = await bedrockService.fetchFilesMetaFromEntries(...fileEntries);
-				const sharedFiles = await bedrockService.fetchFilesShared();
+				const fullFiles = await bedrockService.fetchFilesMetaFromEntries(fileEntries);
 				const contacts = await bedrockService.fetchContacts();
+				const sharedFilesByContacts = await Promise.all(
+					contacts.map((c) => bedrockService.fetchFilesSharedByContact(c)),
+				);
+				const sharedFiles = sharedFilesByContacts.flat();
 
 				const folderPaths = new Set<string>();
 

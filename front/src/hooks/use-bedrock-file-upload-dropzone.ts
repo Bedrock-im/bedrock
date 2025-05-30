@@ -14,7 +14,7 @@ export default function useBedrockFileUploadDropzone(options: DropzoneOptions) {
 	const onDrop = useCallback(
 		async (acceptedFiles: File[]) => {
 			if (!bedrockService) return;
-			const fileInfos = bedrockService.uploadFiles(currentWorkingDirectory, ...acceptedFiles);
+			const fileInfos = bedrockService.uploadFiles(currentWorkingDirectory, acceptedFiles);
 			toast.promise(fileInfos, {
 				loading: `Uploading ${acceptedFiles.length} files...`,
 				success: (uploadedFiles) => `Successfully uploaded ${uploadedFiles.length} files`,
@@ -32,14 +32,21 @@ export default function useBedrockFileUploadDropzone(options: DropzoneOptions) {
 				success: (savedFiles) => `Successfully saved ${savedFiles.length} files`,
 				error: (err) => `Failed to save files: ${err}`,
 			});
-			const awaitedFileEntries = await fileEntries.catch(() => []);
-			addFiles(
-				awaitedFileInfos.map(({ path, ...fileInfo }) => ({
-					...fileInfo,
-					path,
-					post_hash: awaitedFileEntries.find((entry) => entry.path === path)!.post_hash,
-				})),
-			);
+			try {
+				const awaitedFileEntries = await fileEntries;
+
+				addFiles(
+					awaitedFileInfos.map(({ path, ...fileInfo }) => ({
+						...fileInfo,
+						path,
+						post_hash: awaitedFileEntries.find((entry) => entry.path === path)!.post_hash,
+					})),
+				);
+			} catch (err) {
+				console.error("Failed to save files:", err);
+				toast.error(`Failed to save files: ${err}`);
+				return;
+			}
 		},
 		[currentWorkingDirectory, bedrockService, addFiles],
 	);

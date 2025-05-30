@@ -15,9 +15,7 @@ const zod32CharHexString = z.string().regex(/^[a-f0-9]{32}$/, {
 	message: "Invalid hash format. It should be a 32-character hexadecimal string.",
 });
 export const FileEntrySchema = z.object({
-	path: z.string().regex(/^(\/[A-Za-z0-9-_+.]+)+$/, {
-		message: "Invalid URI format. It should start with '/', contain valid path segments and do not end with a '/'.",
-	}),
+	path: z.string(),
 	post_hash: zod64CharHexString,
 	shared_with: z.array(z.string()).default([]),
 });
@@ -29,6 +27,8 @@ export const EncryptedFileEntrySchema = z.object({
 });
 
 export const FileMetaSchema = z.object({
+	name: z.string(),
+	path: z.string(),
 	key: zod64CharHexString,
 	iv: zod32CharHexString,
 	store_hash: zod64CharHexString,
@@ -45,6 +45,8 @@ export const FileMetaSchema = z.object({
 });
 
 export const EncryptedFileMetaSchema = z.object({
+	name: zodEncryptedHexString,
+	path: zodEncryptedHexString,
 	key: zodEncryptedHexString,
 	iv: zodEncryptedHexString,
 	store_hash: zodEncryptedHexString,
@@ -164,13 +166,14 @@ export default class BedrockService {
 		}
 	}
 
-	async uploadFiles(directoryPath: string, ...files: File[]): Promise<Omit<FileFullInfos, "post_hash">[]> {
+	async uploadFiles(directoryPath: string, files: File[]): Promise<Omit<FileFullInfos, "post_hash">[]> {
 		const uploadedFiles = await this.fetchFileEntries();
 		const results = await Promise.allSettled(
 			files
 				.map((file) => ({
 					file,
 					path: `${directoryPath}${file.name}`,
+					name: file.name,
 					size: file.size,
 					created_at: new Date().toISOString(),
 					deleted_at: null,
@@ -226,9 +229,9 @@ export default class BedrockService {
 
 		const fileEntries = (
 			await Promise.allSettled(
-				fileInfos.map(async ({ path, ...rest }) => ({
-					post_hash: await this.postFile(rest),
-					path,
+				fileInfos.map(async (file) => ({
+					post_hash: await this.postFile(file),
+					path: file.path,
 				})),
 			)
 		)
@@ -305,16 +308,16 @@ export default class BedrockService {
 		);
 	}
 
-	async fetchFilesMetaFromEntries(...fileEntries: FileEntry[]): Promise<FileFullInfos[]> {
+	async fetchFilesMetaFromEntries(fileEntries: FileEntry[], owner?: string): Promise<FileFullInfos[]> {
 		fileEntries = z.array(FileEntrySchema).parse(fileEntries); // Validate the input because fileEntry can be built without using the parse method
 
 		const results = await Promise.allSettled(
-			fileEntries.map(async ({ post_hash, path }) => {
+			fileEntries.map(async ({ post_hash }) => {
 				// eslint-disable-next-line prefer-const
 				let { key, iv, shared_keys, ...rest } = await this.alephService.fetchPost(
 					FILE_POST_TYPE,
 					EncryptedFileMetaSchema,
-					undefined,
+					owner ? [owner] : undefined,
 					post_hash,
 				);
 
@@ -334,10 +337,11 @@ export default class BedrockService {
 					iv: decryptedIV,
 					post_hash,
 					store_hash: EncryptionService.decrypt(rest.store_hash, bufferKey, bufferIv),
-					path,
+					path: EncryptionService.decrypt(rest.path, bufferKey, bufferIv),
 					size: parseInt(EncryptionService.decrypt(rest.size, bufferKey, bufferIv), 10),
 					created_at: EncryptionService.decrypt(rest.created_at, bufferKey, bufferIv),
 					deleted_at: decryptedDeletedAt === "null" ? null : decryptedDeletedAt,
+					name: EncryptionService.decrypt(rest.name, bufferKey, bufferIv),
 				};
 			}),
 		);
@@ -822,22 +826,9 @@ export default class BedrockService {
 
 	async fetchFilesSharedByContact(contact: Pick<Contact, "address" | "public_key">): Promise<FileFullInfos[]> {
 		const fileEntries = (
-			await this.alephService.fetchAggregate(FILE_ENTRIES_AGGREGATE_KEY, EncryptedFileEntriesSchema)
-		).files
-			.filter(({ shared_with }) => shared_with.includes(contact.public_key))
-			.map(({ path: _, ...rest }) => ({ path: "/", ...rest }));
-
-		return this.fetchFilesMetaFromEntries(...fileEntries);
-	}
-
-	async fetchFilesShared(): Promise<FileFullInfos[]> {
-		const fileEntries = (
-			await this.alephService.fetchAggregate(FILE_ENTRIES_AGGREGATE_KEY, EncryptedFileEntriesSchema)
-		).files
-			.filter(({ shared_with }) => shared_with.includes(this.alephPublicKey))
-			.map(({ path: _, ...rest }) => ({ path: "/", ...rest }));
-
-		return this.fetchFilesMetaFromEntries(...fileEntries);
+			await this.alephService.fetchAggregate(FILE_ENTRIES_AGGREGATE_KEY, EncryptedFileEntriesSchema, contact.address)
+		).files.filter(({ shared_with }) => shared_with.includes(this.alephPublicKey));
+		return this.fetchFilesMetaFromEntries(fileEntries, contact.address);
 	}
 
 	private fileExists(files: FileEntry[], path: string): boolean {
@@ -851,10 +842,14 @@ export default class BedrockService {
 		created_at,
 		deleted_at,
 		size,
-	}: Omit<FileFullInfos, "post_hash" | "path">): Promise<string> {
+		name,
+		path,
+	}: Omit<FileFullInfos, "post_hash">): Promise<string> {
 		const bufferKey = Buffer.from(key, "hex");
 		const bufferIv = Buffer.from(iv, "hex");
 		const fileData: EncryptedFileMeta = {
+			name: EncryptionService.encrypt(name, bufferKey, bufferIv),
+			path: EncryptionService.encrypt(path, bufferKey, bufferIv),
 			key: EncryptionService.encryptEcies(key, this.alephService.encryptionPrivateKey.publicKey.compressed),
 			iv: EncryptionService.encryptEcies(iv, this.alephService.encryptionPrivateKey.publicKey.compressed),
 			store_hash: EncryptionService.encrypt(store_hash, bufferKey, bufferIv),

@@ -2,6 +2,7 @@ import { Account } from "thirdweb/wallets";
 import { create } from "zustand";
 
 import { getUsernameAddressGet } from "@/apis/usernames";
+import env from "@/config/env";
 import { AlephService, BEDROCK_MESSAGE } from "@/services/aleph";
 import BedrockService from "@/services/bedrock";
 
@@ -30,7 +31,24 @@ export const useAccountStore = create<AccountStoreState & AccountStoreActions>((
 			return;
 		}
 
-		const hash = await account.signMessage({ message: BEDROCK_MESSAGE });
+		let hash: `0x${string}` = "0x";
+
+		const localSignatureKey = `bedrock-signature-${account.address}`;
+
+		if (env.DEV_SAVE_LOCAL_SIGNATURE === "true") {
+			// Try loading from localStorage
+			const storedSig = localStorage.getItem(localSignatureKey) as `0x${string}` | null;
+			if (storedSig) {
+				hash = storedSig;
+			} else {
+				// Sign and store
+				hash = await account.signMessage({ message: BEDROCK_MESSAGE });
+				localStorage.setItem(localSignatureKey, hash);
+			}
+		} else {
+			// Always ask for signature, don't store
+			hash = await account.signMessage({ message: BEDROCK_MESSAGE });
+		}
 		const alephService = await AlephService.initialize(hash);
 		if (alephService === undefined) {
 			return;
