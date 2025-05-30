@@ -484,9 +484,9 @@ const FileList: React.FC<FileListProps> = ({
 									setSelected={() => selectItem(folder.path)}
 									onLeftClick={() => setClickedItem(folder.path)}
 									onDoubleClick={() => setCurrentWorkingDirectory(folder.path + "/")}
-									onDelete={actions.has("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
-									onHardDelete={actions.has("hardDelete") ? () => handleHardDelete(folder.path, true) : undefined}
-									onRestore={actions.has("restore") ? () => handleRestoreFile(folder.path) : undefined}
+									onDelete={actions.includes("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
+									onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(folder.path, true) : undefined}
+									onRestore={actions.includes("restore") ? () => handleRestoreFile(folder.path) : undefined}
 								/>
 							))}
 							{sortedFiles.map((file) => (
@@ -497,12 +497,12 @@ const FileList: React.FC<FileListProps> = ({
 									selected={selectedItems.has(file.path)}
 									setSelected={() => selectItem(file.path)}
 									onLeftClick={() => setClickedItem(file.path)}
-									onDownload={actions.has("download") ? () => handleDownloadFile(file) : undefined}
-									onRename={actions.has("rename") ? () => handleRename(file.path, false) : undefined}
-									onMove={actions.has("move") ? () => handleMove(file.path, false) : undefined}
-									onDelete={actions.has("delete") ? () => handleSoftDelete(file.path, false) : undefined}
-									onHardDelete={actions.has("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
-									onRestore={actions.has("restore") ? () => handleRestoreFile(file.path) : undefined}
+									onDownload={actions.includes("download") ? () => handleDownloadFile(file) : undefined}
+									onRename={actions.includes("rename") ? () => handleRename(file.path, false) : undefined}
+									onMove={actions.includes("move") ? () => handleMove(file.path, false) : undefined}
+									onDelete={actions.includes("delete") ? () => handleSoftDelete(file.path, false) : undefined}
+									onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
+									onRestore={actions.includes("restore") ? () => handleRestoreFile(file.path) : undefined}
 								/>
 							))}
 						</TableBody>
