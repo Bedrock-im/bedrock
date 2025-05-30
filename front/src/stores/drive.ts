@@ -10,7 +10,7 @@ type DriveStoreState = {
 };
 
 export type DriveFile = FileFullInfos;
-export type DriveFolder = Omit<DriveFile, "store_hash" | "post_hash" | "size" | "key" | "iv">;
+export type DriveFolder = Omit<DriveFile, "store_hash" | "post_hash" | "size" | "key" | "iv" | "name">;
 
 type DriveStoreActions = {
 	setFiles: (files: DriveFile[]) => void;
