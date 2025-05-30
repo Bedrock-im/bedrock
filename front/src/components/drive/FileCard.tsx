@@ -1,26 +1,12 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { filesize } from "filesize";
-import {
-	Download,
-	Edit,
-	Share2,
-	FileText,
-	FolderIcon,
-	Move,
-	Trash,
-	ArchiveRestore,
-} from "lucide-react";
+import { Download, Edit, Share2, FileText, FolderIcon, Move, Trash, ArchiveRestore } from "lucide-react";
 import React from "react";
 
 import ActionIcon from "@/components/drive/ActionIcon";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-	ContextMenu,
-	ContextMenuContent,
-	ContextMenuItem,
-	ContextMenuTrigger,
-} from "@/components/ui/context-menu";
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { DriveFile, DriveFolder } from "@/stores/drive";
 
@@ -50,22 +36,27 @@ type FileCardFolderProps = {
 };
 
 const FileCard = ({
-					  metadata,
-					  folder,
-					  clicked = false,
-					  selected = false,
-					  setSelected,
-					  onLeftClick,
-					  onDoubleClick,
-					  onDelete,
-					  onShare,
-					  onDownload,
-					  onRename,
-					  onMove,
-					  onRestore,
-					  onHardDelete,
-				  }: FileCardProps) => {
-	const { attributes, listeners, setNodeRef: setDraggableRef, transform } = useDraggable({
+	metadata,
+	folder,
+	clicked = false,
+	selected = false,
+	setSelected,
+	onLeftClick,
+	onDoubleClick,
+	onDelete,
+	onShare,
+	onDownload,
+	onRename,
+	onMove,
+	onRestore,
+	onHardDelete,
+}: FileCardProps) => {
+	const {
+		attributes,
+		listeners,
+		setNodeRef: setDraggableRef,
+		transform,
+	} = useDraggable({
 		id: metadata.path,
 		disabled: folder,
 	});
