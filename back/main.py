@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import os
 import json
 import aiohttp
-from eth_utils import keccak, to_bytes, to_hex
+from eth_utils import keccak
 
 load_dotenv()
 REGISTRAR_CONTRACT_ADDRESS = "0x30afcf8bddd96b3e2b0210f8f003aafd4a52f628"
@@ -134,7 +134,7 @@ async def change_avatar(username: str, file: UploadFile = File(...)) -> Transact
         async with session.post(url, data=data, headers=headers) as response:
             response.raise_for_status()
             result = await response.json()
-            image_url = f"https://gateway.pinata.cloud/ipfs/{result.get("IpfsHash")}"
+            image_url = f"https://gateway.pinata.cloud/ipfs/{result.get('IpfsHash')}"
 
 
     try:
