@@ -2,11 +2,9 @@
 
 import { BadgeCheck, Bell, ChevronsUpDown, LogOut, Trash2, WrenchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useActiveAccount, useActiveWallet, useDisconnect } from "thirdweb/react";
-
-import { getAvatarUsernameUsernameAvatarGet } from "@/apis/usernames/sdk.gen";
 import DeleteDialog from "@/components/drive/DeleteDialog";
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -26,28 +24,7 @@ import { shrinkEthAddress } from "@/utils/ethereum";
 const BedrockAccountAvatar = () => {
 	const account = useActiveAccount();
 	const username = useAccountStore((state) => state.username);
-	const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-
-	useEffect(() => {
-		const fetchAvatar = async () => {
-			if (!username) return;
-
-			try {
-				const response = await getAvatarUsernameUsernameAvatarGet({
-					path: { username },
-				});
-
-				if (response.data) {
-					setAvatarUrl(response.data);
-				}
-			} catch (error) {
-				console.error("Failed to fetch avatar:", error);
-				setAvatarUrl(null);
-			}
-		};
-
-		fetchAvatar();
-	}, [username]);
+	const avatarUrl = useAccountStore((state) => state.avatarUrl);
 
 	if (account === undefined) {
 		return null;

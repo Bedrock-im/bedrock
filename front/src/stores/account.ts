@@ -1,7 +1,7 @@
 import { Account } from "thirdweb/wallets";
 import { create } from "zustand";
 
-import { getUsernameAddressGet } from "@/apis/usernames";
+import { getUsernameAddressGet, getAvatarUsernameUsernameAvatarGet } from "@/apis/usernames";
 import env from "@/config/env";
 import { AlephService, BEDROCK_MESSAGE } from "@/services/aleph";
 import BedrockService from "@/services/bedrock";
@@ -10,18 +10,21 @@ type AccountStoreState = {
 	isConnected: boolean;
 	bedrockService: BedrockService | null;
 	username: string | null;
+	avatarUrl: string | null;
 };
 
 type AccountStoreActions = {
 	onDisconnect: () => void;
 	onAccountChange: (account: Account | undefined) => Promise<void>;
 	setUsername: (username: string) => void;
+	fetchAvatar: (username: string) => Promise<void>;
 };
 
 export const useAccountStore = create<AccountStoreState & AccountStoreActions>((set, get) => ({
 	isConnected: false,
 	bedrockService: null,
 	username: null,
+	avatarUrl: null,
 	onAccountChange: async (account) => {
 		const state = get();
 
@@ -70,6 +73,11 @@ export const useAccountStore = create<AccountStoreState & AccountStoreActions>((
 				username: username || null,
 				isConnected: Boolean(username), // Only true if username exists
 			});
+
+			// Fetch avatar if username exists
+			if (username) {
+				get().fetchAvatar(username);
+			}
 		} catch (error) {
 			console.error("Error fetching username:", error);
 			set({ isConnected: false });
@@ -80,12 +88,29 @@ export const useAccountStore = create<AccountStoreState & AccountStoreActions>((
 			bedrockService: null,
 			isConnected: false,
 			username: null,
+			avatarUrl: null,
 		});
 	},
 	setUsername: (username) => {
 		const state = get();
 		if (state.bedrockService) {
 			set({ username, isConnected: true });
+			// Fetch avatar when username is set
+			state.fetchAvatar(username);
+		}
+	},
+	fetchAvatar: async (username) => {
+		try {
+			const response = await getAvatarUsernameUsernameAvatarGet({
+				path: { username },
+			});
+
+			if (response.data) {
+				set({ avatarUrl: response.data });
+			}
+		} catch (error) {
+			console.error("Failed to fetch avatar:", error);
+			set({ avatarUrl: null });
 		}
 	},
 }));
