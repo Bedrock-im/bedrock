@@ -23,4 +23,4 @@ const Avatar = React.forwardRef<React.ElementRef<typeof AvatarImage>, AvatarProp
 );
 Avatar.displayName = "Avatar";
 
-export { Avatar };
+export { Avatar, AvatarImage, Fallback as AvatarFallback };
