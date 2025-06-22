@@ -6,6 +6,7 @@ const envSchema = z.object({
 	ALEPH_GENERAL_CHANNEL: z.string().optional().default("bedrock"),
 	USERNAMES_API_URL: z.string().url(),
 	DEV_SAVE_LOCAL_SIGNATURE: z.string().optional().default("false"),
+	USDC_BASE_ADDRESS: z.string().startsWith("0x").optional().default("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"),
 });
 
 const env = envSchema.parse({
