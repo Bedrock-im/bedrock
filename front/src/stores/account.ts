@@ -5,10 +5,12 @@ import { getAvatarUsernameUsernameAvatarGet, getUsernameAddressGet } from "@/api
 import env from "@/config/env";
 import { AlephService, BEDROCK_MESSAGE } from "@/services/aleph";
 import BedrockService from "@/services/bedrock";
+import { LibertaiService } from "@/services/libertai";
 
 type AccountStoreState = {
 	isConnected: boolean;
 	bedrockService: BedrockService | null;
+	libertaiService: LibertaiService | null;
 	username: string | null;
 	avatarUrl: string | null;
 };
@@ -23,6 +25,7 @@ type AccountStoreActions = {
 export const useAccountStore = create<AccountStoreState & AccountStoreActions>((set, get) => ({
 	isConnected: false,
 	bedrockService: null,
+	libertaiService: null,
 	username: null,
 	avatarUrl: null,
 	onAccountChange: async (account, wallet) => {
@@ -64,12 +67,14 @@ export const useAccountStore = create<AccountStoreState & AccountStoreActions>((
 			});
 			const username = result.data?.username;
 
+			const libertaiService = new LibertaiService();
 			const bedrockService = new BedrockService(alephService);
 			await bedrockService.setup();
 
 			// Only mark as connected if a username exists
 			set({
 				bedrockService,
+				libertaiService,
 				username: username || null,
 				isConnected: Boolean(username), // Only true if username exists
 			});

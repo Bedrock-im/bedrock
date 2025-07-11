@@ -9,8 +9,8 @@ type DriveStoreState = {
 	contacts: Contact[];
 };
 
-export type DriveFile = FileFullInfos;
-export type DriveFolder = Omit<DriveFile, "store_hash" | "post_hash" | "size" | "key" | "iv" | "name">;
+export type DriveFile = FileFullInfos & { content?: ArrayBuffer };
+export type DriveFolder = Omit<DriveFile, "store_hash" | "post_hash" | "size" | "key" | "iv" | "name" | "content">;
 
 type DriveStoreActions = {
 	setFiles: (files: DriveFile[]) => void;
@@ -52,6 +52,7 @@ export const useDriveStore = create<DriveStoreState & DriveStoreActions>((set, g
 				file.path === path
 					? {
 							...file,
+							content: undefined,
 							deleted_at: deletionDate.toISOString(),
 						}
 					: file,
