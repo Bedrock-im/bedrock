@@ -11531,6 +11531,7 @@ __metadata:
     lucide-react: "npm:^0.508.0"
     next: "npm:14.2.26"
     nuqs: "npm:^2.4.3"
+    openai: "npm:^5.3.0"
     pino-pretty: "npm:^13.0.0"
     postcss: "npm:^8.5.3"
     prettier: "npm:^3.5.3"
@@ -14920,6 +14921,23 @@ __metadata:
     is-docker: "npm:^2.1.1"
     is-wsl: "npm:^2.2.0"
   checksum: 10c0/bb6b3a58401dacdb0aad14360626faf3fb7fba4b77816b373495988b724fb48941cad80c1b65d62bb31a17609b2cd91c41a181602caea597ca80dfbcc27e84c9
+  languageName: node
+  linkType: hard
+
+"openai@npm:^5.3.0":
+  version: 5.3.0
+  resolution: "openai@npm:5.3.0"
+  peerDependencies:
+    ws: ^8.18.0
+    zod: ^3.23.8
+  peerDependenciesMeta:
+    ws:
+      optional: true
+    zod:
+      optional: true
+  bin:
+    openai: bin/cli
+  checksum: 10c0/6363711a7fb1b905c862de84bcaba03ff5a94cddce4ea5b1393bc1bb73fde70b633bd8e142f95cd27567ad78d34a75cfefebecf1f0bf1bdc649504cf151cfb75
   languageName: node
   linkType: hard
 
