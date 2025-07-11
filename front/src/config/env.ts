@@ -7,6 +7,9 @@ const envSchema = z.object({
 	USERNAMES_API_URL: z.string().url(),
 	DEV_SAVE_LOCAL_SIGNATURE: z.string().optional().default("false"),
 	USDC_BASE_ADDRESS: z.string().startsWith("0x").optional().default("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"),
+	// Will be transfered in the backend soon™️
+	LIBERTAI_API_URL: z.string().url().default("https://api.libertai.io/v1"),
+	LIBERTAI_API_SECRET_KEY: z.string(),
 });
 
 const env = envSchema.parse({
@@ -15,6 +18,8 @@ const env = envSchema.parse({
 	ALEPH_GENERAL_CHANNEL: process.env.NEXT_PUBLIC_ALEPH_GENERAL_CHANNEL,
 	USERNAMES_API_URL: process.env.NEXT_PUBLIC_USERNAMES_API_URL,
 	DEV_SAVE_LOCAL_SIGNATURE: process.env.NEXT_PUBLIC_DEV_SAVE_LOCAL_SIGNATURE,
+	LIBERTAI_API_URL: process.env.NEXT_PUBLIC_LIBERTAI_API_URL,
+	LIBERTAI_API_SECRET_KEY: process.env.NEXT_PUBLIC_LIBERTAI_API_SECRET_KEY,
 });
 
 export default env;

@@ -7,6 +7,8 @@ import { ChatBubble, ChatBubbleAction, ChatBubbleMessage } from "@/components/ui
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { useAccountStore } from "@/stores/account";
+import { useDriveStore } from "@/stores/drive";
 import { KnowledgeBase } from "@/stores/knowledge-bases";
 
 export type KnowledgeBaseAskDialogProps = {
@@ -22,9 +24,40 @@ type Message = {
 export default function KnowledgeBaseAskDialog({ knowledgeBase, onOpenChange }: KnowledgeBaseAskDialogProps) {
 	const [messageToSend, setMessageToSend] = useState("");
 	const [messages, setMessages] = useState<Message[]>([]);
+	const { libertaiService } = useAccountStore();
+	const { files } = useDriveStore();
 
 	const handleSendMessage = () => {
 		setMessages((prev) => [...prev, { type: "sent", message: messageToSend }]);
+		if (!knowledgeBase || !libertaiService) {
+			toast.error("Knowledge base or LibertAI service not available");
+			return;
+		}
+		libertaiService
+			.askKnowledgeBase(
+				messageToSend,
+				knowledgeBase.filePaths
+					.map((path) => ({
+						file: files.find((file) => file.path === path),
+						filePath: path,
+					}))
+					.filter(({ file }) => !!file?.content)
+					.map(({ filePath, file }) => ({ filePath, content: file!.content! })),
+				messages.map(({ type, message }) => ({
+					role: type === "sent" ? "user" : "assistant",
+					content: message,
+				})),
+			)
+			.then((response) => {
+				setMessages((prev) => [...prev, { type: "received", message: response.at(-1)!.content as string }]);
+			})
+			.catch((error) => {
+				toast.error(`Error asking knowledge base: ${error.message}`);
+				setMessages((prev) => [
+					...prev,
+					{ type: "received", message: "An error occurred while processing your request." },
+				]);
+			});
 		setMessageToSend("");
 	};
 
