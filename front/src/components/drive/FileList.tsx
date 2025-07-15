@@ -4,10 +4,13 @@ import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { LoaderIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
 import React, { useEffect, useMemo, useState } from "react";
+import {toast} from "sonner";
 
 import CurrentPath from "@/components/drive/CurrentPath";
 import FileCard from "@/components/drive/FileCard";
 import SortOption from "@/components/drive/SortOption";
+import {FileRenameModal} from "@/components/FileRenameModal";
+import {FileShareModal} from "@/components/FileShareModal";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
@@ -18,9 +21,7 @@ import { useAccountStore } from "@/stores/account";
 import { DriveFile, DriveFolder, useDriveStore } from "@/stores/drive";
 
 import UploadButton from "./UploadButton";
-import {toast} from "sonner";
-import {FileRenameModal} from "@/components/FileRenameModal";
-import {FileShareModal} from "@/components/FileShareModal";
+import {FileMoveModal} from "@/components/FileMoveModal";
 
 type SortColumn = "path" | "size" | "created_at";
 type SortOrder = "asc" | "desc";
@@ -51,6 +52,7 @@ const FileList: React.FC<FileListProps> = ({
 		defaultValue: defaultCwd,
 		history: "push",
 	});
+	const [fileToMove, setFileToMove]	= useState<{ path: string, folder: boolean } | null>(null);
 	const [fileToRename, setFileToRename]	= useState<FileFullInfos | null>(null);
 	const [fileToShare, setFileToShare]	= useState<FileFullInfos | null>(null);
 	const [sortColumn, setSortColumn] = useQueryState("sort", { defaultValue: "path" as SortColumn });
@@ -246,13 +248,7 @@ const FileList: React.FC<FileListProps> = ({
 		}
 	};
 
-	const handleMove = (path: string, folder: boolean) => {
-		const newPath = prompt("Enter new path", path);
-
-		if (!newPath) {
-			return;
-		}
-
+	const handleMove = (path: string, newPath: string, folder: boolean) => {
 		if (!folder) {
 			moveFile(path, newPath);
 			bedrockService?.moveFile(path, newPath);
@@ -324,6 +320,7 @@ const FileList: React.FC<FileListProps> = ({
 
 	return (
 		<div className="flex flex-col h-full bg-gray-200" onClick={() => setClickedItem(undefined)}>
+			{fileToMove && <FileMoveModal isOpen={true} onClose={() => setFileToMove(null)} onComplete={(newPath) => handleMove(fileToMove.path, newPath, fileToMove.folder)} />}
 			{fileToRename && <FileRenameModal isOpen={true} onClose={() => setFileToRename(null)} onComplete={(newName) => handleRename(fileToRename.path, false, newName)} />}
 			{fileToShare && <FileShareModal isOpen={true} onClose={() => setFileToShare(null)} onComplete={(contact) => handleShare(fileToShare, contact)} contacts={contacts} />}
 			<div className="flex justify-between items-center m-2 gap-4">
@@ -419,7 +416,7 @@ const FileList: React.FC<FileListProps> = ({
 									onDownload={actions.includes("download") ? () => handleDownloadFile(file) : undefined}
 									onShare={actions.includes("share") ? () => setFileToShare(file) : undefined}
 									onRename={actions.includes("rename") ? () => setFileToRename(file) : undefined}
-									onMove={actions.includes("move") ? () => handleMove(file.path, false) : undefined}
+									onMove={actions.includes("move") ? () => setFileToMove({ path: file.path, folder: false }) : undefined}
 									onDelete={actions.includes("delete") ? () => handleSoftDelete(file.path, false) : undefined}
 									onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
 									onRestore={actions.includes("restore") ? () => handleRestoreFile(file.path) : undefined}
