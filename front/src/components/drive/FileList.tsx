@@ -1,7 +1,15 @@
 "use client";
 
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
-import { Download, LoaderIcon, Move, Share2, Trash } from "lucide-react";
+import {
+	Ban,
+	ClipboardPaste,
+	Download,
+	LoaderIcon,
+	Move,
+	Share2,
+	Trash
+} from "lucide-react";
 import { useQueryState } from "nuqs";
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -51,6 +59,8 @@ const FileList: React.FC<FileListProps> = ({
 	trash = false,
 	emptyMessage,
 }) => {
+	// TODO: Replace with a real clipboard
+	const clipboard = 1;
 	const [searchQuery, setSearchQuery] = useQueryState("search", { defaultValue: defaultSearchQuery });
 	const [currentWorkingDirectory, setCurrentWorkingDirectory] = useQueryState("cwd", {
 		defaultValue: defaultCwd,
@@ -461,6 +471,28 @@ const FileList: React.FC<FileListProps> = ({
 								))}
 							</TableBody>
 						</Table>
+					)}
+					{clipboard > 0 && (
+						<>
+						<div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-[#1e81b0] text-white px-6 py-3 rounded-full shadow-lg w-[50%] ml-[10%]">
+							<div className="flex justify-between items-center gap-4">
+								<p>
+									{clipboard} item{clipboard > 1 ? "s" : ""} copied to clipboard.
+								</p>
+								<Button variant="ghost" className="text-white text-sm gap-2">
+									<ClipboardPaste size={16} />
+									Paste
+								</Button>
+							</div>
+						</div>
+							<div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-39 bg-[#A21511] text-white px-6 py-3 rounded-full shadow-lg w-[50%] ml-[15%]">
+								<div className="flex justify-end items-center">
+									<Button variant="ghost" className="text-white text-sm px-2 py-1">
+										<Ban size={16} />
+									</Button>
+								</div>
+							</div>
+						</>
 					)}
 					{selectedItems.size > 0 && (
 						<div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-[#20243a] text-white px-6 py-3 rounded-full shadow-lg w-[50%]">
