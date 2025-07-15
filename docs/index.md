@@ -21,7 +21,7 @@ features:
   - title: 🗂️ Create folders
     details: You can create folders (no folders will be created if they do not contains files)
   - title: 📤 Upload files
-    details: You can upload files from your computer to aleph storage
+    details: You can upload files from your computer to Aleph storage
   - title: 🧭 Breadcrumb navigation
     details: you can navigate between folders while maintaining a good url historic
   - title: ✅ Multi-file selection
