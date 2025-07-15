@@ -18,6 +18,8 @@ import { useAccountStore } from "@/stores/account";
 import { DriveFile, DriveFolder, useDriveStore } from "@/stores/drive";
 
 import UploadButton from "./UploadButton";
+import {toast} from "sonner";
+import {FileRenameModal} from "@/components/FileRenameModal";
 
 type SortColumn = "path" | "size" | "created_at";
 type SortOrder = "asc" | "desc";
@@ -48,6 +50,7 @@ const FileList: React.FC<FileListProps> = ({
 		defaultValue: defaultCwd,
 		history: "push",
 	});
+	const [fileToRename, setFileToRename]	= useState<FileFullInfos | null>(null);
 	const [sortColumn, setSortColumn] = useQueryState("sort", { defaultValue: "path" as SortColumn });
 	const [sortOrder, setSortOrder] = useQueryState("order", { defaultValue: "asc" as SortOrder });
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set(selectedPaths));
@@ -172,7 +175,7 @@ const FileList: React.FC<FileListProps> = ({
 			link.click();
 			document.body.removeChild(link);
 		} catch (error) {
-			console.error("Failed to download file:", error);
+			toast.error("Failed to download file:" + error?.toString());
 		}
 	};
 
@@ -184,7 +187,7 @@ const FileList: React.FC<FileListProps> = ({
 
 		// TODO: this check should be moved to the drive or bedrock service to check against all files, not just those passed to this component
 		// if (folders.some((folder) => folder.path === newFolderPath)) {
-		// 	alert("This folder already exists!");
+		// 	toast.error("This folder already exists!");
 		// 	return;
 		// }
 
@@ -198,15 +201,10 @@ const FileList: React.FC<FileListProps> = ({
 
 		addFolder(newFolder);
 
-		alert(`The folder "${folderName}" has been created locally. It will only be saved if a file is moved inside.`);
+		toast.success(`The folder "${folderName}" has been created.`);
 	};
 
-	const handleRename = (path: string, folder: boolean) => {
-		const newName = prompt(`Enter new ${folder ? "folder" : "file"} name`, path.split("/").pop());
-		if (!newName) {
-			return;
-		}
-
+	const handleRename = (path: string, folder: boolean, newName: string) => {
 		const newPath = `${path.split("/").slice(0, -1).join("/")}/${newName}`;
 
 		if (!folder) {
@@ -268,7 +266,7 @@ const FileList: React.FC<FileListProps> = ({
 
 		const contact = contacts.find((contact) => contact.name === contactName);
 		if (!contact) {
-			alert("Contact not found");
+			toast.error("Contact not found");
 			return;
 		}
 
@@ -331,6 +329,7 @@ const FileList: React.FC<FileListProps> = ({
 
 	return (
 		<div className="flex flex-col h-full bg-gray-200" onClick={() => setClickedItem(undefined)}>
+			<FileRenameModal isOpen={!!fileToRename} onComplete={(newName) => handleRename(fileToRename?.path ?? "/", false, newName)} name={fileToRename?.name} />
 			<div className="flex justify-between items-center m-2 gap-4">
 				{actions.includes("upload") && (
 					<UploadButton onCreateFolder={handleCreateFolder} getInputProps={getInputProps} />
@@ -423,7 +422,7 @@ const FileList: React.FC<FileListProps> = ({
 									onLeftClick={() => setClickedItem(file.path)}
 									onDownload={actions.includes("download") ? () => handleDownloadFile(file) : undefined}
 									onShare={actions.includes("share") ? () => handleShare(file) : undefined}
-									onRename={actions.includes("rename") ? () => handleRename(file.path, false) : undefined}
+									onRename={actions.includes("rename") ? () => setFileToRename(file) : undefined}
 									onMove={actions.includes("move") ? () => handleMove(file.path, false) : undefined}
 									onDelete={actions.includes("delete") ? () => handleSoftDelete(file.path, false) : undefined}
 									onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
