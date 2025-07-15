@@ -1,7 +1,7 @@
-import { Account } from "thirdweb/wallets";
+import { Account, Wallet } from "thirdweb/wallets";
 import { create } from "zustand";
 
-import { getUsernameAddressGet, getAvatarUsernameUsernameAvatarGet } from "@/apis/usernames";
+import { getAvatarUsernameUsernameAvatarGet, getUsernameAddressGet } from "@/apis/usernames";
 import env from "@/config/env";
 import { AlephService, BEDROCK_MESSAGE } from "@/services/aleph";
 import BedrockService from "@/services/bedrock";
@@ -15,7 +15,7 @@ type AccountStoreState = {
 
 type AccountStoreActions = {
 	onDisconnect: () => void;
-	onAccountChange: (account: Account | undefined) => Promise<void>;
+	onAccountChange: (account: Account | undefined, wallet: Wallet | undefined) => Promise<void>;
 	setUsername: (username: string) => void;
 	fetchAvatar: (username: string) => Promise<void>;
 };
@@ -25,10 +25,10 @@ export const useAccountStore = create<AccountStoreState & AccountStoreActions>((
 	bedrockService: null,
 	username: null,
 	avatarUrl: null,
-	onAccountChange: async (account) => {
+	onAccountChange: async (account, wallet) => {
 		const state = get();
 
-		if (account === undefined) {
+		if (account === undefined || wallet === undefined) {
 			// Potential disconnection
 			state.onDisconnect();
 			return;
@@ -52,7 +52,7 @@ export const useAccountStore = create<AccountStoreState & AccountStoreActions>((
 			// Always ask for signature, don't store
 			hash = await account.signMessage({ message: BEDROCK_MESSAGE });
 		}
-		const alephService = await AlephService.initialize(hash);
+		const alephService = await AlephService.initialize(hash, wallet);
 		if (alephService === undefined) {
 			return;
 		}

@@ -2,11 +2,15 @@ import { AuthenticatedAlephHttpClient } from "@aleph-sdk/client";
 import { ETHAccount, getAccountFromProvider, importAccountFromPrivateKey } from "@aleph-sdk/ethereum";
 import { AggregateMessage, ForgetMessage, ItemType, PostMessage, StoreMessage } from "@aleph-sdk/message";
 import { PrivateKey } from "eciesjs";
+import { ethers5Adapter } from "thirdweb/adapters/ethers5";
+import { ethereum } from "thirdweb/chains";
+import { Wallet } from "thirdweb/wallets";
 import { SignMessageReturnType } from "viem";
 import web3 from "web3";
 import { z } from "zod";
 
 import env from "@/config/env";
+import { thirdwebClient } from "@/config/thirdweb";
 
 // Aleph keys and channels settings
 const SECURITY_AGGREGATE_KEY = "security"; // Reserved Aleph key (https://docs.aleph.im/protocol/permissions/#the-security-aggregate)
@@ -20,7 +24,7 @@ export class AlephService {
 		public encryptionPrivateKey: PrivateKey,
 	) {}
 
-	static async initialize(hash: SignMessageReturnType) {
+	static async initialize(hash: SignMessageReturnType, thirdweb_wallet: Wallet) {
 		const privateKey = web3.utils.sha3(hash);
 
 		if (privateKey === undefined) {
@@ -28,10 +32,26 @@ export class AlephService {
 			return undefined;
 		}
 		const encryptionPrivateKey = PrivateKey.fromHex(privateKey);
+		let account: ETHAccount;
 
+		if (["io.rabby", "io.metamask"].includes(thirdweb_wallet.id)) {
+			// @ts-expect-error undefined window.ethereum
+			account = await getAccountFromProvider(window.ethereum);
+		} else {
+			const signer = await ethers5Adapter.signer.toEthers({
+				client: thirdwebClient,
+				chain: ethereum,
+				account: thirdweb_wallet.getAccount()!,
+			});
+			const messageHash = await signer.signMessage("Generating Aleph account...");
+			const externalWalletPrivateKey = web3.utils.sha3(messageHash);
+			if (externalWalletPrivateKey === undefined) {
+				console.error("Private key generation failed");
+				return undefined;
+			}
+			account = importAccountFromPrivateKey(externalWalletPrivateKey);
+		}
 		const subAccount = importAccountFromPrivateKey(privateKey);
-		// @ts-expect-error undefined window.ethereum
-		const account = await getAccountFromProvider(window.ethereum);
 		const accountClient = new AuthenticatedAlephHttpClient(account, env.ALEPH_API_URL);
 		const subAccountClient = new AuthenticatedAlephHttpClient(subAccount, env.ALEPH_API_URL);
 
