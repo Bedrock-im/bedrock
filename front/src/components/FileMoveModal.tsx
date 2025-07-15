@@ -5,7 +5,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
-	DialogContent, DialogDescription,
+	DialogContent,
+	DialogDescription,
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
@@ -22,24 +23,19 @@ export function FileMoveModal({ isOpen, onClose, onComplete }: UsernameRegistrat
 	const [input, setInput] = useState("");
 
 	return (
-		<Dialog open={isOpen} onOpenChange={(b) => {
-			if (!b)
-				onClose();
-		}}>
+		<Dialog
+			open={isOpen}
+			onOpenChange={(b) => {
+				if (!b) onClose();
+			}}
+		>
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>Move file</DialogTitle>
-					<DialogDescription>
-						Enter the new path for the file.
-					</DialogDescription>
+					<DialogDescription>Enter the new path for the file.</DialogDescription>
 				</DialogHeader>
 				<div>
-					<Input
-						id="filepath"
-						placeholder={`New file path`}
-						value={input}
-						onChange={(e) => setInput(e.target.value)}
-					/>
+					<Input id="filepath" placeholder={`New file path`} value={input} onChange={(e) => setInput(e.target.value)} />
 				</div>
 				<DialogFooter className="justify-end">
 					<Button onClick={() => onComplete(input)} disabled={input.length === 0}>

@@ -57,7 +57,7 @@ export class LibertaiService {
 					`<file><filepath>${filePath}</filepath><content>${Buffer.from(content).toString("utf-8")}</content></file>`,
 			)
 			.join("\n\n");
-		console.log(KNOWLEDGE_BASE_SYSTEM_INSTRUCTIONS.replace("%files%", aggregatedFiles));
+
 		const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
 			{
 				role: "system",

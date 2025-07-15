@@ -16,10 +16,10 @@ import { Input } from "@/components/ui/input";
 interface UsernameRegistrationModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onComplete: (newName: string) => void;
+	onComplete: (folderName: string) => void;
 }
 
-export function FileRenameModal({ isOpen, onClose, onComplete }: UsernameRegistrationModalProps) {
+export function FolderCreateModal({ isOpen, onClose, onComplete }: UsernameRegistrationModalProps) {
 	const [input, setInput] = useState("");
 
 	return (
@@ -31,15 +31,20 @@ export function FileRenameModal({ isOpen, onClose, onComplete }: UsernameRegistr
 		>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>Rename file</DialogTitle>
-					<DialogDescription>Enter the new name for the file.</DialogDescription>
+					<DialogTitle>Create folder</DialogTitle>
+					<DialogDescription>Enter the name for the new folder.</DialogDescription>
 				</DialogHeader>
 				<div>
-					<Input id="filename" placeholder={`New file name`} value={input} onChange={(e) => setInput(e.target.value)} />
+					<Input
+						id="folder-name"
+						placeholder={`Folder name`}
+						value={input}
+						onChange={(e) => setInput(e.target.value)}
+					/>
 				</div>
 				<DialogFooter className="justify-end">
 					<Button onClick={() => onComplete(input)} disabled={input.length === 0}>
-						Rename
+						Create
 					</Button>
 				</DialogFooter>
 			</DialogContent>

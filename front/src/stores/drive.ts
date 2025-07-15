@@ -142,7 +142,7 @@ export const useDriveStore = create<DriveStoreState & DriveStoreActions>((set, g
 					}
 				: f;
 		});
-		set((state) => ({
+		set(() => ({
 			files: updatedFiles,
 		}));
 		return files.map(({ newContent }) => newContent);
