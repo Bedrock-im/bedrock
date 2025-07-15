@@ -34,12 +34,19 @@ export default function useBedrockFileUploadDropzone(options: DropzoneOptions) {
 			});
 			try {
 				const awaitedFileEntries = await fileEntries;
+				const fileContents = await Promise.all(
+					acceptedFiles.map(async (file) => ({
+						content: Buffer.from(await file.arrayBuffer()),
+						name: file.name,
+					})),
+				);
 
 				addFiles(
 					awaitedFileInfos.map(({ path, ...fileInfo }) => ({
 						...fileInfo,
 						path,
 						post_hash: awaitedFileEntries.find((entry) => entry.path === path)!.post_hash,
+						content: fileContents.find((fileContent) => fileContent.name === fileInfo.name)?.content,
 					})),
 				);
 			} catch (err) {
