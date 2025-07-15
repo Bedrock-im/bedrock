@@ -52,7 +52,7 @@ const FileList: React.FC<FileListProps> = ({
 	emptyMessage,
 }) => {
 	// TODO: Replace with a real clipboard
-	const clipboard = 1;
+	const clipboard = 0;
 	const [searchQuery, setSearchQuery] = useQueryState("search", { defaultValue: defaultSearchQuery });
 	const [currentWorkingDirectory, setCurrentWorkingDirectory] = useQueryState("cwd", {
 		defaultValue: defaultCwd,
@@ -254,6 +254,8 @@ const FileList: React.FC<FileListProps> = ({
 	};
 
 	const handleMove = (path: string, newPath: string, folder: boolean) => {
+		newPath = newPath.startsWith("/") ? newPath : `/${newPath}`;
+
 		if (!folder) {
 			moveFile(path, newPath);
 			bedrockService?.moveFile(path, newPath);
@@ -261,6 +263,7 @@ const FileList: React.FC<FileListProps> = ({
 			const filesToMove = moveFolder(path, newPath);
 			filesToMove.map(([oldFile, newFile]) => bedrockService?.moveFile(oldFile.path, newFile.path));
 		}
+		setFileToMove(null);
 		toast.success(`The ${folder ? "folder" : "file"} has been moved.`);
 	};
 
@@ -323,6 +326,10 @@ const FileList: React.FC<FileListProps> = ({
 			bedrockService?.moveFile(draggedPath, newPath);
 		}
 	};
+
+	console.log("---------------------")
+	console.log(files)
+	console.log(folders)
 
 	return (
 		<div className="flex flex-col h-full bg-gray-200" onClick={() => setClickedItem(undefined)}>
