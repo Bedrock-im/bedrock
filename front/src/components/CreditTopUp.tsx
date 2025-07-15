@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { base } from "thirdweb/chains";
 import { PayEmbed, useActiveAccount } from "thirdweb/react";
 
@@ -27,7 +28,7 @@ export default function CreditTopUp({ creditBalance, onTopUpComplete }: CreditTo
 	const handleShowPayment = () => {
 		const dollarAmount = parseFloat(amount);
 		if (!dollarAmount || dollarAmount <= 0) {
-			alert("Please enter a valid amount");
+			toast.error("Please enter a valid amount");
 			return;
 		}
 		setShowPayment(true);
