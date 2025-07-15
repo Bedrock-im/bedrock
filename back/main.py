@@ -20,7 +20,7 @@ with open(os.path.join(code_dir, "abis/registry.json"), "r") as abi_file:
 
 PRIVATE_KEY = os.getenv("BEDROCK_PRIVATE_KEY")
 PINATA_JWT = os.getenv("PINATA_JWT")
-BASE_RPC_URL = "https://mainnet.base.org"
+BASE_RPC_URL = os.getenv("BASE_RPC_URL", "https://mainnet.base.org")
 
 w3 = Web3(Web3.HTTPProvider(BASE_RPC_URL))
 account = w3.eth.account.from_key(PRIVATE_KEY)
@@ -61,6 +61,9 @@ class CheckUsernameAvailableResponse(BaseModel):
 class GetUsernameResponse(BaseModel):
     username: str
 
+class GetAddressResponse(BaseModel):
+    address: str
+
 class TransactionResponse(BaseModel):
     tx_hash: str
 
@@ -95,6 +98,15 @@ def get_username(address: str) -> GetUsernameResponse:
     try:
         result = registrar_contract.functions.getUsername(Web3.to_checksum_address(address)).call()
         return GetUsernameResponse(username=result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/username/{username}/address", description="Get the address of a username using the registry contract")
+def get_address(username: str) -> GetAddressResponse:
+    try:
+        node = namehash(f"{username}.bedrock-app.eth")
+        address = registry_contract.functions.addr(node).call()
+        return GetAddressResponse(address=address)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

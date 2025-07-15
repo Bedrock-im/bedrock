@@ -9,6 +9,10 @@ export type CheckUsernameAvailableResponse = {
     available: boolean;
 };
 
+export type GetAddressResponse = {
+    address: string;
+};
+
 export type GetUsernameResponse = {
     username: string;
 };
@@ -110,6 +114,33 @@ export type GetUsernameAddressGetResponses = {
 };
 
 export type GetUsernameAddressGetResponse = GetUsernameAddressGetResponses[keyof GetUsernameAddressGetResponses];
+
+export type GetAddressUsernameUsernameAddressGetData = {
+    body?: never;
+    path: {
+        username: string;
+    };
+    query?: never;
+    url: '/username/{username}/address';
+};
+
+export type GetAddressUsernameUsernameAddressGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetAddressUsernameUsernameAddressGetError = GetAddressUsernameUsernameAddressGetErrors[keyof GetAddressUsernameUsernameAddressGetErrors];
+
+export type GetAddressUsernameUsernameAddressGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: GetAddressResponse;
+};
+
+export type GetAddressUsernameUsernameAddressGetResponse = GetAddressUsernameUsernameAddressGetResponses[keyof GetAddressUsernameUsernameAddressGetResponses];
 
 export type GetAvatarUsernameUsernameAvatarGetData = {
     body?: never;

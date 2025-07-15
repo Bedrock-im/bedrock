@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import { getAddressUsernameUsernameAddressGet } from "@/apis/usernames";
 import { ContactFormData } from "@/app/(drive)/contacts/page";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,10 +28,77 @@ export default function CreateContactDialog({ isOpen, onOpenChange, createContac
 		address: "",
 		publicKey: "",
 	});
+	const [username, setUsername] = useState("");
+	const [isLoadingAddress, setIsLoadingAddress] = useState(false);
+	const [addressError, setAddressError] = useState("");
 
 	const isContactNameTaken = useMemo(() => {
-		return contacts.some((contact) => contact.name === contactFormData.name);
-	}, [contacts, contactFormData.name]);
+		return contacts.some((contact) => contact.name === username);
+	}, [contacts, username]);
+
+	const isValidAddress = (address: string) => {
+		if (!address || address.trim() === "") return false;
+		return address !== "0x0000000000000000000000000000000000000000";
+	};
+
+	useEffect(() => {
+		if (username.trim()) {
+			setIsLoadingAddress(true);
+			setAddressError("");
+
+			const currentUsername = username;
+
+			getAddressUsernameUsernameAddressGet({
+				path: { username },
+			})
+				.then((response) => {
+					// Only update if this is still the current username
+					if (currentUsername === username) {
+						const address = response.data?.address ?? "";
+						if (!isValidAddress(address)) {
+							setAddressError("Username has no valid address registered");
+							setContactFormData((prev) => ({
+								...prev,
+								name: username,
+								address: "",
+							}));
+						} else {
+							setContactFormData((prev) => ({
+								...prev,
+								name: username,
+								address: address,
+							}));
+						}
+						setIsLoadingAddress(false);
+					}
+				})
+				.catch((error) => {
+					// Only update if this is still the current username
+					if (currentUsername === username) {
+						let errorMessage = "Username not found or invalid";
+						if (error.response?.status === 500) {
+							errorMessage = "Server error. Please try again later.";
+						} else if (error.response?.status === 404) {
+							errorMessage = "Username not found";
+						}
+						setAddressError(errorMessage);
+						setContactFormData((prev) => ({
+							...prev,
+							name: username,
+							address: "",
+						}));
+						setIsLoadingAddress(false);
+					}
+				});
+		} else {
+			setContactFormData((prev) => ({
+				...prev,
+				name: "",
+				address: "",
+			}));
+			setAddressError("");
+		}
+	}, [username]);
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -38,31 +106,26 @@ export default function CreateContactDialog({ isOpen, onOpenChange, createContac
 				<DialogHeader>
 					<DialogTitle>Create a contact</DialogTitle>
 				</DialogHeader>
-				<Input
-					value={contactFormData.name}
-					onChange={(e) =>
-						setContactFormData({
-							...contactFormData,
-							name: e.target.value,
-						})
-					}
-					placeholder="Contact Name"
-					className={`${isContactNameTaken && "border-destructive"}`}
-				/>
 				{isContactNameTaken && (
 					<DialogDescription className="text-destructive">Contact name is already taken.</DialogDescription>
 				)}
 				<Input
-					value={contactFormData.address}
-					onChange={(e) =>
-						setContactFormData({
-							...contactFormData,
-							address: e.target.value,
-						})
-					}
-					placeholder="Contact Address"
-					className="w-full"
+					value={username}
+					onChange={(e) => setUsername(e.target.value)}
+					placeholder="Username"
+					className={`w-full ${addressError && "border-destructive"}`}
 				/>
+				{addressError && <DialogDescription className="text-destructive">{addressError}</DialogDescription>}
+				<Input
+					value={contactFormData.address}
+					placeholder={isLoadingAddress ? "Loading address..." : "Address (auto-filled)"}
+					className={`w-full ${contactFormData.address && !isValidAddress(contactFormData.address) ? "border-destructive" : ""}`}
+					readOnly
+					disabled={isLoadingAddress}
+				/>
+				{contactFormData.address && !isValidAddress(contactFormData.address) && (
+					<DialogDescription className="text-destructive">Address is not valid</DialogDescription>
+				)}
 				<Input
 					value={contactFormData.publicKey}
 					onChange={(e) =>
@@ -80,10 +143,12 @@ export default function CreateContactDialog({ isOpen, onOpenChange, createContac
 					</DialogClose>
 					<Button
 						disabled={
-							!contactFormData.name.length ||
+							!username.length ||
 							!contactFormData.address.length ||
 							!contactFormData.publicKey.length ||
-							isContactNameTaken
+							isContactNameTaken ||
+							isLoadingAddress ||
+							!!addressError
 						}
 						onClick={() => createContact(contactFormData)}
 					>

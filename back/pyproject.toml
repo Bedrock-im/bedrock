@@ -10,6 +10,7 @@ dependencies = [
     "pydantic (>=2.11.5,<3.0.0)",
     "python-dotenv (>=1.1.0,<2.0.0)",
     "eth-account (>=0.13.7,<0.14.0)",
+    "fastapi[standard] (>=0.116.1,<0.117.0)",
 ]
 
 [tool.poetry]
