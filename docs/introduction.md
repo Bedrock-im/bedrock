@@ -6,7 +6,7 @@ A decentralized drive-like file manager built with **Next.js**, **React**, **Tai
 
 Bedrock.im is a project built on top of [Aleph.im](https://aleph.im)'s decentralized cloud, supported by their [Acceleratooor](https://www.twentysix.cloud/acceleratooor/) program.
 
-As the project is still in it's early stages, ways to contribute and understand the technical architecture aren't properly documented yet and will gradually appear in [our documentation](https://docs.bedrock.im).
+As the project is still in its early stages, ways to contribute and understand the technical architecture aren't properly documented yet and will gradually appear in [our documentation](https://docs.bedrock.im).
 
 If you're interested to learn more about this project, feel free to reach out by creating an issue, or contacting any of the team members.
 
