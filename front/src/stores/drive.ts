@@ -139,7 +139,7 @@ export const useDriveStore = create<DriveStoreState & DriveStoreActions>((set, g
 				? {
 						...f,
 						content: update.newContent,
-				  }
+					}
 				: f;
 		});
 		set((state) => ({
