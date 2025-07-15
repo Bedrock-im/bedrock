@@ -9,8 +9,8 @@ type DriveStoreState = {
 	contacts: Contact[];
 };
 
-export type DriveFile = FileFullInfos;
-export type DriveFolder = Omit<DriveFile, "store_hash" | "post_hash" | "size" | "key" | "iv" | "name">;
+export type DriveFile = FileFullInfos & { content?: Buffer };
+export type DriveFolder = Omit<DriveFile, "store_hash" | "post_hash" | "size" | "key" | "iv" | "name" | "content">;
 
 type DriveStoreActions = {
 	setFiles: (files: DriveFile[]) => void;
@@ -26,6 +26,8 @@ type DriveStoreActions = {
 	deleteFolder: (path: string) => DriveFile[];
 	moveFile: (oldPath: string, newPath: string) => void;
 	moveFolder: (oldPath: string, newPath: string) => [DriveFile, DriveFile][];
+	updateFileContent: (path: string, newContent: Buffer) => Buffer | undefined;
+	updateFilesContent: (files: { path: string; newContent: Buffer }[]) => (Buffer | undefined)[];
 };
 
 export const useDriveStore = create<DriveStoreState & DriveStoreActions>((set, getState) => ({
@@ -52,6 +54,7 @@ export const useDriveStore = create<DriveStoreState & DriveStoreActions>((set, g
 				file.path === path
 					? {
 							...file,
+							content: undefined,
 							deleted_at: deletionDate.toISOString(),
 						}
 					: file,
@@ -113,5 +116,35 @@ export const useDriveStore = create<DriveStoreState & DriveStoreActions>((set, g
 			),
 		}));
 		return filesToMove.map((file) => [file, { ...file, path: newPath + file.path.slice(oldPath.length) }] as const);
+	},
+	updateFileContent: (path, newContent) => {
+		const file = getState().files.find((file) => file.path === path);
+		if (!file) return undefined;
+		set((state) => ({
+			files: state.files.map((f) =>
+				f.path === path
+					? {
+							...f,
+							content: newContent,
+						}
+					: f,
+			),
+		}));
+		return newContent;
+	},
+	updateFilesContent: (files) => {
+		const updatedFiles = getState().files.map((f) => {
+			const update = files.find(({ path }) => path === f.path);
+			return update
+				? {
+						...f,
+						content: update.newContent,
+					}
+				: f;
+		});
+		set((state) => ({
+			files: updatedFiles,
+		}));
+		return files.map(({ newContent }) => newContent);
 	},
 }));

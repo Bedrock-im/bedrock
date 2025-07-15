@@ -1,21 +1,23 @@
-import { Account } from "thirdweb/wallets";
+import { Account, Wallet } from "thirdweb/wallets";
 import { create } from "zustand";
 
-import { getUsernameAddressGet, getAvatarUsernameUsernameAvatarGet } from "@/apis/usernames";
+import { getAvatarUsernameUsernameAvatarGet, getUsernameAddressGet } from "@/apis/usernames";
 import env from "@/config/env";
 import { AlephService, BEDROCK_MESSAGE } from "@/services/aleph";
 import BedrockService from "@/services/bedrock";
+import { LibertaiService } from "@/services/libertai";
 
 type AccountStoreState = {
 	isConnected: boolean;
 	bedrockService: BedrockService | null;
+	libertaiService: LibertaiService | null;
 	username: string | null;
 	avatarUrl: string | null;
 };
 
 type AccountStoreActions = {
 	onDisconnect: () => void;
-	onAccountChange: (account: Account | undefined) => Promise<void>;
+	onAccountChange: (account: Account | undefined, wallet: Wallet | undefined) => Promise<void>;
 	setUsername: (username: string) => void;
 	fetchAvatar: (username: string) => Promise<void>;
 };
@@ -23,12 +25,13 @@ type AccountStoreActions = {
 export const useAccountStore = create<AccountStoreState & AccountStoreActions>((set, get) => ({
 	isConnected: false,
 	bedrockService: null,
+	libertaiService: null,
 	username: null,
 	avatarUrl: null,
-	onAccountChange: async (account) => {
+	onAccountChange: async (account, wallet) => {
 		const state = get();
 
-		if (account === undefined) {
+		if (account === undefined || wallet === undefined) {
 			// Potential disconnection
 			state.onDisconnect();
 			return;
@@ -52,7 +55,7 @@ export const useAccountStore = create<AccountStoreState & AccountStoreActions>((
 			// Always ask for signature, don't store
 			hash = await account.signMessage({ message: BEDROCK_MESSAGE });
 		}
-		const alephService = await AlephService.initialize(hash);
+		const alephService = await AlephService.initialize(hash, wallet);
 		if (alephService === undefined) {
 			return;
 		}
@@ -64,12 +67,14 @@ export const useAccountStore = create<AccountStoreState & AccountStoreActions>((
 			});
 			const username = result.data?.username;
 
+			const libertaiService = new LibertaiService();
 			const bedrockService = new BedrockService(alephService);
 			await bedrockService.setup();
 
 			// Only mark as connected if a username exists
 			set({
 				bedrockService,
+				libertaiService,
 				username: username || null,
 				isConnected: Boolean(username), // Only true if username exists
 			});

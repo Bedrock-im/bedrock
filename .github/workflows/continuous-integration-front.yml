@@ -70,6 +70,8 @@ jobs:
         run: |
           echo "NEXT_PUBLIC_THIRDWEB_CLIENT_ID=${{ secrets.FRONT_NEXT_PUBLIC_THIRDWEB_CLIENT_ID }}" >> front/.env
           echo "NEXT_PUBLIC_USERNAMES_API_URL=${{ secrets.FRONT_NEXT_PUBLIC_USERNAMES_API_URL }}" >> front/.env
+          echo "NEXT_PUBLIC_LIBERTAI_API_URL=${{ secrets.FRONT_NEXT_PUBLIC_LIBERTAI_API_URL }}" >> front/.env
+          echo "NEXT_PUBLIC_LIBERTAI_API_SECRET_KEY=${{ secrets.FRONT_NEXT_PUBLIC_LIBERTAI_API_SECRET_KEY }}" >> front/.env
       - name: Build
         run: yarn workspace front build
 
