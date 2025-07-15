@@ -327,10 +327,6 @@ const FileList: React.FC<FileListProps> = ({
 		}
 	};
 
-	console.log("---------------------")
-	console.log(files)
-	console.log(folders)
-
 	return (
 		<div className="flex flex-col h-full bg-gray-200" onClick={() => setClickedItem(undefined)}>
 			{fileToMove && (
