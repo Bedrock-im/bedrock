@@ -256,7 +256,7 @@ const FileList: React.FC<FileListProps> = ({
 		let copyName = `${baseName}_copie${ext}`;
 		let counter = 2;
 		while (files.some((f) => f.path === `${dir}/${copyName}`)) {
-			copyName = `${baseName}_copie_${counter+=1}${ext}`;
+			copyName = `${baseName}_copie_${(counter += 1)}${ext}`;
 		}
 
 		const newPath = `${dir}/${copyName}`;
@@ -364,7 +364,7 @@ const FileList: React.FC<FileListProps> = ({
 		let copyName = `${baseName}_copie${ext}`;
 		let counter = 2;
 		while (files.some((f) => f.path === `${currentWorkingDirectory}${copyName}`)) {
-			copyName = `${baseName}_copie_${counter+=1}${ext}`;
+			copyName = `${baseName}_copie_${(counter += 1)}${ext}`;
 		}
 
 		const newPath = `${currentWorkingDirectory}${copyName}`;
