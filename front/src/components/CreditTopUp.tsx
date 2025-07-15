@@ -1,9 +1,11 @@
 "use client";
 
+import { CheckCircle } from "lucide-react";
 import { useState } from "react";
 import { base } from "thirdweb/chains";
 import { PayEmbed, useActiveAccount } from "thirdweb/react";
 
+import { addCreditsRouteCreditsAddPost } from "@/apis/usernames";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,11 +19,13 @@ interface CreditTopUpProps {
 	onTopUpComplete?: () => void;
 }
 
-const PAYMENT_RECEIVER_ADDRESS = "0x7569b2C9294BB79744E5d201F5fCA42Dc02d7A9f"; // TODO: Replace with actual payment receiver
+const PAYMENT_RECEIVER_ADDRESS = "0x7Ab98f6b22ECb42E27Dc9C7d2d488F69b5CDD0b2"; // TODO: Replace with actual payment receiver
 
 export default function CreditTopUp({ creditBalance, onTopUpComplete }: CreditTopUpProps) {
 	const [amount, setAmount] = useState("");
 	const [showPayment, setShowPayment] = useState(false);
+	const [showSuccess, setShowSuccess] = useState(false);
+	const [isProcessing, setIsProcessing] = useState(false);
 	const account = useActiveAccount();
 
 	const handleShowPayment = () => {
@@ -33,10 +37,33 @@ export default function CreditTopUp({ creditBalance, onTopUpComplete }: CreditTo
 		setShowPayment(true);
 	};
 
-	const handlePaymentSuccess = () => {
-		setShowPayment(false);
+	const handlePaymentSuccess = async () => {
+		if (!account?.address) return;
+
+		setIsProcessing(true);
+		try {
+			// Call backend to add credits
+			await addCreditsRouteCreditsAddPost({
+				body: {
+					address: account.address,
+					amount: parseFloat(amount),
+				},
+			});
+
+			setShowPayment(false);
+			setShowSuccess(true);
+			onTopUpComplete?.();
+		} catch (error) {
+			console.error("Failed to add credits:", error);
+			alert("Failed to add credits. Please contact support.");
+		} finally {
+			setIsProcessing(false);
+		}
+	};
+
+	const handleStartOver = () => {
+		setShowSuccess(false);
 		setAmount("");
-		onTopUpComplete?.();
 	};
 
 	return (
@@ -46,7 +73,20 @@ export default function CreditTopUp({ creditBalance, onTopUpComplete }: CreditTo
 				<CardDescription>Current Balance: {creditBalance.balance} credits</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
-				{!showPayment ? (
+				{showSuccess ? (
+					<div className="text-center space-y-4">
+						<CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
+						<div>
+							<h3 className="text-lg font-semibold text-green-600">Payment Successful!</h3>
+							<p className="text-sm text-muted-foreground">
+								${amount} worth of credits have been added to your account.
+							</p>
+						</div>
+						<Button onClick={handleStartOver} className="w-full">
+							Top Up Again
+						</Button>
+					</div>
+				) : !showPayment ? (
 					<>
 						<div className="space-y-2">
 							<Label htmlFor="amount">Amount (USD)</Label>
@@ -98,7 +138,7 @@ export default function CreditTopUp({ creditBalance, onTopUpComplete }: CreditTo
 							}}
 						/>
 
-						<Button variant="outline" onClick={() => setShowPayment(false)} className="w-full">
+						<Button variant="outline" onClick={() => setShowPayment(false)} className="w-full" disabled={isProcessing}>
 							Back
 						</Button>
 					</div>
