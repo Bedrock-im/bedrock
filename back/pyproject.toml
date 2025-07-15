@@ -11,10 +11,15 @@ dependencies = [
     "python-dotenv (>=1.1.0,<2.0.0)",
     "eth-account (>=0.13.7,<0.14.0)",
     "fastapi[standard] (>=0.116.1,<0.117.0)",
+    "aleph-sdk-python (>=2.0.0,<3.0.0)",
 ]
 
 [tool.poetry]
 package-mode = false
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.11.1"
+ruff = "^0.6.0"
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.8"

@@ -1,12 +1,16 @@
-from fastapi import FastAPI, HTTPException, Query, UploadFile, File
+import json
+import os
+from typing import Any
+
+import aiohttp
+from dotenv import load_dotenv
+from eth_utils import keccak
+from fastapi import FastAPI, HTTPException, Query, UploadFile, File, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from web3 import Web3
-from dotenv import load_dotenv
-import os
-import json
-import aiohttp
-from eth_utils import keccak
+
+from thirdweb_webhook import thirdweb_webhook, get_credits, add_credits_direct, ThirdwebWebhookPayload
 
 load_dotenv()
 REGISTRAR_CONTRACT_ADDRESS = "0x30afcf8bddd96b3e2b0210f8f003aafd4a52f628"
@@ -24,8 +28,14 @@ BASE_RPC_URL = os.getenv("BASE_RPC_URL", "https://mainnet.base.org")
 
 w3 = Web3(Web3.HTTPProvider(BASE_RPC_URL))
 account = w3.eth.account.from_key(PRIVATE_KEY)
-registrar_contract = w3.eth.contract(address=Web3.to_checksum_address(REGISTRAR_CONTRACT_ADDRESS), abi=REGISTRAR_CONTRACT_ABI)
-registry_contract = w3.eth.contract(address=Web3.to_checksum_address(REGISTRY_CONTRACT_ADDRESS), abi=REGISTRY_CONTRACT_ABI)
+registrar_contract = w3.eth.contract(
+    address=Web3.to_checksum_address(REGISTRAR_CONTRACT_ADDRESS),
+    abi=REGISTRAR_CONTRACT_ABI,
+)
+registry_contract = w3.eth.contract(
+    address=Web3.to_checksum_address(REGISTRY_CONTRACT_ADDRESS),
+    abi=REGISTRY_CONTRACT_ABI,
+)
 
 app = FastAPI()
 
@@ -42,42 +52,81 @@ def namehash(name: str) -> bytes:
     Implements the ENS namehash algorithm.
     See: https://eips.ethereum.org/EIPS/eip-137
     """
-    node = b'\x00' * 32
+    node = b"\x00" * 32
     if name:
-        labels = name.split('.')
+        labels = name.split(".")
         for label in reversed(labels):
             label_hash = keccak(text=label)
             node = keccak(node + label_hash)
     return node  # returns 32-byte hash
 
+
 class RegisterRequest(BaseModel):
     username: str
     address: str
+
 
 class CheckUsernameAvailableResponse(BaseModel):
     username: str
     available: bool
 
+
 class GetUsernameResponse(BaseModel):
     username: str
+
 
 class GetAddressResponse(BaseModel):
     address: str
 
+
 class TransactionResponse(BaseModel):
     tx_hash: str
+
+
+class AddCreditsRequest(BaseModel):
+    address: str
+    amount: float
+
+
+# Thirdweb webhook routes
+@app.post("/thirdweb/webhook", description="Receive webhooks from Thirdweb")
+async def thirdweb_webhook_route(
+    request: Request,
+    payload: ThirdwebWebhookPayload,
+    signature: str = Header(None, alias="X-Pay-Signature"),
+    timestamp: str = Header(None, alias="X-Pay-Timestamp"),
+) -> dict[str, str]:
+    """Route wrapper for thirdweb webhook"""
+    return await thirdweb_webhook(request, payload, signature, timestamp)
+
+
+@app.get("/credits/{address}", description="Get credit balance for an address")
+async def get_credits_route(address: str) -> dict[str, Any]:
+    """Route wrapper for getting credits"""
+    return await get_credits(address)
+
+
+@app.post("/credits/add", description="Add credits directly to an address balance")
+async def add_credits_route(request: AddCreditsRequest) -> dict[str, Any]:
+    """Route to add credits directly to an address balance"""
+    return await add_credits_direct(request.address, request.amount)
+
 
 @app.post("/register", description="Register an ENS subname")
 def register_username(req: RegisterRequest) -> TransactionResponse:
     try:
         nonce = w3.eth.get_transaction_count(account.address)
-        txn = registrar_contract.functions.register(req.username, Web3.to_checksum_address(req.address)).build_transaction({
-            "from": account.address,
-            "nonce": nonce,
-            "gas": 300000,
-            "gasPrice": w3.eth.gas_price,
-            "chainId": w3.eth.chain_id,
-        })
+        txn = registrar_contract.functions.register(
+            req.username, Web3.to_checksum_address(req.address)
+        ).build_transaction(
+            {
+                "from": account.address,
+                "nonce": nonce,
+                "gas": 300000,
+                "gasPrice": w3.eth.gas_price,
+                "chainId": w3.eth.chain_id,
+            }
+        )
 
         signed_txn = w3.eth.account.sign_transaction(txn, private_key=PRIVATE_KEY)
         tx_hash = w3.eth.send_raw_transaction(signed_txn.raw_transaction)
@@ -85,23 +134,33 @@ def register_username(req: RegisterRequest) -> TransactionResponse:
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/available", description="Check if an ENS subname is available")
-def check_username_available(username: str = Query(..., min_length=1)) -> CheckUsernameAvailableResponse:
+def check_username_available(
+    username: str = Query(..., min_length=1),
+) -> CheckUsernameAvailableResponse:
     try:
         is_available = registrar_contract.functions.available(username).call()
         return CheckUsernameAvailableResponse(username=username, available=is_available)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/{address}", description="Get the ENS subname of an address")
 def get_username(address: str) -> GetUsernameResponse:
     try:
-        result = registrar_contract.functions.getUsername(Web3.to_checksum_address(address)).call()
+        result = registrar_contract.functions.getUsername(
+            Web3.to_checksum_address(address)
+        ).call()
         return GetUsernameResponse(username=result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/username/{username}/address", description="Get the address of a username using the registry contract")
+
+@app.get(
+    "/username/{username}/address",
+    description="Get the address of a username using the registry contract",
+)
 def get_address(username: str) -> GetAddressResponse:
     try:
         node = namehash(f"{username}.bedrock-app.eth")
@@ -109,6 +168,7 @@ def get_address(username: str) -> GetAddressResponse:
         return GetAddressResponse(address=address)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/username/{username}/avatar", description="Get the avatar URL of a username")
 async def get_avatar(username: str) -> str:
@@ -126,8 +186,13 @@ async def get_avatar(username: str) -> str:
         raise HTTPException(status_code=500, detail=f"Failed to get avatar: {str(e)}")
 
 
-@app.post("/username/{username}/avatar", description="Create or update the avatar of a user (using ENS text records)")
-async def change_avatar(username: str, file: UploadFile = File(...)) -> TransactionResponse:
+@app.post(
+    "/username/{username}/avatar",
+    description="Create or update the avatar of a user (using ENS text records)",
+)
+async def change_avatar(
+    username: str, file: UploadFile = File(...)
+) -> TransactionResponse:
     url = "https://api.pinata.cloud/pinning/pinFileToIPFS"
 
     data = aiohttp.FormData()
@@ -148,20 +213,21 @@ async def change_avatar(username: str, file: UploadFile = File(...)) -> Transact
             result = await response.json()
             image_url = f"https://gateway.pinata.cloud/ipfs/{result.get('IpfsHash')}"
 
-
     try:
         nonce = w3.eth.get_transaction_count(account.address)
         txn = registrar_contract.functions.setText(
-            namehash(f"{username}.bedrock-app.eth"),            # label
-            "avatar",                      # key
-            image_url                      # value
-        ).build_transaction({
-            "from": account.address,
-            "nonce": nonce,
-            "gas": 300000,
-            "gasPrice": w3.eth.gas_price,
-            "chainId": w3.eth.chain_id,
-        })
+            namehash(f"{username}.bedrock-app.eth"),  # label
+            "avatar",  # key
+            image_url,  # value
+        ).build_transaction(
+            {
+                "from": account.address,
+                "nonce": nonce,
+                "gas": 300000,
+                "gasPrice": w3.eth.gas_price,
+                "chainId": w3.eth.chain_id,
+            }
+        )
 
         signed_txn = w3.eth.account.sign_transaction(txn, private_key=PRIVATE_KEY)
         tx_hash = w3.eth.send_raw_transaction(signed_txn.raw_transaction)
