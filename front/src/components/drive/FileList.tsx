@@ -13,13 +13,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import useBedrockFileUploadDropzone from "@/hooks/use-bedrock-file-upload-dropzone";
-import { FileFullInfos } from "@/services/bedrock";
+import {Contact, FileFullInfos} from "@/services/bedrock";
 import { useAccountStore } from "@/stores/account";
 import { DriveFile, DriveFolder, useDriveStore } from "@/stores/drive";
 
 import UploadButton from "./UploadButton";
 import {toast} from "sonner";
 import {FileRenameModal} from "@/components/FileRenameModal";
+import {FileShareModal} from "@/components/FileShareModal";
 
 type SortColumn = "path" | "size" | "created_at";
 type SortOrder = "asc" | "desc";
@@ -51,6 +52,7 @@ const FileList: React.FC<FileListProps> = ({
 		history: "push",
 	});
 	const [fileToRename, setFileToRename]	= useState<FileFullInfos | null>(null);
+	const [fileToShare, setFileToShare]	= useState<FileFullInfos | null>(null);
 	const [sortColumn, setSortColumn] = useQueryState("sort", { defaultValue: "path" as SortColumn });
 	const [sortOrder, setSortOrder] = useQueryState("order", { defaultValue: "asc" as SortOrder });
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set(selectedPaths));
@@ -213,7 +215,9 @@ const FileList: React.FC<FileListProps> = ({
 			const filesToMove = moveFolder(path, newPath);
 			filesToMove.map(([oldFile, newFile]) => bedrockService?.moveFile(oldFile.path, newFile.path));
 		}
-	};
+		setFileToRename(null)
+		toast.success(`The ${folder ? "folder" : "file"} has been renamed.`);
+	}
 
 	const handleSoftDelete = (path: string, folder: boolean) => {
 		if (folder) {
@@ -256,19 +260,10 @@ const FileList: React.FC<FileListProps> = ({
 		}
 	};
 
-	const handleShare = (file: FileFullInfos) => {
-		const contactName = prompt("Enter the contact you want to share this file with:");
-		if (!contactName) {
-			return;
-		}
-
-		const contact = contacts.find((contact) => contact.name === contactName);
-		if (!contact) {
-			toast.error("Contact not found");
-			return;
-		}
-
+	const handleShare = (file: FileFullInfos, contact: Contact) => {
 		bedrockService?.shareFileWithContact(file, contact.public_key);
+		setFileToShare(null);
+		toast.success(`The file has been shared with contact ${contact.name}.`);
 	};
 
 	const handleRestoreFile = (path: string) => {
@@ -327,7 +322,8 @@ const FileList: React.FC<FileListProps> = ({
 
 	return (
 		<div className="flex flex-col h-full bg-gray-200" onClick={() => setClickedItem(undefined)}>
-			<FileRenameModal isOpen={!!fileToRename} onComplete={(newName) => handleRename(fileToRename?.path ?? "/", false, newName)} name={fileToRename?.name} />
+			{fileToRename && <FileRenameModal isOpen={true} onClose={() => setFileToRename(null)} onComplete={(newName) => handleRename(fileToRename.path, false, newName)} />}
+			{fileToShare && <FileShareModal isOpen={true} onClose={() => setFileToShare(null)} onComplete={(contact) => handleShare(fileToShare, contact)} contacts={contacts} />}
 			<div className="flex justify-between items-center m-2 gap-4">
 				{actions.includes("upload") && (
 					<UploadButton onCreateFolder={handleCreateFolder} getInputProps={getInputProps} />
@@ -419,7 +415,7 @@ const FileList: React.FC<FileListProps> = ({
 									setSelected={() => selectItem(file.path)}
 									onLeftClick={() => setClickedItem(file.path)}
 									onDownload={actions.includes("download") ? () => handleDownloadFile(file) : undefined}
-									onShare={actions.includes("share") ? () => handleShare(file) : undefined}
+									onShare={actions.includes("share") ? () => setFileToShare(file) : undefined}
 									onRename={actions.includes("rename") ? () => setFileToRename(file) : undefined}
 									onMove={actions.includes("move") ? () => handleMove(file.path, false) : undefined}
 									onDelete={actions.includes("delete") ? () => handleSoftDelete(file.path, false) : undefined}

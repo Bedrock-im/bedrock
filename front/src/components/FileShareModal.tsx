@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import {useMemo, useState} from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,15 +12,21 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Contact } from "@/services/bedrock";
 
 interface UsernameRegistrationModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onComplete: (newName: string) => void;
+	onComplete: (contact: Contact) => void;
+	contacts: Contact[]
 }
 
-export function FileRenameModal({ isOpen, onClose, onComplete }: UsernameRegistrationModalProps) {
+export function FileShareModal({ isOpen, onClose, onComplete, contacts }: UsernameRegistrationModalProps) {
 	const [input, setInput] = useState("");
+
+	const contact = useMemo(() => {
+		return contacts.find(contact => contact.name === input);
+	}, [contacts, input]);
 
 	return (
 		<Dialog open={isOpen} onOpenChange={(b) => {
@@ -29,22 +35,27 @@ export function FileRenameModal({ isOpen, onClose, onComplete }: UsernameRegistr
 		}}>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>Rename file</DialogTitle>
+					<DialogTitle>Share file</DialogTitle>
 					<DialogDescription>
-						Enter the new name for the file.
+						Enter the contact you want to share this file with.
 					</DialogDescription>
 				</DialogHeader>
 				<div>
 					<Input
-						id="filename"
-						placeholder={`New file name`}
+						id="contact"
+						placeholder={`Contact name`}
 						value={input}
 						onChange={(e) => setInput(e.target.value)}
 					/>
+					{input.length > 0 && !contact && (
+						<p className={`text-sm mt-1 text-red-500`}>
+							Contact not found
+						</p>
+					)}
 				</div>
 				<DialogFooter className="justify-end">
-					<Button onClick={() => onComplete(input)} disabled={input.length === 0}>
-						Rename
+					<Button onClick={() => contact && onComplete(contact)} disabled={input.length === 0 || !contact}>
+						Share
 					</Button>
 				</DialogFooter>
 			</DialogContent>
