@@ -28,10 +28,10 @@ If you're interested to learn more about this project, feel free to reach out by
 - **Frontend**: Next.js (App Router), TypeScript, Tailwind CSS
 - **State management**: Zustand
 - **UI library**: Radix UI + Lucide Icons
-- **Drag and Drop**: `@dnd-kit/core`
+- **UI testing tools**: storybook
+- **AI**: openai
+- **Wallet management**: thirdweb + ethers
 - **Storage**: Aleph.im via `@aleph-sdk/*`
-- **File Size Display**: `filesize`
-- **Query Parameters**: `nuqs`
 
 ## 📁 Project Structure
 
