@@ -41,52 +41,56 @@ export default function CreateContactDialog({ isOpen, onOpenChange, createContac
 	};
 
 	useEffect(() => {
-		if (username.trim()) {
-			setIsLoadingAddress(true);
+		const timer = setTimeout(() => {
+			if (username.trim()) {
+				setIsLoadingAddress(true);
 
-			const currentUsername = username;
+				const currentUsername = username;
 
-			getAddressUsernameUsernameAddressGet({
-				path: { username },
-			})
-				.then((response) => {
-					// Only update if this is still the current username
-					if (currentUsername === username) {
-						const address = response.data?.address ?? "";
-						if (!isValidAddress(address)) {
+				getAddressUsernameUsernameAddressGet({
+					path: { username },
+				})
+					.then((response) => {
+						// Only update if this is still the current username
+						if (currentUsername === username) {
+							const address = response.data?.address ?? "";
+							if (!isValidAddress(address)) {
+								setContactFormData((prev) => ({
+									...prev,
+									name: username,
+									address: "",
+								}));
+							} else {
+								setContactFormData((prev) => ({
+									...prev,
+									name: username,
+									address: address,
+								}));
+							}
+							setIsLoadingAddress(false);
+						}
+					})
+					.catch(() => {
+						// Only update if this is still the current username
+						if (currentUsername === username) {
 							setContactFormData((prev) => ({
 								...prev,
 								name: username,
 								address: "",
 							}));
-						} else {
-							setContactFormData((prev) => ({
-								...prev,
-								name: username,
-								address: address,
-							}));
+							setIsLoadingAddress(false);
 						}
-						setIsLoadingAddress(false);
-					}
-				})
-				.catch(() => {
-					// Only update if this is still the current username
-					if (currentUsername === username) {
-						setContactFormData((prev) => ({
-							...prev,
-							name: username,
-							address: "",
-						}));
-						setIsLoadingAddress(false);
-					}
-				});
-		} else {
-			setContactFormData((prev) => ({
-				...prev,
-				name: "",
-				address: "",
-			}));
-		}
+					});
+			} else {
+				setContactFormData((prev) => ({
+					...prev,
+					name: "",
+					address: "",
+				}));
+			}
+		}, 500);
+
+		return () => clearTimeout(timer);
 	}, [username]);
 
 	return (
