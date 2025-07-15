@@ -25,7 +25,7 @@ You don't have access to any other tool than the list of file with their content
 # Examples
 
 <user_query>
-Show me every file containing at leat a reference to human resources department.
+Show me every file containing at least a reference to human resources department.
 </user_query>
 
 <assistant_response>
