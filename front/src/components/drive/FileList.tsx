@@ -65,6 +65,7 @@ const FileList: React.FC<FileListProps> = ({
 		setFiles,
 		setFolders,
 		softDeleteFile,
+		hardDeleteFile,
 		addFolder,
 		deleteFolder,
 		moveFile,
@@ -241,6 +242,7 @@ const FileList: React.FC<FileListProps> = ({
 				console.error("File not found:", path);
 				return;
 			}
+			hardDeleteFile(fileToDelete.path);
 			bedrockService?.hardDeleteFiles(fileToDelete);
 		}
 		toast.success(`The ${folder ? "folder" : "file"} has been permanently deleted.`);
