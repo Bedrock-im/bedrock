@@ -8,7 +8,7 @@ export default function Shared() {
 
 	return (
 		<section>
-			<FileList files={sharedFiles} folders={[]} actions={["download"]} />
+			<FileList emptyMessage="You have no shared files." files={sharedFiles} folders={[]} actions={["download"]} />
 		</section>
 	);
 }

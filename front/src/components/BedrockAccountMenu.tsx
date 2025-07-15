@@ -92,24 +92,16 @@ export const BedrockAccountMenu = () => {
 					</DropdownMenuLabel>
 					<DropdownMenuSeparator />
 					<DropdownMenuGroup>
-						<DropdownMenuItem>
-							<BadgeCheck />
-							Account
-						</DropdownMenuItem>
 						<DropdownMenuItem onClick={() => router.push("/settings")}>
 							<WrenchIcon />
 							Settings
 						</DropdownMenuItem>
-						<DropdownMenuItem>
+						<DropdownMenuItem disabled>
 							<Bell />
 							Notifications
 						</DropdownMenuItem>
 					</DropdownMenuGroup>
 					<DropdownMenuSeparator />
-					<DropdownMenuItem onClick={() => setConfirmDataResetDialogOpen(true)} className="text-red-500">
-						<Trash2 />
-						Delete my data
-					</DropdownMenuItem>
 					<DropdownMenuItem onClick={() => disconnect(wallet)} className="cursor-pointer">
 						<LogOut />
 						Log out
