@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ConnectEmbed, useActiveAccount, useActiveWallet } from "thirdweb/react";
 
-import { authBackground } from "@/components/auth/background";
+import { dotsBackground } from "@/components/auth/background";
 import { UsernameRegistrationModal } from "@/components/UsernameRegistrationModal";
 import { thirdwebClient } from "@/config/thirdweb";
 import { useAccountStore } from "@/stores/account";
@@ -37,7 +37,7 @@ export default function Auth() {
 		}
 
 		// Just setup the background on initial load
-		authBackground(canvasRef);
+		dotsBackground(canvasRef);
 	}, [account, wallet, isConnected, handleBack, username, bedrockService]);
 
 	const handleUsernameComplete = () => {
