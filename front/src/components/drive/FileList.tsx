@@ -4,24 +4,25 @@ import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { LoaderIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
 import React, { useEffect, useMemo, useState } from "react";
-import {toast} from "sonner";
+import { toast } from "sonner";
 
 import CurrentPath from "@/components/drive/CurrentPath";
 import FileCard from "@/components/drive/FileCard";
 import SortOption from "@/components/drive/SortOption";
-import {FileRenameModal} from "@/components/FileRenameModal";
-import {FileShareModal} from "@/components/FileShareModal";
+import { FileMoveModal } from "@/components/FileMoveModal";
+import { FileRenameModal } from "@/components/FileRenameModal";
+import { FileShareModal } from "@/components/FileShareModal";
+import { FolderCreateModal } from "@/components/FolderCreateModal";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import useBedrockFileUploadDropzone from "@/hooks/use-bedrock-file-upload-dropzone";
-import {Contact, FileFullInfos} from "@/services/bedrock";
+import { Contact, FileFullInfos } from "@/services/bedrock";
 import { useAccountStore } from "@/stores/account";
 import { DriveFile, DriveFolder, useDriveStore } from "@/stores/drive";
 
 import UploadButton from "./UploadButton";
-import {FileMoveModal} from "@/components/FileMoveModal";
 
 type SortColumn = "path" | "size" | "created_at";
 type SortOrder = "asc" | "desc";
@@ -52,9 +53,10 @@ const FileList: React.FC<FileListProps> = ({
 		defaultValue: defaultCwd,
 		history: "push",
 	});
-	const [fileToMove, setFileToMove]	= useState<{ path: string, folder: boolean } | null>(null);
-	const [fileToRename, setFileToRename]	= useState<FileFullInfos | null>(null);
-	const [fileToShare, setFileToShare]	= useState<FileFullInfos | null>(null);
+	const [fileToMove, setFileToMove] = useState<{ path: string; folder: boolean } | null>(null);
+	const [fileToRename, setFileToRename] = useState<FileFullInfos | null>(null);
+	const [fileToShare, setFileToShare] = useState<FileFullInfos | null>(null);
+	const [isCreatingFolder, setIsCreatingFolder] = useState(false);
 	const [sortColumn, setSortColumn] = useQueryState("sort", { defaultValue: "path" as SortColumn });
 	const [sortOrder, setSortOrder] = useQueryState("order", { defaultValue: "asc" as SortOrder });
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set(selectedPaths));
@@ -182,10 +184,7 @@ const FileList: React.FC<FileListProps> = ({
 		}
 	};
 
-	const handleCreateFolder = () => {
-		const folderName = prompt("Enter folder name");
-		if (!folderName) return;
-
+	const handleCreateFolder = (folderName: string) => {
 		const newFolderPath = `${currentWorkingDirectory}${folderName}`;
 
 		// TODO: this check should be moved to the drive or bedrock service to check against all files, not just those passed to this component
@@ -203,7 +202,7 @@ const FileList: React.FC<FileListProps> = ({
 		};
 
 		addFolder(newFolder);
-
+		setIsCreatingFolder(false);
 		toast.success(`The folder "${folderName}" has been created.`);
 	};
 
@@ -217,9 +216,9 @@ const FileList: React.FC<FileListProps> = ({
 			const filesToMove = moveFolder(path, newPath);
 			filesToMove.map(([oldFile, newFile]) => bedrockService?.moveFile(oldFile.path, newFile.path));
 		}
-		setFileToRename(null)
+		setFileToRename(null);
 		toast.success(`The ${folder ? "folder" : "file"} has been renamed.`);
-	}
+	};
 
 	const handleSoftDelete = (path: string, folder: boolean) => {
 		if (folder) {
@@ -320,12 +319,36 @@ const FileList: React.FC<FileListProps> = ({
 
 	return (
 		<div className="flex flex-col h-full bg-gray-200" onClick={() => setClickedItem(undefined)}>
-			{fileToMove && <FileMoveModal isOpen={true} onClose={() => setFileToMove(null)} onComplete={(newPath) => handleMove(fileToMove.path, newPath, fileToMove.folder)} />}
-			{fileToRename && <FileRenameModal isOpen={true} onClose={() => setFileToRename(null)} onComplete={(newName) => handleRename(fileToRename.path, false, newName)} />}
-			{fileToShare && <FileShareModal isOpen={true} onClose={() => setFileToShare(null)} onComplete={(contact) => handleShare(fileToShare, contact)} contacts={contacts} />}
+			{fileToMove && (
+				<FileMoveModal
+					isOpen={true}
+					onClose={() => setFileToMove(null)}
+					onComplete={(newPath) => handleMove(fileToMove.path, newPath, fileToMove.folder)}
+				/>
+			)}
+			{fileToRename && (
+				<FileRenameModal
+					isOpen={true}
+					onClose={() => setFileToRename(null)}
+					onComplete={(newName) => handleRename(fileToRename.path, false, newName)}
+				/>
+			)}
+			{fileToShare && (
+				<FileShareModal
+					isOpen={true}
+					onClose={() => setFileToShare(null)}
+					onComplete={(contact) => handleShare(fileToShare, contact)}
+					contacts={contacts}
+				/>
+			)}
+			<FolderCreateModal
+				isOpen={isCreatingFolder}
+				onClose={() => setIsCreatingFolder(false)}
+				onComplete={handleCreateFolder}
+			/>
 			<div className="flex justify-between items-center m-2 gap-4">
 				{actions.includes("upload") && (
-					<UploadButton onCreateFolder={handleCreateFolder} getInputProps={getInputProps} />
+					<UploadButton onCreateFolder={() => setIsCreatingFolder(true)} getInputProps={getInputProps} />
 				)}
 				<input type="file" id="fileInput" className="hidden" onChange={() => {}} />
 				<input
@@ -416,7 +439,9 @@ const FileList: React.FC<FileListProps> = ({
 									onDownload={actions.includes("download") ? () => handleDownloadFile(file) : undefined}
 									onShare={actions.includes("share") ? () => setFileToShare(file) : undefined}
 									onRename={actions.includes("rename") ? () => setFileToRename(file) : undefined}
-									onMove={actions.includes("move") ? () => setFileToMove({ path: file.path, folder: false }) : undefined}
+									onMove={
+										actions.includes("move") ? () => setFileToMove({ path: file.path, folder: false }) : undefined
+									}
 									onDelete={actions.includes("delete") ? () => handleSoftDelete(file.path, false) : undefined}
 									onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
 									onRestore={actions.includes("restore") ? () => handleRestoreFile(file.path) : undefined}
