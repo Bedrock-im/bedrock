@@ -76,7 +76,7 @@ This project uses:
 ## 🌍 Future Improvements
 
 - 🧠 Smart search suggestions
-- ⌚ Real time editor for files
+- ⌚ Real-time editor for files
 
 ## Team
 
