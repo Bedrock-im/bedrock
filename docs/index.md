@@ -17,7 +17,7 @@ features:
   - title: 🔍 Search files and folders
     details: You can use the search bar to look for files or folders by name
   - title: 🧩 Sort by name, size, or creation date
-    details: You can sort files in the fileList by name size or creation date
+    details: You can sort files in the fileList by name, size, or creation date
   - title: 🗂️ Create folders
     details: You can create folders (no folders will be created if they do not contain files)
   - title: 📤 Upload files
