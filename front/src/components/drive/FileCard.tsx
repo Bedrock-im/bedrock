@@ -1,7 +1,7 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { filesize } from "filesize";
-import { Download, Edit, Share2, FileText, FolderIcon, Move, Trash, ArchiveRestore } from "lucide-react";
+import { Download, Edit, Share2, FileText, FolderIcon, Move, Trash, ArchiveRestore, Copy } from "lucide-react";
 import React from "react";
 
 import ActionIcon from "@/components/drive/ActionIcon";
@@ -11,18 +11,21 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { DriveFile, DriveFolder } from "@/stores/drive";
 
 export type FileCardProps = {
-	clicked?: boolean;
-	selected?: boolean;
-	setSelected?: () => void;
-	onLeftClick?: () => void;
-	onDelete?: () => void;
-	onShare?: () => void;
-	onDoubleClick?: () => void;
-	onDownload?: () => void;
-	onRename?: () => void;
-	onMove?: () => void;
-	onHardDelete?: () => void;
-	onRestore?: () => void;
+	clicked?: boolean,
+	selected?: boolean,
+	setSelected?: () => void,
+	onLeftClick?: () => void,
+	onDelete?: () => void,
+	onShare?: () => void,
+	onDoubleClick?: () => void,
+	onDownload?: () => void,
+	onRename?: () => void,
+	onMove?: () => void,
+	onHardDelete?: () => void,
+	onRestore?: () => void,
+	onDuplicate?: (() => Promise<void>) | undefined
+	onCopy?: () => void,
+	onPaste?: () => void,
 } & (FileCardFileProps | FileCardFolderProps);
 
 type FileCardFileProps = {
@@ -36,22 +39,24 @@ type FileCardFolderProps = {
 };
 
 const FileCard = ({
-	metadata,
-	folder,
-	clicked = false,
-	selected = false,
-	setSelected,
-	onLeftClick,
-	onDoubleClick,
-	onDelete,
-	onShare,
-	onDownload,
-	onRename,
-	onMove,
-	onRestore,
-	onHardDelete,
-	onDuplicate,
-}: FileCardProps) => {
+					  metadata,
+					  folder,
+					  clicked = false,
+					  selected = false,
+					  setSelected,
+					  onLeftClick,
+					  onDoubleClick,
+					  onDelete,
+					  onShare,
+					  onDownload,
+					  onRename,
+					  onMove,
+					  onRestore,
+					  onHardDelete,
+					  onDuplicate,
+					  onCopy,
+					  onPaste,
+				  }: FileCardProps) => {
 	const {
 		attributes,
 		listeners,
@@ -123,6 +128,7 @@ const FileCard = ({
 						{onDelete && <ActionIcon Icon={Trash} onClick={onDelete} tooltip="Delete" />}
 						{onHardDelete && <ActionIcon Icon={Trash} onClick={onHardDelete} tooltip="Definitive delete" />}
 						{onRestore && <ActionIcon Icon={ArchiveRestore} onClick={onRestore} tooltip="Restore" />}
+						{onCopy && <ActionIcon Icon={Copy} onClick={onCopy} tooltip={"copy"} />}
 					</TableCell>
 				</TableRow>
 			</ContextMenuTrigger>
@@ -174,6 +180,18 @@ const FileCard = ({
 					<ContextMenuItem onClick={onDuplicate}>
 						<ArchiveRestore className="mr-2 h-4 w-4" />
 						duplicate
+					</ContextMenuItem>
+				)}
+				{onCopy && (
+					<ContextMenuItem onClick={onCopy}>
+						<ArchiveRestore className="mr-2 h-4 w-4" />
+						copy
+					</ContextMenuItem>
+				)}
+				{onPaste && (
+					<ContextMenuItem onClick={onPaste}>
+						<ArchiveRestore className="mr-2 h-4 w-4" />
+						paste
 					</ContextMenuItem>
 				)}
 			</ContextMenuContent>

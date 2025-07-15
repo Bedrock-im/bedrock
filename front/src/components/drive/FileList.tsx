@@ -51,6 +51,7 @@ const FileList: React.FC<FileListProps> = ({
 	const [sortColumn, setSortColumn] = useQueryState("sort", { defaultValue: "path" as SortColumn });
 	const [sortOrder, setSortOrder] = useQueryState("order", { defaultValue: "asc" as SortOrder });
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set(selectedPaths));
+	const [copiedFilePath, setcopiedFilePath] = useState<string | null>(null);
 	const [clickedItem, setClickedItem] = useState<string>();
 	const {
 		setFiles,
@@ -335,6 +336,47 @@ const FileList: React.FC<FileListProps> = ({
 		});
 	};
 
+	const handleCopy = (path: string) => {
+		setcopiedFilePath(path);
+		toast.success(`${path.length} file(s) copied`);
+	};
+
+	const handlePaste = async () => {
+		if (!copiedFilePath || !bedrockService) return;
+
+		const originalFile = files.find((f) => f.path === copiedFilePath);
+		if (!originalFile) {
+			console.error("File not found");
+			return;
+		}
+
+		const filename = originalFile.path.split("/").pop()!;
+		const hasExtension = filename.includes(".");
+		const ext = hasExtension ? "." + filename.split(".").pop()! : "";
+		const baseName = hasExtension ? filename.slice(0, -ext.length) : filename;
+
+		let copyName = `${baseName}_copie${ext}`;
+		let counter = 2;
+		while (files.some((f) => f.path === `${currentWorkingDirectory}${copyName}`)) {
+			copyName = `${baseName}_copie_${counter++}${ext}`;
+		}
+
+		const newPath = `${currentWorkingDirectory}${copyName}`;
+		const newPostHash = await bedrockService.duplicateFile(copiedFilePath, newPath);
+
+		setFiles([
+			...files,
+			{
+				...originalFile,
+				path: newPath,
+				name: copyName,
+				created_at: new Date().toISOString(),
+				deleted_at: null,
+				post_hash: newPostHash,
+			},
+		]);
+	};
+
 	const selectAll = () => {
 		setSelectedItems((prev) => {
 			if (prev.size === currentPathFiles.length + currentPathFolders.length) {
@@ -370,7 +412,6 @@ const FileList: React.FC<FileListProps> = ({
 			bedrockService?.moveFile(draggedPath, newPath);
 		}
 	};
-	console.log(files);
 
 	return (
 		<div className="flex flex-col h-full bg-gray-200" onClick={() => setClickedItem(undefined)}>
@@ -472,6 +513,8 @@ const FileList: React.FC<FileListProps> = ({
 									onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
 									onRestore={actions.includes("restore") ? () => handleRestoreFile(file.path) : undefined}
 									onDuplicate={actions.includes("duplicate") ? () => handleDuplicate(file.path, false) : undefined}
+									onCopy={actions.includes("copy") ? () => handleCopy(file.path) : undefined}
+									onPaste={actions.includes("copy") && copiedFilePath != null ? () => handlePaste(): undefined}
 								/>
 							))}
 						</TableBody>
