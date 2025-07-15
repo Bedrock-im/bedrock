@@ -166,6 +166,42 @@ export default class BedrockService {
 		}
 	}
 
+	async duplicateFile(oldPath: string, newPath: string): Promise<string | undefined> {
+		const fileEntries = await this.fetchFileEntries();
+		const fullFiles = await this.fetchFilesMetaFromEntries(fileEntries);
+		const original = fullFiles.find((f) => f.path === oldPath);
+		if (!original) {
+			console.error(`File not found at path: ${oldPath}`);
+			toast.error(`File not found at path: ${oldPath}`);
+			return;
+		}
+
+		const newName = newPath.split("/").pop()!;
+
+		const newFileMeta: Omit<FileFullInfos, "post_hash"> = {
+			...original,
+			path: newPath,
+			name: newName,
+			created_at: new Date().toISOString(),
+			deleted_at: null,
+		};
+
+		const post_hash = await this.postFile(newFileMeta);
+
+		await this.alephService.updateAggregate("bedrock_file_entries", EncryptedFileEntriesSchema, async ({ files }) => ({
+			files: [
+				...files,
+				{
+					post_hash,
+					path: EncryptionService.encryptEcies(newPath, this.alephService.encryptionPrivateKey.publicKey.compressed),
+					shared_with: [],
+				},
+			],
+		}));
+
+		return post_hash;
+	}
+
 	async uploadFiles(directoryPath: string, files: File[]): Promise<Omit<FileFullInfos, "post_hash">[]> {
 		const uploadedFiles = await this.fetchFileEntries();
 		const results = await Promise.allSettled(

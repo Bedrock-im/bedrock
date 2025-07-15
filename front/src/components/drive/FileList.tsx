@@ -25,7 +25,7 @@ type SortOrder = "asc" | "desc";
 type FileListProps = {
 	files?: DriveFile[];
 	folders?: DriveFolder[];
-	actions?: ("upload" | "rename" | "download" | "delete" | "share" | "move" | "restore" | "hardDelete")[];
+	actions?: ("upload" | "rename" | "download" | "delete" | "share" | "move" | "restore" | "hardDelete" | "duplicate")[];
 	defaultCwd?: string;
 	defaultSearchQuery?: string;
 	onSelectedItemPathsChange?: (selectedItemPaths: Set<string>) => void;
@@ -217,6 +217,50 @@ const FileList: React.FC<FileListProps> = ({
 		}
 	};
 
+	const handleDuplicate = async (path: string, folder: boolean) => {
+		if (folder) {
+			alert("Folder duplication is not supported yet.");
+			return;
+		}
+
+		const originalFile = files.find((f) => f.path === path);
+		if (!originalFile || !bedrockService) return;
+
+		const nameParts = path.split("/");
+		const filename = nameParts.pop()!;
+		const dir = nameParts.join("/");
+
+		const hasExtension = filename.includes(".");
+		const ext = hasExtension ? "." + filename.split(".").pop()! : "";
+		const baseName = hasExtension ? filename.slice(0, -ext.length) : filename;
+
+		let copyName = `${baseName}_copie${ext}`;
+		let counter = 2;
+		while (files.some((f) => f.path === `${dir}/${copyName}`)) {
+			copyName = `${baseName}_copie_${counter++}${ext}`;
+		}
+
+		const newPath = `${dir}/${copyName}`;
+
+		const newPostHash = await bedrockService.duplicateFile(path, newPath);
+		if (!newPostHash) {
+			console.error("File duplication failed");
+			return;
+		}
+
+		setFiles([
+			...files,
+			{
+				...originalFile,
+				path: newPath,
+				name: copyName,
+				created_at: new Date().toISOString(),
+				deleted_at: null,
+				post_hash: newPostHash,
+			},
+		]);
+	};
+
 	const handleSoftDelete = (path: string, folder: boolean) => {
 		if (folder) {
 			const filesToDelete = deleteFolder(path);
@@ -326,6 +370,7 @@ const FileList: React.FC<FileListProps> = ({
 			bedrockService?.moveFile(draggedPath, newPath);
 		}
 	};
+	console.log(files);
 
 	return (
 		<div className="flex flex-col h-full bg-gray-200" onClick={() => setClickedItem(undefined)}>
@@ -426,6 +471,7 @@ const FileList: React.FC<FileListProps> = ({
 									onDelete={actions.includes("delete") ? () => handleSoftDelete(file.path, false) : undefined}
 									onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
 									onRestore={actions.includes("restore") ? () => handleRestoreFile(file.path) : undefined}
+									onDuplicate={actions.includes("duplicate") ? () => handleDuplicate(file.path, false) : undefined}
 								/>
 							))}
 						</TableBody>

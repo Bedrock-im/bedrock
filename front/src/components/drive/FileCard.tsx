@@ -50,6 +50,7 @@ const FileCard = ({
 	onMove,
 	onRestore,
 	onHardDelete,
+	onDuplicate,
 }: FileCardProps) => {
 	const {
 		attributes,
@@ -167,6 +168,12 @@ const FileCard = ({
 					<ContextMenuItem onClick={onRestore}>
 						<ArchiveRestore className="mr-2 h-4 w-4" />
 						Restore
+					</ContextMenuItem>
+				)}
+				{onDuplicate && (
+					<ContextMenuItem onClick={onDuplicate}>
+						<ArchiveRestore className="mr-2 h-4 w-4" />
+						duplicate
 					</ContextMenuItem>
 				)}
 			</ContextMenuContent>
