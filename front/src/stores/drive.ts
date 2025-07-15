@@ -132,20 +132,19 @@ export const useDriveStore = create<DriveStoreState & DriveStoreActions>((set, g
 		}));
 		return newContent;
 	},
-	updateFilesContent: (files) =>
-		files.map(({ path, newContent }) => {
-			const file = getState().files.find((file) => file.path === path);
-			if (!file) return undefined;
-			set((state) => ({
-				files: state.files.map((f) =>
-					f.path === path
-						? {
-								...f,
-								content: newContent,
-							}
-						: f,
-				),
-			}));
-			return newContent;
-		}),
+	updateFilesContent: (files) => {
+		const updatedFiles = getState().files.map((f) => {
+			const update = files.find(({ path }) => path === f.path);
+			return update
+				? {
+						...f,
+						content: update.newContent,
+				  }
+				: f;
+		});
+		set((state) => ({
+			files: updatedFiles,
+		}));
+		return files.map(({ newContent }) => newContent);
+	},
 }));
