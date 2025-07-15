@@ -25,7 +25,7 @@ features:
   - title: 🧭 Breadcrumb navigation
     details: you can navigate between folders while maintaining a good URL history
   - title: ✅ Multi-file selection
-    details: Every actions done on one file can be done on multiple selected files
+    details: All actions performed on a single file can be applied to multiple selected files
   - title: 🗑️ Soft/hard delete with restore option
     details: You can either soft delete files (they will be put into the trash and be deleted 30 days after) or hard delete them
   - title: 📝 Rename and move files
