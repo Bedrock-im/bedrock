@@ -31,7 +31,7 @@ export default function KnowledgeBases() {
 	const [openNewKBModal, setOpenNewKBModal] = useState(false);
 	const [newKBName, setNewKBName] = useState("");
 	const { bedrockService } = useAccountStore();
-	const { files } = useDriveStore();
+	const { files, updateFilesContent } = useDriveStore();
 	const {
 		knowledgeBases,
 		renameKnowledgeBase,
@@ -57,8 +57,25 @@ export default function KnowledgeBases() {
 		})();
 	}, [bedrockService, setKnowledgeBases]);
 
-	const handleSearchKBModalOpening = (base: KnowledgeBase) => {
+	const handleSearchKBModalOpening = async (base: KnowledgeBase) => {
 		if (openedAskKBModal !== null) return;
+		updateFilesContent(
+			await Promise.all(
+				base.filePaths
+					.filter((filePath) => !!files.find(({ path, content }) => path === filePath && content === undefined))
+					.map(async (filePath) => {
+						const driveFile = files.find(({ path }) => path === filePath)!;
+						return {
+							path: filePath,
+							newContent: await bedrockService!.downloadFileFromStoreHash(
+								driveFile.store_hash,
+								driveFile.key,
+								driveFile.iv,
+							),
+						};
+					}),
+			),
+		);
 		setOpenedAskKBModal(base);
 	};
 
@@ -115,8 +132,26 @@ export default function KnowledgeBases() {
 		await bedrockService?.renameKnowledgeBase(kb.name, newName);
 		renameKnowledgeBase(kb.name, newName);
 	};
+
 	const handleFileSelection = async (newFilePaths: string[], kb: KnowledgeBase) => {
 		await bedrockService?.setKnowledgeBaseFiles(kb.name, newFilePaths);
+		updateFilesContent(
+			await Promise.all(
+				newFilePaths
+					.filter((filePath) => !!files.find(({ path }) => path === filePath))
+					.map(async (filePath) => {
+						const driveFile = files.find(({ path }) => path === filePath)!;
+						return {
+							path: filePath,
+							newContent: await bedrockService!.downloadFileFromStoreHash(
+								driveFile.store_hash,
+								driveFile.key,
+								driveFile.iv,
+							),
+						};
+					}),
+			),
+		);
 		setKnowledgeBaseFiles(kb.name, ...newFilePaths);
 	};
 	return (
@@ -165,10 +200,12 @@ export default function KnowledgeBases() {
 					))}
 				</TableBody>
 			</Table>
-			<KnowledgeBaseAskDialog
-				knowledgeBase={openedAskKBModal}
-				onOpenChange={(open) => !open && setOpenedAskKBModal(null)}
-			/>
+			{openedAskKBModal !== null && (
+				<KnowledgeBaseAskDialog
+					knowledgeBase={openedAskKBModal}
+					onOpenChange={(open) => !open && setOpenedAskKBModal(null)}
+				/>
+			)}
 			{openedModifyFileListKBModal && (
 				<KnowledgeBaseFileSelector
 					knowledgeBase={openedModifyFileListKBModal}

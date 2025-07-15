@@ -23,6 +23,10 @@ export default defineConfig({
 				text: "Changelog",
 				link: "/CHANGELOG",
 			},
+			{
+				text: "Architecture",
+				link: "/architecture",
+			},
 		],
 
 		editLink: {

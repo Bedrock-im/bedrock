@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import { getAddressUsernameUsernameAddressGet } from "@/apis/usernames";
 import { ContactFormData } from "@/app/(drive)/contacts/page";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,10 +28,70 @@ export default function CreateContactDialog({ isOpen, onOpenChange, createContac
 		address: "",
 		publicKey: "",
 	});
+	const [username, setUsername] = useState("");
+	const [isLoadingAddress, setIsLoadingAddress] = useState(false);
 
 	const isContactNameTaken = useMemo(() => {
-		return contacts.some((contact) => contact.name === contactFormData.name);
-	}, [contacts, contactFormData.name]);
+		return contacts.some((contact) => contact.name === username);
+	}, [contacts, username]);
+
+	const isValidAddress = (address: string) => {
+		if (!address || address.trim() === "") return false;
+		return address !== "0x0000000000000000000000000000000000000000";
+	};
+
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			if (username.trim()) {
+				setIsLoadingAddress(true);
+
+				const currentUsername = username;
+
+				getAddressUsernameUsernameAddressGet({
+					path: { username },
+				})
+					.then((response) => {
+						// Only update if this is still the current username
+						if (currentUsername === username) {
+							const address = response.data?.address ?? "";
+							if (!isValidAddress(address)) {
+								setContactFormData((prev) => ({
+									...prev,
+									name: username,
+									address: "",
+								}));
+							} else {
+								setContactFormData((prev) => ({
+									...prev,
+									name: username,
+									address: address,
+								}));
+							}
+							setIsLoadingAddress(false);
+						}
+					})
+					.catch(() => {
+						// Only update if this is still the current username
+						if (currentUsername === username) {
+							setContactFormData((prev) => ({
+								...prev,
+								name: username,
+								address: "",
+							}));
+							setIsLoadingAddress(false);
+						}
+					});
+			} else {
+				setContactFormData((prev) => ({
+					...prev,
+					name: "",
+					address: "",
+				}));
+			}
+		}, 500);
+
+		return () => clearTimeout(timer);
+	}, [username]);
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -38,31 +99,25 @@ export default function CreateContactDialog({ isOpen, onOpenChange, createContac
 				<DialogHeader>
 					<DialogTitle>Create a contact</DialogTitle>
 				</DialogHeader>
-				<Input
-					value={contactFormData.name}
-					onChange={(e) =>
-						setContactFormData({
-							...contactFormData,
-							name: e.target.value,
-						})
-					}
-					placeholder="Contact Name"
-					className={`${isContactNameTaken && "border-destructive"}`}
-				/>
 				{isContactNameTaken && (
 					<DialogDescription className="text-destructive">Contact name is already taken.</DialogDescription>
 				)}
 				<Input
-					value={contactFormData.address}
-					onChange={(e) =>
-						setContactFormData({
-							...contactFormData,
-							address: e.target.value,
-						})
-					}
-					placeholder="Contact Address"
+					value={username}
+					onChange={(e) => setUsername(e.target.value)}
+					placeholder="Username"
 					className="w-full"
 				/>
+				<Input
+					value={contactFormData.address}
+					placeholder={isLoadingAddress ? "Loading address..." : "Address (auto-filled)"}
+					className={`w-full ${contactFormData.address && !isValidAddress(contactFormData.address) ? "border-destructive" : ""}`}
+					readOnly
+					disabled={isLoadingAddress}
+				/>
+				{contactFormData.address && !isValidAddress(contactFormData.address) && (
+					<DialogDescription className="text-destructive">Address is not valid</DialogDescription>
+				)}
 				<Input
 					value={contactFormData.publicKey}
 					onChange={(e) =>
@@ -80,10 +135,12 @@ export default function CreateContactDialog({ isOpen, onOpenChange, createContac
 					</DialogClose>
 					<Button
 						disabled={
-							!contactFormData.name.length ||
+							!username.length ||
 							!contactFormData.address.length ||
 							!contactFormData.publicKey.length ||
-							isContactNameTaken
+							isContactNameTaken ||
+							isLoadingAddress ||
+							!isValidAddress(contactFormData.address)
 						}
 						onClick={() => createContact(contactFormData)}
 					>

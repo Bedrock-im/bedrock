@@ -1,19 +1,25 @@
 "use client";
 
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
-import { LoaderIcon } from "lucide-react";
+import { Ban, ClipboardPaste, Download, LoaderIcon, Move, Share2, Trash } from "lucide-react";
 import { useQueryState } from "nuqs";
 import React, { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import CurrentPath from "@/components/drive/CurrentPath";
 import FileCard from "@/components/drive/FileCard";
 import SortOption from "@/components/drive/SortOption";
+import { FileMoveModal } from "@/components/FileMoveModal";
+import { FileRenameModal } from "@/components/FileRenameModal";
+import { FileShareModal } from "@/components/FileShareModal";
+import { FolderCreateModal } from "@/components/FolderCreateModal";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import useBedrockFileUploadDropzone from "@/hooks/use-bedrock-file-upload-dropzone";
-import { FileFullInfos } from "@/services/bedrock";
+import { Contact, FileFullInfos } from "@/services/bedrock";
 import { useAccountStore } from "@/stores/account";
 import { DriveFile, DriveFolder, useDriveStore } from "@/stores/drive";
 
@@ -25,12 +31,13 @@ type SortOrder = "asc" | "desc";
 type FileListProps = {
 	files?: DriveFile[];
 	folders?: DriveFolder[];
-	actions?: ("upload" | "rename" | "download" | "delete" | "share" | "move" | "restore" | "hardDelete" | "duplicate")[];
+	actions?: ("upload" | "rename" | "download" | "delete" | "share" | "move" | "restore" | "hardDelete" | "duplicate" | "copy")[];
 	defaultCwd?: string;
 	defaultSearchQuery?: string;
 	onSelectedItemPathsChange?: (selectedItemPaths: Set<string>) => void;
 	selectedPaths?: string[];
 	trash?: boolean;
+	emptyMessage: string;
 };
 
 const FileList: React.FC<FileListProps> = ({
@@ -42,12 +49,19 @@ const FileList: React.FC<FileListProps> = ({
 	onSelectedItemPathsChange,
 	selectedPaths = [],
 	trash = false,
+	emptyMessage,
 }) => {
+	// TODO: Replace with a real clipboard
+	const clipboard = 1;
 	const [searchQuery, setSearchQuery] = useQueryState("search", { defaultValue: defaultSearchQuery });
 	const [currentWorkingDirectory, setCurrentWorkingDirectory] = useQueryState("cwd", {
 		defaultValue: defaultCwd,
 		history: "push",
 	});
+	const [fileToMove, setFileToMove] = useState<{ path: string; folder: boolean } | null>(null);
+	const [fileToRename, setFileToRename] = useState<FileFullInfos | null>(null);
+	const [fileToShare, setFileToShare] = useState<FileFullInfos | null>(null);
+	const [isCreatingFolder, setIsCreatingFolder] = useState(false);
 	const [sortColumn, setSortColumn] = useQueryState("sort", { defaultValue: "path" as SortColumn });
 	const [sortOrder, setSortOrder] = useQueryState("order", { defaultValue: "asc" as SortOrder });
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set(selectedPaths));
@@ -57,6 +71,7 @@ const FileList: React.FC<FileListProps> = ({
 		setFiles,
 		setFolders,
 		softDeleteFile,
+		hardDeleteFile,
 		addFolder,
 		deleteFolder,
 		moveFile,
@@ -172,19 +187,16 @@ const FileList: React.FC<FileListProps> = ({
 			link.click();
 			document.body.removeChild(link);
 		} catch (error) {
-			console.error("Failed to download file:", error);
+			toast.error("Failed to download file:" + error?.toString());
 		}
 	};
 
-	const handleCreateFolder = () => {
-		const folderName = prompt("Enter folder name");
-		if (!folderName) return;
-
+	const handleCreateFolder = (folderName: string) => {
 		const newFolderPath = `${currentWorkingDirectory}${folderName}`;
 
 		// TODO: this check should be moved to the drive or bedrock service to check against all files, not just those passed to this component
 		// if (folders.some((folder) => folder.path === newFolderPath)) {
-		// 	alert("This folder already exists!");
+		// 	toast.error("This folder already exists!");
 		// 	return;
 		// }
 
@@ -197,16 +209,11 @@ const FileList: React.FC<FileListProps> = ({
 		};
 
 		addFolder(newFolder);
-
-		alert(`The folder "${folderName}" has been created locally. It will only be saved if a file is moved inside.`);
+		setIsCreatingFolder(false);
+		toast.success(`The folder "${folderName}" has been created.`);
 	};
 
-	const handleRename = (path: string, folder: boolean) => {
-		const newName = prompt(`Enter new ${folder ? "folder" : "file"} name`, path.split("/").pop());
-		if (!newName) {
-			return;
-		}
-
+	const handleRename = (path: string, folder: boolean, newName: string) => {
 		const newPath = `${path.split("/").slice(0, -1).join("/")}/${newName}`;
 
 		if (!folder) {
@@ -216,6 +223,8 @@ const FileList: React.FC<FileListProps> = ({
 			const filesToMove = moveFolder(path, newPath);
 			filesToMove.map(([oldFile, newFile]) => bedrockService?.moveFile(oldFile.path, newFile.path));
 		}
+		setFileToRename(null);
+		toast.success(`The ${folder ? "folder" : "file"} has been renamed.`);
 	};
 
 	const handleDuplicate = async (path: string, folder: boolean) => {
@@ -283,17 +292,13 @@ const FileList: React.FC<FileListProps> = ({
 				console.error("File not found:", path);
 				return;
 			}
+			hardDeleteFile(fileToDelete.path);
 			bedrockService?.hardDeleteFiles(fileToDelete);
 		}
+		toast.success(`The ${folder ? "folder" : "file"} has been permanently deleted.`);
 	};
 
-	const handleMove = (path: string, folder: boolean) => {
-		const newPath = prompt("Enter new path", path);
-
-		if (!newPath) {
-			return;
-		}
-
+	const handleMove = (path: string, newPath: string, folder: boolean) => {
 		if (!folder) {
 			moveFile(path, newPath);
 			bedrockService?.moveFile(path, newPath);
@@ -301,21 +306,13 @@ const FileList: React.FC<FileListProps> = ({
 			const filesToMove = moveFolder(path, newPath);
 			filesToMove.map(([oldFile, newFile]) => bedrockService?.moveFile(oldFile.path, newFile.path));
 		}
+		toast.success(`The ${folder ? "folder" : "file"} has been moved.`);
 	};
 
-	const handleShare = (file: FileFullInfos) => {
-		const contactName = prompt("Enter the contact you want to share this file with:");
-		if (!contactName) {
-			return;
-		}
-
-		const contact = contacts.find((contact) => contact.name === contactName);
-		if (!contact) {
-			alert("Contact not found");
-			return;
-		}
-
+	const handleShare = (file: FileFullInfos, contact: Contact) => {
 		bedrockService?.shareFileWithContact(file, contact.public_key);
+		setFileToShare(null);
+		toast.success(`The file has been shared with contact ${contact.name}.`);
 	};
 
 	const handleRestoreFile = (path: string) => {
@@ -375,7 +372,10 @@ const FileList: React.FC<FileListProps> = ({
 				post_hash: newPostHash,
 			},
 		]);
+		setcopiedFilePath(null)
 	};
+
+	console.log(files)
 
 	const selectAll = () => {
 		setSelectedItems((prev) => {
@@ -415,9 +415,36 @@ const FileList: React.FC<FileListProps> = ({
 
 	return (
 		<div className="flex flex-col h-full bg-gray-200" onClick={() => setClickedItem(undefined)}>
+			{fileToMove && (
+				<FileMoveModal
+					isOpen={true}
+					onClose={() => setFileToMove(null)}
+					onComplete={(newPath) => handleMove(fileToMove.path, newPath, fileToMove.folder)}
+				/>
+			)}
+			{fileToRename && (
+				<FileRenameModal
+					isOpen={true}
+					onClose={() => setFileToRename(null)}
+					onComplete={(newName) => handleRename(fileToRename.path, false, newName)}
+				/>
+			)}
+			{fileToShare && (
+				<FileShareModal
+					isOpen={true}
+					onClose={() => setFileToShare(null)}
+					onComplete={(contact) => handleShare(fileToShare, contact)}
+					contacts={contacts}
+				/>
+			)}
+			<FolderCreateModal
+				isOpen={isCreatingFolder}
+				onClose={() => setIsCreatingFolder(false)}
+				onComplete={handleCreateFolder}
+			/>
 			<div className="flex justify-between items-center m-2 gap-4">
 				{actions.includes("upload") && (
-					<UploadButton onCreateFolder={handleCreateFolder} getInputProps={getInputProps} />
+					<UploadButton onCreateFolder={() => setIsCreatingFolder(true)} getInputProps={getInputProps} />
 				)}
 				<input type="file" id="fileInput" className="hidden" onChange={() => {}} />
 				<input
@@ -429,98 +456,160 @@ const FileList: React.FC<FileListProps> = ({
 				/>
 			</div>
 
-			<Card className="m-2 pb-2 gap-y-4">
-				<div className="m-4 mt-2">
-					<CurrentPath path={currentWorkingDirectory} setPath={setCurrentWorkingDirectory} />
-					<Separator orientation="horizontal" />
-				</div>
-				<DndContext onDragEnd={handleDragEnd}>
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead className="w-[40px]">
-									<Checkbox
-										checked={selectedItems.size === files.length + folders.length}
-										onClick={(e) => {
-											e.stopPropagation();
-											selectAll();
-										}}
+			<DndContext onDragEnd={handleDragEnd}>
+				<Card className="m-2 pb-2 gap-y-4">
+					<div className="m-4 mt-2">
+						<CurrentPath path={currentWorkingDirectory} setPath={setCurrentWorkingDirectory} />
+						<Separator orientation="horizontal" />
+					</div>
+					{sortedFiles.length === 0 && sortedFolders.length === 0 ? (
+						<div className="flex justify-center items-center">
+							<p className="py-4">{currentWorkingDirectory === "/" ? emptyMessage : "This directory is empty."}</p>
+						</div>
+					) : (
+						<Table>
+							<TableHeader>
+								<TableRow>
+									<TableHead className="w-[40px]">
+										<Checkbox
+											checked={selectedItems.size === files.length + folders.length}
+											onClick={(e) => {
+												e.stopPropagation();
+												selectAll();
+											}}
+										/>
+									</TableHead>
+									<TableHead>
+										<SortOption
+											option="path"
+											name="Name"
+											sortColumn={sortColumn}
+											sortOrder={sortOrder}
+											setSortColumn={setSortColumn}
+											setSortOrder={setSortOrder}
+										/>
+									</TableHead>
+									<TableHead>
+										<SortOption
+											option="size"
+											name="Size"
+											sortColumn={sortColumn}
+											sortOrder={sortOrder}
+											setSortColumn={setSortColumn}
+											setSortOrder={setSortOrder}
+										/>
+									</TableHead>
+									<TableHead>
+										<SortOption
+											option="created_at"
+											name="Created At"
+											sortColumn={sortColumn}
+											sortOrder={sortOrder}
+											setSortColumn={setSortColumn}
+											setSortOrder={setSortOrder}
+										/>
+									</TableHead>
+									<TableHead className="text-right">Actions</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{/* TODO: concat both lists and show them together, so it can be sorted by name */}
+								{sortedFolders.map((folder) => (
+									<FileCard
+										key={folder.path}
+										folder
+										metadata={folder}
+										clicked={clickedItem === folder.path}
+										selected={selectedItems.has(folder.path + "/")}
+										setSelected={() => selectItem(folder.path + "/")}
+										onLeftClick={() => setClickedItem(folder.path)}
+										onDoubleClick={() => setCurrentWorkingDirectory(folder.path + "/")}
+										onDelete={actions.includes("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
+										onHardDelete={
+											actions.includes("hardDelete") ? () => handleHardDelete(folder.path, true) : undefined
+										}
+										onRestore={actions.includes("restore") ? () => handleRestoreFile(folder.path) : undefined}
 									/>
-								</TableHead>
-								<TableHead>
-									<SortOption
-										option="path"
-										name="Name"
-										sortColumn={sortColumn}
-										sortOrder={sortOrder}
-										setSortColumn={setSortColumn}
-										setSortOrder={setSortOrder}
+								))}
+								{sortedFiles.map((file) => (
+									<FileCard
+										key={file.path}
+										metadata={file}
+										clicked={clickedItem === file.path}
+										selected={selectedItems.has(file.path)}
+										setSelected={() => selectItem(file.path)}
+										onLeftClick={() => setClickedItem(file.path)}
+										onDownload={actions.includes("download") ? () => handleDownloadFile(file) : undefined}
+										onShare={actions.includes("share") ? () => setFileToShare(file) : undefined}
+										onRename={actions.includes("rename") ? () => setFileToRename(file) : undefined}
+										onMove={
+											actions.includes("move") ? () => setFileToMove({ path: file.path, folder: false }) : undefined
+										}
+										onDelete={actions.includes("delete") ? () => handleSoftDelete(file.path, false) : undefined}
+										onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
+										onRestore={actions.includes("restore") ? () => handleRestoreFile(file.path) : undefined}
+										onDuplicate={actions.includes("duplicate") ? () => handleDuplicate(file.path, false) : undefined}
+										onCopy={actions.includes("copy") ? () => handleCopy(file.path) : undefined}
+										onPaste={actions.includes("copy") && copiedFilePath != null ? () => handlePaste(): undefined}
 									/>
-								</TableHead>
-								<TableHead>
-									<SortOption
-										option="size"
-										name="Size"
-										sortColumn={sortColumn}
-										sortOrder={sortOrder}
-										setSortColumn={setSortColumn}
-										setSortOrder={setSortOrder}
-									/>
-								</TableHead>
-								<TableHead>
-									<SortOption
-										option="created_at"
-										name="Created At"
-										sortColumn={sortColumn}
-										sortOrder={sortOrder}
-										setSortColumn={setSortColumn}
-										setSortOrder={setSortOrder}
-									/>
-								</TableHead>
-								<TableHead className="text-right">Actions</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{/* TODO: concat both lists and show them together, so it can be sorted by name */}
-							{sortedFolders.map((folder) => (
-								<FileCard
-									key={folder.path}
-									folder
-									metadata={folder}
-									clicked={clickedItem === folder.path}
-									selected={selectedItems.has(folder.path + "/")}
-									setSelected={() => selectItem(folder.path + "/")}
-									onLeftClick={() => setClickedItem(folder.path)}
-									onDoubleClick={() => setCurrentWorkingDirectory(folder.path + "/")}
-									onDelete={actions.includes("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
-									onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(folder.path, true) : undefined}
-									onRestore={actions.includes("restore") ? () => handleRestoreFile(folder.path) : undefined}
-								/>
-							))}
-							{sortedFiles.map((file) => (
-								<FileCard
-									key={file.path}
-									metadata={file}
-									clicked={clickedItem === file.path}
-									selected={selectedItems.has(file.path)}
-									setSelected={() => selectItem(file.path)}
-									onLeftClick={() => setClickedItem(file.path)}
-									onDownload={actions.includes("download") ? () => handleDownloadFile(file) : undefined}
-									onShare={actions.includes("share") ? () => handleShare(file) : undefined}
-									onRename={actions.includes("rename") ? () => handleRename(file.path, false) : undefined}
-									onMove={actions.includes("move") ? () => handleMove(file.path, false) : undefined}
-									onDelete={actions.includes("delete") ? () => handleSoftDelete(file.path, false) : undefined}
-									onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
-									onRestore={actions.includes("restore") ? () => handleRestoreFile(file.path) : undefined}
-									onDuplicate={actions.includes("duplicate") ? () => handleDuplicate(file.path, false) : undefined}
-									onCopy={actions.includes("copy") ? () => handleCopy(file.path) : undefined}
-									onPaste={actions.includes("copy") && copiedFilePath != null ? () => handlePaste(): undefined}
-								/>
-							))}
-						</TableBody>
-					</Table>
-				</DndContext>
-			</Card>
+
+								))}
+							</TableBody>
+						</Table>
+					)}
+					{copiedFilePath != null && (
+						<>
+							<div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-[#1e81b0] text-white px-6 py-3 rounded-full shadow-lg w-[50%] ml-[10%]">
+								<div className="flex justify-between items-center gap-4">
+									<p>
+										1 item copied to clipboard.
+									</p>
+									<Button variant="ghost" className="text-white text-sm gap-2" onClick={() => handlePaste()}>
+										<ClipboardPaste size={16} />
+										Paste
+									</Button>
+								</div>
+							</div>
+							<div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-39 bg-[#A21511] text-white px-6 py-3 rounded-full shadow-lg w-[50%] ml-[15%]">
+								<div className="flex justify-end items-center">
+									<Button variant="ghost" className="text-white text-sm px-2 py-1" onClick={() => setcopiedFilePath(null)}>
+										<Ban size={16} />
+									</Button>
+								</div>
+							</div>
+						</>
+					)}
+					{selectedItems.size > 0 && (
+						<div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-[#20243a] text-white px-6 py-3 rounded-full shadow-lg w-[50%]">
+							<div className="flex gap-4 justify-between items-center">
+								<div>
+									<span className="text-sm">
+										{selectedItems.size} item{selectedItems.size > 1 ? "s" : ""} selected
+									</span>
+								</div>
+								<div className="gap-4">
+									<Button variant="ghost" className="text-white text-sm gap-2">
+										<Download size={16} />
+										Download
+									</Button>
+									<Button variant="ghost" className="text-white text-sm gap-2">
+										<Share2 size={16} />
+										Share
+									</Button>
+									<Button variant="ghost" className="text-white text-sm gap-2">
+										<Move size={16} />
+										Move
+									</Button>
+									<Button variant="ghost" className="text-white text-sm gap-2">
+										<Trash size={16} />
+										Delete
+									</Button>
+								</div>
+							</div>
+						</div>
+					)}
+				</Card>
+			</DndContext>
 		</div>
 	);
 };

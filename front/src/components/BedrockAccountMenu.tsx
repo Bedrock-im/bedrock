@@ -1,10 +1,11 @@
 "use client";
 
-import { BadgeCheck, Bell, ChevronsUpDown, LogOut, Trash2, WrenchIcon } from "lucide-react";
+import { Bell, ChevronsUpDown, LogOut, WrenchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useActiveAccount, useActiveWallet, useDisconnect } from "thirdweb/react";
+
 import DeleteDialog from "@/components/drive/DeleteDialog";
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -91,24 +92,16 @@ export const BedrockAccountMenu = () => {
 					</DropdownMenuLabel>
 					<DropdownMenuSeparator />
 					<DropdownMenuGroup>
-						<DropdownMenuItem>
-							<BadgeCheck />
-							Account
-						</DropdownMenuItem>
 						<DropdownMenuItem onClick={() => router.push("/settings")}>
 							<WrenchIcon />
 							Settings
 						</DropdownMenuItem>
-						<DropdownMenuItem>
+						<DropdownMenuItem disabled>
 							<Bell />
 							Notifications
 						</DropdownMenuItem>
 					</DropdownMenuGroup>
 					<DropdownMenuSeparator />
-					<DropdownMenuItem onClick={() => setConfirmDataResetDialogOpen(true)} className="text-red-500">
-						<Trash2 />
-						Delete my data
-					</DropdownMenuItem>
 					<DropdownMenuItem onClick={() => disconnect(wallet)} className="cursor-pointer">
 						<LogOut />
 						Log out

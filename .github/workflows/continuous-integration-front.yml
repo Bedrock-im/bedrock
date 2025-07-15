@@ -70,12 +70,14 @@ jobs:
         run: |
           echo "NEXT_PUBLIC_THIRDWEB_CLIENT_ID=${{ secrets.FRONT_NEXT_PUBLIC_THIRDWEB_CLIENT_ID }}" >> front/.env
           echo "NEXT_PUBLIC_USERNAMES_API_URL=${{ secrets.FRONT_NEXT_PUBLIC_USERNAMES_API_URL }}" >> front/.env
+          echo "NEXT_PUBLIC_LIBERTAI_API_URL=${{ secrets.FRONT_NEXT_PUBLIC_LIBERTAI_API_URL }}" >> front/.env
+          echo "NEXT_PUBLIC_LIBERTAI_API_SECRET_KEY=${{ secrets.FRONT_NEXT_PUBLIC_LIBERTAI_API_SECRET_KEY }}" >> front/.env
       - name: Build
         run: yarn workspace front build
 
       - name: Deploy preview on Aleph
         if: ${{ github.event_name == 'pull_request' }}
-        uses: aleph-im/web3-hosting-action@v1.1.0
+        uses: aleph-im/web3-hosting-action@v1.1.1
         with:
           path: 'front/out'
 
