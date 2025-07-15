@@ -11,21 +11,21 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { DriveFile, DriveFolder } from "@/stores/drive";
 
 export type FileCardProps = {
-	clicked?: boolean,
-	selected?: boolean,
-	setSelected?: () => void,
-	onLeftClick?: () => void,
-	onDelete?: () => void,
-	onShare?: () => void,
-	onDoubleClick?: () => void,
-	onDownload?: () => void,
-	onRename?: () => void,
-	onMove?: () => void,
-	onHardDelete?: () => void,
-	onRestore?: () => void,
-	onDuplicate?: (() => Promise<void>) | undefined
-	onCopy?: () => void,
-	onPaste?: () => void,
+	clicked?: boolean;
+	selected?: boolean;
+	setSelected?: () => void;
+	onLeftClick?: () => void;
+	onDelete?: () => void;
+	onShare?: () => void;
+	onDoubleClick?: () => void;
+	onDownload?: () => void;
+	onRename?: () => void;
+	onMove?: () => void;
+	onHardDelete?: () => void;
+	onRestore?: () => void;
+	onDuplicate?: (() => Promise<void>) | undefined;
+	onCopy?: () => void;
+	onPaste?: () => void;
 } & (FileCardFileProps | FileCardFolderProps);
 
 type FileCardFileProps = {
@@ -39,24 +39,24 @@ type FileCardFolderProps = {
 };
 
 const FileCard = ({
-					  metadata,
-					  folder,
-					  clicked = false,
-					  selected = false,
-					  setSelected,
-					  onLeftClick,
-					  onDoubleClick,
-					  onDelete,
-					  onShare,
-					  onDownload,
-					  onRename,
-					  onMove,
-					  onRestore,
-					  onHardDelete,
-					  onDuplicate,
-					  onCopy,
-					  onPaste,
-				  }: FileCardProps) => {
+	metadata,
+	folder,
+	clicked = false,
+	selected = false,
+	setSelected,
+	onLeftClick,
+	onDoubleClick,
+	onDelete,
+	onShare,
+	onDownload,
+	onRename,
+	onMove,
+	onRestore,
+	onHardDelete,
+	onDuplicate,
+	onCopy,
+	onPaste,
+}: FileCardProps) => {
 	const {
 		attributes,
 		listeners,

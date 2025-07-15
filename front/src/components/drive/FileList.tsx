@@ -31,7 +31,18 @@ type SortOrder = "asc" | "desc";
 type FileListProps = {
 	files?: DriveFile[];
 	folders?: DriveFolder[];
-	actions?: ("upload" | "rename" | "download" | "delete" | "share" | "move" | "restore" | "hardDelete" | "duplicate" | "copy")[];
+	actions?: (
+		| "upload"
+		| "rename"
+		| "download"
+		| "delete"
+		| "share"
+		| "move"
+		| "restore"
+		| "hardDelete"
+		| "duplicate"
+		| "copy"
+	)[];
 	defaultCwd?: string;
 	defaultSearchQuery?: string;
 	onSelectedItemPathsChange?: (selectedItemPaths: Set<string>) => void;
@@ -372,10 +383,10 @@ const FileList: React.FC<FileListProps> = ({
 				post_hash: newPostHash,
 			},
 		]);
-		setcopiedFilePath(null)
+		setcopiedFilePath(null);
 	};
 
-	console.log(files)
+	console.log(files);
 
 	const selectAll = () => {
 		setSelectedItems((prev) => {
@@ -550,9 +561,8 @@ const FileList: React.FC<FileListProps> = ({
 										onRestore={actions.includes("restore") ? () => handleRestoreFile(file.path) : undefined}
 										onDuplicate={actions.includes("duplicate") ? () => handleDuplicate(file.path, false) : undefined}
 										onCopy={actions.includes("copy") ? () => handleCopy(file.path) : undefined}
-										onPaste={actions.includes("copy") && copiedFilePath != null ? () => handlePaste(): undefined}
+										onPaste={actions.includes("copy") && copiedFilePath != null ? () => handlePaste() : undefined}
 									/>
-
 								))}
 							</TableBody>
 						</Table>
@@ -561,9 +571,7 @@ const FileList: React.FC<FileListProps> = ({
 						<>
 							<div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-[#1e81b0] text-white px-6 py-3 rounded-full shadow-lg w-[50%] ml-[10%]">
 								<div className="flex justify-between items-center gap-4">
-									<p>
-										1 item copied to clipboard.
-									</p>
+									<p>1 item copied to clipboard.</p>
 									<Button variant="ghost" className="text-white text-sm gap-2" onClick={() => handlePaste()}>
 										<ClipboardPaste size={16} />
 										Paste
@@ -572,7 +580,11 @@ const FileList: React.FC<FileListProps> = ({
 							</div>
 							<div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-39 bg-[#A21511] text-white px-6 py-3 rounded-full shadow-lg w-[50%] ml-[15%]">
 								<div className="flex justify-end items-center">
-									<Button variant="ghost" className="text-white text-sm px-2 py-1" onClick={() => setcopiedFilePath(null)}>
+									<Button
+										variant="ghost"
+										className="text-white text-sm px-2 py-1"
+										onClick={() => setcopiedFilePath(null)}
+									>
 										<Ban size={16} />
 									</Button>
 								</div>
