@@ -23,7 +23,7 @@ features:
   - title: 📤 Upload files
     details: You can upload files from your computer to Aleph storage
   - title: 🧭 Breadcrumb navigation
-    details: you can navigate between folders while maintaining a good url historic
+    details: you can navigate between folders while maintaining a good URL history
   - title: ✅ Multi-file selection
     details: Every actions done on one file can be done on multiple selected files
   - title: 🗑️ Soft/hard delete with restore option
