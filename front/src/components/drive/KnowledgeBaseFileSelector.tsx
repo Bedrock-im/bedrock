@@ -39,6 +39,7 @@ export default function KnowledgeBaseFileSelector({
 						<DialogDescription>Select files to include in the knowledge base.</DialogDescription>
 					</DialogHeader>
 					<FileList
+						emptyMessage="Your drive is empty."
 						selectedPaths={selectedPaths}
 						onSelectedItemPathsChange={(newPaths) =>
 							setSelectedFilePaths(Array.from(newPaths).filter((path) => !path.endsWith("/")))

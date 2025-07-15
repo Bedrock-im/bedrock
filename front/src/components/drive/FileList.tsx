@@ -1,7 +1,7 @@
 "use client";
 
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
-import { LoaderIcon } from "lucide-react";
+import {Download, LoaderIcon, Move, Share2, Trash} from "lucide-react";
 import { useQueryState } from "nuqs";
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import { FileMoveModal } from "@/components/FileMoveModal";
 import { FileRenameModal } from "@/components/FileRenameModal";
 import { FileShareModal } from "@/components/FileShareModal";
 import { FolderCreateModal } from "@/components/FolderCreateModal";
+import {Button} from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
@@ -36,6 +37,7 @@ type FileListProps = {
 	onSelectedItemPathsChange?: (selectedItemPaths: Set<string>) => void;
 	selectedPaths?: string[];
 	trash?: boolean;
+	emptyMessage: string;
 };
 
 const FileList: React.FC<FileListProps> = ({
@@ -47,6 +49,7 @@ const FileList: React.FC<FileListProps> = ({
 	onSelectedItemPathsChange,
 	selectedPaths = [],
 	trash = false,
+	emptyMessage,
 }) => {
 	const [searchQuery, setSearchQuery] = useQueryState("search", { defaultValue: defaultSearchQuery });
 	const [currentWorkingDirectory, setCurrentWorkingDirectory] = useQueryState("cwd", {
@@ -362,12 +365,19 @@ const FileList: React.FC<FileListProps> = ({
 				/>
 			</div>
 
+			<DndContext onDragEnd={handleDragEnd}>
 			<Card className="m-2 pb-2 gap-y-4">
 				<div className="m-4 mt-2">
 					<CurrentPath path={currentWorkingDirectory} setPath={setCurrentWorkingDirectory} />
 					<Separator orientation="horizontal" />
 				</div>
-				<DndContext onDragEnd={handleDragEnd}>
+				{sortedFiles.length === 0 && sortedFolders.length === 0 ? (
+					<div className="flex justify-center items-center">
+						<p className="py-4">
+							{currentWorkingDirectory === "/" ? emptyMessage : "This directory is empty."}
+						</p>
+					</div>
+				) : (
 					<Table>
 						<TableHeader>
 							<TableRow>
@@ -451,8 +461,36 @@ const FileList: React.FC<FileListProps> = ({
 							))}
 						</TableBody>
 					</Table>
-				</DndContext>
-			</Card>
+				)}
+				{selectedItems.size > 0 && (
+					<div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-[#20243a] text-white px-6 py-3 rounded-full shadow-lg w-[50%]">
+						<div className="flex gap-4 justify-between items-center">
+							<div>
+								<span className="text-sm">{selectedItems.size} item{selectedItems.size > 1 ? "s" : ""} selected</span>
+							</div>
+							<div className="gap-4">
+								<Button variant="ghost" className="text-white text-sm gap-2">
+									<Download size={16} />
+									Download
+								</Button>
+								<Button variant="ghost" className="text-white text-sm gap-2">
+									<Share2 size={16} />
+									Share
+								</Button>
+								<Button variant="ghost" className="text-white text-sm gap-2">
+									<Move size={16} />
+									Move
+								</Button>
+								<Button variant="ghost" className="text-white text-sm gap-2">
+									<Trash size={16} />
+									Delete
+								</Button>
+							</div>
+						</div>
+					</div>
+				)}
+				</Card>
+			</DndContext>
 		</div>
 	);
 };

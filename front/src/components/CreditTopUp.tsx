@@ -115,29 +115,31 @@ export default function CreditTopUp({ creditBalance, onTopUpComplete }: CreditTo
 							</p>
 						</div>
 
-						<PayEmbed
-							client={thirdwebClient}
-							payOptions={{
-								mode: "direct_payment",
-								buyWithFiat: false,
-								onPurchaseSuccess: () => {
-									handlePaymentSuccess();
-								},
-								purchaseData: {
-									userAddress: account?.address,
-								},
-								paymentInfo: {
-									chain: base,
-									sellerAddress: PAYMENT_RECEIVER_ADDRESS,
-									amount: amount.toString(),
-									token: {
-										name: "USDC",
-										symbol: "USDC",
-										address: env.USDC_BASE_ADDRESS,
+						<div className="flex justify-center">
+							<PayEmbed
+								client={thirdwebClient}
+								payOptions={{
+									mode: "direct_payment",
+									buyWithFiat: false,
+									onPurchaseSuccess: () => {
+										handlePaymentSuccess();
 									},
-								},
-							}}
-						/>
+									purchaseData: {
+										userAddress: account?.address,
+									},
+									paymentInfo: {
+										chain: base,
+										sellerAddress: PAYMENT_RECEIVER_ADDRESS,
+										amount: amount.toString(),
+										token: {
+											name: "USDC",
+											symbol: "USDC",
+											address: env.USDC_BASE_ADDRESS,
+										},
+									},
+								}}
+							/>
+						</div>
 
 						<Button variant="outline" onClick={() => setShowPayment(false)} className="w-full" disabled={isProcessing}>
 							Back

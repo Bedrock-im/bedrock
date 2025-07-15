@@ -1,7 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useActiveAccount } from "thirdweb/react";
 
-import { UserCredit } from "@/services/credits";
+import {CreditService, UserCredit} from "@/services/credits";
+import {
+	addCreditsRouteCreditsAddPost,
+	getCreditsRouteCreditsAddressGet
+} from "@/apis/usernames";
 
 export function useCredits() {
 	const account = useActiveAccount();
@@ -16,12 +20,19 @@ export function useCredits() {
 	} = useQuery({
 		queryKey: ["credits", account?.address],
 		queryFn: async (): Promise<UserCredit> => {
-			// if (!account) {
-			return { balance: 0, transactions: [] };
-			// }
+			if (!account) {
+				return { balance: 0, transactions: [] };
+			}
 
-			// const creditService = new CreditService(alephService, account.address);
-			// return await creditService.getCreditBalance();
+			const credits = await getCreditsRouteCreditsAddressGet({
+				path: {
+					address: account.address,
+				},
+			})
+			return {
+				balance: credits.data?.balance as number ?? 0,
+				transactions: [],
+			};
 		},
 		// enabled: !!alephService && !!account,
 		enabled: !!account,
