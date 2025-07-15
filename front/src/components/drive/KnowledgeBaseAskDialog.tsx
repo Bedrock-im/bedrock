@@ -1,4 +1,4 @@
-import { Copy, CornerDownLeft, RefreshCcw } from "lucide-react";
+import { Copy, CornerDownLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -28,6 +28,9 @@ export default function KnowledgeBaseAskDialog({ knowledgeBase, onOpenChange }: 
 	const { files } = useDriveStore();
 
 	const handleSendMessage = () => {
+		if (messageToSend.trim() === "") {
+			return;
+		}
 		setMessages((prev) => [...prev, { type: "sent", message: messageToSend }]);
 		if (!knowledgeBase || !libertaiService) {
 			toast.error("Knowledge base or LibertAI service not available");
@@ -41,8 +44,8 @@ export default function KnowledgeBaseAskDialog({ knowledgeBase, onOpenChange }: 
 						file: files.find((file) => file.path === path),
 						filePath: path,
 					}))
-					.filter(({ file }) => !!file?.content)
-					.map(({ filePath, file }) => ({ filePath, content: file!.content! })),
+					.filter(({ file }) => !!file)
+					.map(({ filePath, file }) => ({ filePath, content: file!.content ?? Buffer.from("</unknown>") })),
 				messages.map(({ type, message }) => ({
 					role: type === "sent" ? "user" : "assistant",
 					content: message,
@@ -71,7 +74,7 @@ export default function KnowledgeBaseAskDialog({ knowledgeBase, onOpenChange }: 
 	return (
 		<Dialog open={knowledgeBase !== null} onOpenChange={onOpenChange}>
 			{knowledgeBase !== null && (
-				<DialogContent className="min-w-[90vw] min-h-[90vh]">
+				<DialogContent className="min-w-[90vw] min-h-[90vh] max-h-[90vh] max-w-[90vw] overflow-y-scroll">
 					<DialogHeader>
 						<DialogTitle>Ask base &quot;{knowledgeBase.name}&quot;</DialogTitle>
 						<DialogDescription>
@@ -94,7 +97,6 @@ export default function KnowledgeBaseAskDialog({ knowledgeBase, onOpenChange }: 
 											icon={<Copy />}
 											onClick={() => handleCopyReceivedMessage(message)}
 										/>
-										<ChatBubbleAction className="size-6" icon={<RefreshCcw />} />
 									</div>
 								)}
 							</ChatBubble>
@@ -111,6 +113,7 @@ export default function KnowledgeBaseAskDialog({ knowledgeBase, onOpenChange }: 
 							autoComplete="off"
 							className="flex-grow px-4 py-3 bg-background text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 w-full rounded-md flex items-center resize-none"
 							onChange={(e) => setMessageToSend(e.target.value)}
+							onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
 							value={messageToSend}
 							placeholder="Type your question here"
 							disabled={messages.at(-1)?.type === "sent"}
