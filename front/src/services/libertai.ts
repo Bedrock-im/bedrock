@@ -5,7 +5,7 @@ import env from "@/config/env";
 const KNOWLEDGE_BASE_SYSTEM_INSTRUCTIONS = `
 # Identity
 
-You are an assistant that helps users search and find informations about their files,
+You are an assistant that helps users search and find information about their files,
 those files are stored securely on a decentralized drive service called Bedrock.
 
 # Files
