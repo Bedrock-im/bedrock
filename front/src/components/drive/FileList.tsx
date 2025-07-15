@@ -62,8 +62,6 @@ const FileList: React.FC<FileListProps> = ({
 	trash = false,
 	emptyMessage,
 }) => {
-	// TODO: Replace with a real clipboard
-	const clipboard = 1;
 	const [searchQuery, setSearchQuery] = useQueryState("search", { defaultValue: defaultSearchQuery });
 	const [currentWorkingDirectory, setCurrentWorkingDirectory] = useQueryState("cwd", {
 		defaultValue: defaultCwd,
@@ -258,7 +256,7 @@ const FileList: React.FC<FileListProps> = ({
 		let copyName = `${baseName}_copie${ext}`;
 		let counter = 2;
 		while (files.some((f) => f.path === `${dir}/${copyName}`)) {
-			copyName = `${baseName}_copie_${counter++}${ext}`;
+			copyName = `${baseName}_copie_${counter+=1}${ext}`;
 		}
 
 		const newPath = `${dir}/${copyName}`;
@@ -366,7 +364,7 @@ const FileList: React.FC<FileListProps> = ({
 		let copyName = `${baseName}_copie${ext}`;
 		let counter = 2;
 		while (files.some((f) => f.path === `${currentWorkingDirectory}${copyName}`)) {
-			copyName = `${baseName}_copie_${counter++}${ext}`;
+			copyName = `${baseName}_copie_${counter+=1}${ext}`;
 		}
 
 		const newPath = `${currentWorkingDirectory}${copyName}`;
@@ -385,8 +383,6 @@ const FileList: React.FC<FileListProps> = ({
 		]);
 		setcopiedFilePath(null);
 	};
-
-	console.log(files);
 
 	const selectAll = () => {
 		setSelectedItems((prev) => {
