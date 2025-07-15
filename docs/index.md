@@ -21,7 +21,7 @@ features:
     icon: 🧩
     details: You can sort files in the fileList by name, size, or creation date
   - title: Create folders
-     icon: 🗂️
+    icon: 🗂️
     details: You can create folders (no folders will be created if they do not contain files)
   - title: Upload files
     icon: 📤
