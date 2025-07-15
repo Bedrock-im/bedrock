@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck, Bell, ChevronsUpDown, LogOut, Trash2, WrenchIcon } from "lucide-react";
+import { Bell, ChevronsUpDown, LogOut, WrenchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";

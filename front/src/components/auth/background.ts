@@ -2,7 +2,7 @@ import { RefObject } from "react";
 
 type Dot = { x: number; y: number; vx: number; vy: number };
 
-export const authBackground = (canvasRef: RefObject<HTMLCanvasElement>) => {
+export const dotsBackground = (canvasRef: RefObject<HTMLCanvasElement>) => {
 	const canvas = canvasRef.current;
 	if (!canvas) return;
 

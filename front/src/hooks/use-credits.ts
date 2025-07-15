@@ -1,11 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useActiveAccount } from "thirdweb/react";
 
-import {CreditService, UserCredit} from "@/services/credits";
-import {
-	addCreditsRouteCreditsAddPost,
-	getCreditsRouteCreditsAddressGet
-} from "@/apis/usernames";
+import { getCreditsRouteCreditsAddressGet } from "@/apis/usernames";
+import { UserCredit } from "@/services/credits";
 
 export function useCredits() {
 	const account = useActiveAccount();
@@ -28,9 +25,9 @@ export function useCredits() {
 				path: {
 					address: account.address,
 				},
-			})
+			});
 			return {
-				balance: credits.data?.balance as number ?? 0,
+				balance: (credits.data?.balance as number) ?? 0,
 				transactions: [],
 			};
 		},

@@ -1,7 +1,7 @@
 "use client";
 
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
-import {Download, LoaderIcon, Move, Share2, Trash} from "lucide-react";
+import { Download, LoaderIcon, Move, Share2, Trash } from "lucide-react";
 import { useQueryState } from "nuqs";
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -13,7 +13,7 @@ import { FileMoveModal } from "@/components/FileMoveModal";
 import { FileRenameModal } from "@/components/FileRenameModal";
 import { FileShareModal } from "@/components/FileShareModal";
 import { FolderCreateModal } from "@/components/FolderCreateModal";
-import {Button} from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
@@ -366,129 +366,131 @@ const FileList: React.FC<FileListProps> = ({
 			</div>
 
 			<DndContext onDragEnd={handleDragEnd}>
-			<Card className="m-2 pb-2 gap-y-4">
-				<div className="m-4 mt-2">
-					<CurrentPath path={currentWorkingDirectory} setPath={setCurrentWorkingDirectory} />
-					<Separator orientation="horizontal" />
-				</div>
-				{sortedFiles.length === 0 && sortedFolders.length === 0 ? (
-					<div className="flex justify-center items-center">
-						<p className="py-4">
-							{currentWorkingDirectory === "/" ? emptyMessage : "This directory is empty."}
-						</p>
+				<Card className="m-2 pb-2 gap-y-4">
+					<div className="m-4 mt-2">
+						<CurrentPath path={currentWorkingDirectory} setPath={setCurrentWorkingDirectory} />
+						<Separator orientation="horizontal" />
 					</div>
-				) : (
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead className="w-[40px]">
-									<Checkbox
-										checked={selectedItems.size === files.length + folders.length}
-										onClick={(e) => {
-											e.stopPropagation();
-											selectAll();
-										}}
+					{sortedFiles.length === 0 && sortedFolders.length === 0 ? (
+						<div className="flex justify-center items-center">
+							<p className="py-4">{currentWorkingDirectory === "/" ? emptyMessage : "This directory is empty."}</p>
+						</div>
+					) : (
+						<Table>
+							<TableHeader>
+								<TableRow>
+									<TableHead className="w-[40px]">
+										<Checkbox
+											checked={selectedItems.size === files.length + folders.length}
+											onClick={(e) => {
+												e.stopPropagation();
+												selectAll();
+											}}
+										/>
+									</TableHead>
+									<TableHead>
+										<SortOption
+											option="path"
+											name="Name"
+											sortColumn={sortColumn}
+											sortOrder={sortOrder}
+											setSortColumn={setSortColumn}
+											setSortOrder={setSortOrder}
+										/>
+									</TableHead>
+									<TableHead>
+										<SortOption
+											option="size"
+											name="Size"
+											sortColumn={sortColumn}
+											sortOrder={sortOrder}
+											setSortColumn={setSortColumn}
+											setSortOrder={setSortOrder}
+										/>
+									</TableHead>
+									<TableHead>
+										<SortOption
+											option="created_at"
+											name="Created At"
+											sortColumn={sortColumn}
+											sortOrder={sortOrder}
+											setSortColumn={setSortColumn}
+											setSortOrder={setSortOrder}
+										/>
+									</TableHead>
+									<TableHead className="text-right">Actions</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{/* TODO: concat both lists and show them together, so it can be sorted by name */}
+								{sortedFolders.map((folder) => (
+									<FileCard
+										key={folder.path}
+										folder
+										metadata={folder}
+										clicked={clickedItem === folder.path}
+										selected={selectedItems.has(folder.path + "/")}
+										setSelected={() => selectItem(folder.path + "/")}
+										onLeftClick={() => setClickedItem(folder.path)}
+										onDoubleClick={() => setCurrentWorkingDirectory(folder.path + "/")}
+										onDelete={actions.includes("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
+										onHardDelete={
+											actions.includes("hardDelete") ? () => handleHardDelete(folder.path, true) : undefined
+										}
+										onRestore={actions.includes("restore") ? () => handleRestoreFile(folder.path) : undefined}
 									/>
-								</TableHead>
-								<TableHead>
-									<SortOption
-										option="path"
-										name="Name"
-										sortColumn={sortColumn}
-										sortOrder={sortOrder}
-										setSortColumn={setSortColumn}
-										setSortOrder={setSortOrder}
+								))}
+								{sortedFiles.map((file) => (
+									<FileCard
+										key={file.path}
+										metadata={file}
+										clicked={clickedItem === file.path}
+										selected={selectedItems.has(file.path)}
+										setSelected={() => selectItem(file.path)}
+										onLeftClick={() => setClickedItem(file.path)}
+										onDownload={actions.includes("download") ? () => handleDownloadFile(file) : undefined}
+										onShare={actions.includes("share") ? () => setFileToShare(file) : undefined}
+										onRename={actions.includes("rename") ? () => setFileToRename(file) : undefined}
+										onMove={
+											actions.includes("move") ? () => setFileToMove({ path: file.path, folder: false }) : undefined
+										}
+										onDelete={actions.includes("delete") ? () => handleSoftDelete(file.path, false) : undefined}
+										onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
+										onRestore={actions.includes("restore") ? () => handleRestoreFile(file.path) : undefined}
 									/>
-								</TableHead>
-								<TableHead>
-									<SortOption
-										option="size"
-										name="Size"
-										sortColumn={sortColumn}
-										sortOrder={sortOrder}
-										setSortColumn={setSortColumn}
-										setSortOrder={setSortOrder}
-									/>
-								</TableHead>
-								<TableHead>
-									<SortOption
-										option="created_at"
-										name="Created At"
-										sortColumn={sortColumn}
-										sortOrder={sortOrder}
-										setSortColumn={setSortColumn}
-										setSortOrder={setSortOrder}
-									/>
-								</TableHead>
-								<TableHead className="text-right">Actions</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{/* TODO: concat both lists and show them together, so it can be sorted by name */}
-							{sortedFolders.map((folder) => (
-								<FileCard
-									key={folder.path}
-									folder
-									metadata={folder}
-									clicked={clickedItem === folder.path}
-									selected={selectedItems.has(folder.path + "/")}
-									setSelected={() => selectItem(folder.path + "/")}
-									onLeftClick={() => setClickedItem(folder.path)}
-									onDoubleClick={() => setCurrentWorkingDirectory(folder.path + "/")}
-									onDelete={actions.includes("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
-									onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(folder.path, true) : undefined}
-									onRestore={actions.includes("restore") ? () => handleRestoreFile(folder.path) : undefined}
-								/>
-							))}
-							{sortedFiles.map((file) => (
-								<FileCard
-									key={file.path}
-									metadata={file}
-									clicked={clickedItem === file.path}
-									selected={selectedItems.has(file.path)}
-									setSelected={() => selectItem(file.path)}
-									onLeftClick={() => setClickedItem(file.path)}
-									onDownload={actions.includes("download") ? () => handleDownloadFile(file) : undefined}
-									onShare={actions.includes("share") ? () => setFileToShare(file) : undefined}
-									onRename={actions.includes("rename") ? () => setFileToRename(file) : undefined}
-									onMove={
-										actions.includes("move") ? () => setFileToMove({ path: file.path, folder: false }) : undefined
-									}
-									onDelete={actions.includes("delete") ? () => handleSoftDelete(file.path, false) : undefined}
-									onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
-									onRestore={actions.includes("restore") ? () => handleRestoreFile(file.path) : undefined}
-								/>
-							))}
-						</TableBody>
-					</Table>
-				)}
-				{selectedItems.size > 0 && (
-					<div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-[#20243a] text-white px-6 py-3 rounded-full shadow-lg w-[50%]">
-						<div className="flex gap-4 justify-between items-center">
-							<div>
-								<span className="text-sm">{selectedItems.size} item{selectedItems.size > 1 ? "s" : ""} selected</span>
-							</div>
-							<div className="gap-4">
-								<Button variant="ghost" className="text-white text-sm gap-2">
-									<Download size={16} />
-									Download
-								</Button>
-								<Button variant="ghost" className="text-white text-sm gap-2">
-									<Share2 size={16} />
-									Share
-								</Button>
-								<Button variant="ghost" className="text-white text-sm gap-2">
-									<Move size={16} />
-									Move
-								</Button>
-								<Button variant="ghost" className="text-white text-sm gap-2">
-									<Trash size={16} />
-									Delete
-								</Button>
+								))}
+							</TableBody>
+						</Table>
+					)}
+					{selectedItems.size > 0 && (
+						<div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-[#20243a] text-white px-6 py-3 rounded-full shadow-lg w-[50%]">
+							<div className="flex gap-4 justify-between items-center">
+								<div>
+									<span className="text-sm">
+										{selectedItems.size} item{selectedItems.size > 1 ? "s" : ""} selected
+									</span>
+								</div>
+								<div className="gap-4">
+									<Button variant="ghost" className="text-white text-sm gap-2">
+										<Download size={16} />
+										Download
+									</Button>
+									<Button variant="ghost" className="text-white text-sm gap-2">
+										<Share2 size={16} />
+										Share
+									</Button>
+									<Button variant="ghost" className="text-white text-sm gap-2">
+										<Move size={16} />
+										Move
+									</Button>
+									<Button variant="ghost" className="text-white text-sm gap-2">
+										<Trash size={16} />
+										Delete
+									</Button>
+								</div>
 							</div>
 						</div>
-					</div>
-				)}
+					)}
 				</Card>
 			</DndContext>
 		</div>
