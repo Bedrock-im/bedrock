@@ -246,6 +246,7 @@ const FileList: React.FC<FileListProps> = ({
 			hardDeleteFile(fileToDelete.path);
 			bedrockService?.hardDeleteFiles(fileToDelete);
 		}
+		toast.success(`The ${folder ? "folder" : "file"} has been permanently deleted.`);
 	};
 
 	const handleMove = (path: string, newPath: string, folder: boolean) => {
@@ -256,6 +257,7 @@ const FileList: React.FC<FileListProps> = ({
 			const filesToMove = moveFolder(path, newPath);
 			filesToMove.map(([oldFile, newFile]) => bedrockService?.moveFile(oldFile.path, newFile.path));
 		}
+		toast.success(`The ${folder ? "folder" : "file"} has been moved.`);
 	};
 
 	const handleShare = (file: FileFullInfos, contact: Contact) => {
