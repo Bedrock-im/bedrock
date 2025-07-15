@@ -25,7 +25,6 @@ export type FileCardProps = {
 	onRestore?: () => void;
 	onDuplicate?: (() => Promise<void>) | undefined;
 	onCopy?: () => void;
-	onPaste?: () => void;
 } & (FileCardFileProps | FileCardFolderProps);
 
 type FileCardFileProps = {
@@ -55,7 +54,6 @@ const FileCard = ({
 	onHardDelete,
 	onDuplicate,
 	onCopy,
-	onPaste,
 }: FileCardProps) => {
 	const {
 		attributes,
@@ -186,12 +184,6 @@ const FileCard = ({
 					<ContextMenuItem onClick={onCopy}>
 						<ArchiveRestore className="mr-2 h-4 w-4" />
 						copy
-					</ContextMenuItem>
-				)}
-				{onPaste && (
-					<ContextMenuItem onClick={onPaste}>
-						<ArchiveRestore className="mr-2 h-4 w-4" />
-						paste
 					</ContextMenuItem>
 				)}
 			</ContextMenuContent>

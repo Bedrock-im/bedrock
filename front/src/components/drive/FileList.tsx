@@ -557,7 +557,6 @@ const FileList: React.FC<FileListProps> = ({
 										onRestore={actions.includes("restore") ? () => handleRestoreFile(file.path) : undefined}
 										onDuplicate={actions.includes("duplicate") ? () => handleDuplicate(file.path, false) : undefined}
 										onCopy={actions.includes("copy") ? () => handleCopy(file.path) : undefined}
-										onPaste={actions.includes("copy") && copiedFilePath != null ? () => handlePaste() : undefined}
 									/>
 								))}
 							</TableBody>
