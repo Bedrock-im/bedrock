@@ -423,26 +423,60 @@ export default class BedrockService {
 		);
 	}
 
-	async softDeleteFile(fileInfo: Pick<FileFullInfos, "post_hash">, deletionDatetime: Date): Promise<void> {
-		const { post_hash } = FileFullInfosSchema.pick({ post_hash: true }).parse(fileInfo);
+	async softDeleteFiles(
+		fileInfos: Pick<FileFullInfos, "post_hash" | "name" | "path">[],
+		deletionDatetime: Date,
+		newPath?: string,
+	): Promise<void> {
+		const files = z.array(FileFullInfosSchema.pick({ post_hash: true, name: true, path: true })).parse(fileInfos);
 
-		await this.alephService.updatePost(
-			FILE_POST_TYPE,
-			post_hash,
-			undefined,
-			EncryptedFileMetaSchema,
-			({ deleted_at: _, ...rest }) => {
-				const key = Buffer.from(
-					EncryptionService.decryptEcies(rest.key, this.alephService.encryptionPrivateKey.secret),
-					"hex",
+		const filePaths: { old: string; new: string }[] = [];
+
+		await Promise.all(
+			files.map(async ({ post_hash, path: _, name }) => {
+				await this.alephService.updatePost(
+					FILE_POST_TYPE,
+					post_hash,
+					undefined,
+					EncryptedFileMetaSchema,
+					({ deleted_at: _, path, ...rest }) => {
+						const key = Buffer.from(
+							EncryptionService.decryptEcies(rest.key, this.alephService.encryptionPrivateKey.secret),
+							"hex",
+						);
+						const iv = Buffer.from(
+							EncryptionService.decryptEcies(rest.iv, this.alephService.encryptionPrivateKey.secret),
+							"hex",
+						);
+						filePaths.push();
+						console.log("newPath", newPath);
+						console.log('newPath?.split("/").pop()!', newPath?.split("/").pop());
+						return {
+							deleted_at: EncryptionService.encrypt(deletionDatetime.toISOString(), key, iv),
+							path: newPath === undefined ? EncryptionService.encrypt(newPath + "/" + name, key, iv) : path,
+							...rest,
+						};
+					},
 				);
-				const iv = Buffer.from(
-					EncryptionService.decryptEcies(rest.iv, this.alephService.encryptionPrivateKey.secret),
-					"hex",
-				);
+			}),
+		);
+
+		console.log("filePaths", filePaths);
+
+		await this.alephService.updateAggregate(
+			FILE_ENTRIES_AGGREGATE_KEY,
+			EncryptedFileEntriesSchema,
+			async ({ files }) => {
+				const decryptedFiles = this.decryptFilesPaths(files);
 				return {
-					deleted_at: EncryptionService.encrypt(deletionDatetime.toISOString(), key, iv),
-					...rest,
+					files: decryptedFiles.map(({ post_hash, path, shared_with }) => ({
+						post_hash,
+						path: EncryptionService.encryptEcies(
+							filePaths.find(({ old }) => old === path)?.new ?? path,
+							this.alephService.encryptionPrivateKey.publicKey.compressed,
+						),
+						shared_with,
+					})),
 				};
 			},
 		);

@@ -21,13 +21,13 @@ type DriveStoreActions = {
 	addFiles: (files: DriveFile[]) => void;
 	addFolder: (folder: DriveFolder) => void;
 	hardDeleteFile: (path: string) => string | undefined;
-	softDeleteFile: (path: string, deletionDate: Date) => string | undefined;
+	softDeleteFile: (path: string, deletionDate: Date, newPath?: string) => DriveFile | undefined;
+	hardDeleteFolder: (path: string) => DriveFile[];
+	softDeleteFolder: (path: string, deletionDate: Date, newPath?: string) => DriveFile[];
 	restoreFile: (path: string) => string | undefined;
-	deleteFolder: (path: string) => DriveFile[];
 	moveFile: (oldPath: string, newPath: string) => void;
 	moveFolder: (oldPath: string, newPath: string) => [DriveFile, DriveFile][];
 	updateFileContent: (path: string, newContent: Buffer) => Buffer | undefined;
-	updateFilesContent: (files: { path: string; newContent: Buffer }[]) => (Buffer | undefined)[];
 };
 
 export const useDriveStore = create<DriveStoreState & DriveStoreActions>((set, getState) => ({
@@ -47,8 +47,8 @@ export const useDriveStore = create<DriveStoreState & DriveStoreActions>((set, g
 		set((state) => ({ files: state.files.filter((file) => file.path !== path) }));
 		return storeHash;
 	},
-	softDeleteFile: (path, deletionDate) => {
-		const postHash = getState().files.find((file) => file.path === path)?.post_hash;
+	softDeleteFile: (path, deletionDate, newPath?: string) => {
+		const fileToDelete = getState().files.find((file) => file.path === path);
 		set((state) => ({
 			files: state.files.map((file) =>
 				file.path === path
@@ -56,11 +56,45 @@ export const useDriveStore = create<DriveStoreState & DriveStoreActions>((set, g
 							...file,
 							content: undefined,
 							deleted_at: deletionDate.toISOString(),
+							path: newPath ? newPath : file.path,
 						}
 					: file,
 			),
 		}));
-		return postHash;
+		return fileToDelete;
+	},
+	hardDeleteFolder: (path) => {
+		const filesToDelete = getState().files.filter((file) => file.path.startsWith(path));
+		set((state) => ({
+			folders: state.folders.filter((folder) => !folder.path.startsWith(path)),
+			files: state.files.filter((file) => !file.path.startsWith(path)),
+		}));
+		return filesToDelete;
+	},
+	softDeleteFolder: (path, deletionDate, newPath?: string) => {
+		const filesToDelete = getState().files.filter((file) => file.path.startsWith(path));
+		set((state) => ({
+			folders: state.folders.map((folder) =>
+				folder.path.startsWith(path)
+					? {
+							...folder,
+							deleted_at: deletionDate.toISOString(),
+							path: newPath ? newPath + "/" + folder.path.slice(path.length) : folder.path,
+						}
+					: folder,
+			),
+			files: state.files.map((file) =>
+				file.path.startsWith(path)
+					? {
+							...file,
+							content: undefined,
+							deleted_at: deletionDate.toISOString(),
+							path: newPath ? newPath + "/" + file.name : file.path,
+						}
+					: file,
+			),
+		}));
+		return filesToDelete;
 	},
 	restoreFile: (path) => {
 		const hash = getState().files.find((file) => file.path === path)?.post_hash;
@@ -75,14 +109,6 @@ export const useDriveStore = create<DriveStoreState & DriveStoreActions>((set, g
 			),
 		}));
 		return hash;
-	},
-	deleteFolder: (path) => {
-		const filesToDelete = getState().files.filter((file) => file.path.startsWith(path));
-		set((state) => ({
-			folders: state.folders.filter((folder) => !folder.path.startsWith(path)),
-			files: state.files.filter((file) => !file.path.startsWith(path)),
-		}));
-		return filesToDelete;
 	},
 	moveFile: (oldPath, newPath) =>
 		set((state) => ({
@@ -131,20 +157,5 @@ export const useDriveStore = create<DriveStoreState & DriveStoreActions>((set, g
 			),
 		}));
 		return newContent;
-	},
-	updateFilesContent: (files) => {
-		const updatedFiles = getState().files.map((f) => {
-			const update = files.find(({ path }) => path === f.path);
-			return update
-				? {
-						...f,
-						content: update.newContent,
-					}
-				: f;
-		});
-		set(() => ({
-			files: updatedFiles,
-		}));
-		return files.map(({ newContent }) => newContent);
 	},
 }));

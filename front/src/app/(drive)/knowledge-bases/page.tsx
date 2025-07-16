@@ -31,7 +31,7 @@ export default function KnowledgeBases() {
 	const [openNewKBModal, setOpenNewKBModal] = useState(false);
 	const [newKBName, setNewKBName] = useState("");
 	const { bedrockService } = useAccountStore();
-	const { files, updateFilesContent } = useDriveStore();
+	const { files, updateFileContent } = useDriveStore();
 	const {
 		knowledgeBases,
 		renameKnowledgeBase,
@@ -59,7 +59,7 @@ export default function KnowledgeBases() {
 
 	const handleSearchKBModalOpening = async (base: KnowledgeBase) => {
 		if (openedAskKBModal !== null) return;
-		updateFilesContent(
+		(
 			await Promise.all(
 				base.filePaths
 					.filter((filePath) => !!files.find(({ path, content }) => path === filePath && content === undefined))
@@ -74,8 +74,8 @@ export default function KnowledgeBases() {
 							),
 						};
 					}),
-			),
-		);
+			)
+		).forEach(({ newContent, path }) => updateFileContent(path, newContent));
 		setOpenedAskKBModal(base);
 	};
 
@@ -135,7 +135,8 @@ export default function KnowledgeBases() {
 
 	const handleFileSelection = async (newFilePaths: string[], kb: KnowledgeBase) => {
 		await bedrockService?.setKnowledgeBaseFiles(kb.name, newFilePaths);
-		updateFilesContent(
+
+		(
 			await Promise.all(
 				newFilePaths
 					.filter((filePath) => !!files.find(({ path }) => path === filePath))
@@ -150,8 +151,8 @@ export default function KnowledgeBases() {
 							),
 						};
 					}),
-			),
-		);
+			)
+		).forEach(({ newContent, path }) => updateFileContent(path, newContent));
 		setKnowledgeBaseFiles(kb.name, ...newFilePaths);
 	};
 	return (
