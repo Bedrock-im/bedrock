@@ -31,7 +31,18 @@ type SortOrder = "asc" | "desc";
 type FileListProps = {
 	files?: DriveFile[];
 	folders?: DriveFolder[];
-	actions?: ("upload" | "rename" | "download" | "delete" | "share" | "move" | "restore" | "hardDelete")[];
+	actions?: (
+		| "upload"
+		| "rename"
+		| "download"
+		| "delete"
+		| "share"
+		| "move"
+		| "restore"
+		| "hardDelete"
+		| "duplicate"
+		| "copy"
+	)[];
 	defaultCwd?: string;
 	defaultSearchQuery?: string;
 	onSelectedItemPathsChange?: (selectedItemPaths: Set<string>) => void;
@@ -51,8 +62,6 @@ const FileList: React.FC<FileListProps> = ({
 	trash = false,
 	emptyMessage,
 }) => {
-	// TODO: Replace with a real clipboard
-	const clipboard = 0;
 	const [searchQuery, setSearchQuery] = useQueryState("search", { defaultValue: defaultSearchQuery });
 	const [currentWorkingDirectory, setCurrentWorkingDirectory] = useQueryState("cwd", {
 		defaultValue: defaultCwd,
@@ -65,6 +74,7 @@ const FileList: React.FC<FileListProps> = ({
 	const [sortColumn, setSortColumn] = useQueryState("sort", { defaultValue: "path" as SortColumn });
 	const [sortOrder, setSortOrder] = useQueryState("order", { defaultValue: "asc" as SortOrder });
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set(selectedPaths));
+	const [copiedFilePath, setcopiedFilePath] = useState<string | null>(null);
 	const [clickedItem, setClickedItem] = useState<string>();
 	const {
 		setFiles,
@@ -226,6 +236,50 @@ const FileList: React.FC<FileListProps> = ({
 		toast.success(`The ${folder ? "folder" : "file"} has been renamed.`);
 	};
 
+	const handleDuplicate = async (path: string, folder: boolean) => {
+		if (folder) {
+			alert("Folder duplication is not supported yet.");
+			return;
+		}
+
+		const originalFile = files.find((f) => f.path === path);
+		if (!originalFile || !bedrockService) return;
+
+		const nameParts = path.split("/");
+		const filename = nameParts.pop()!;
+		const dir = nameParts.join("/");
+
+		const hasExtension = filename.includes(".");
+		const ext = hasExtension ? "." + filename.split(".").pop()! : "";
+		const baseName = hasExtension ? filename.slice(0, -ext.length) : filename;
+
+		let copyName = `${baseName}_copie${ext}`;
+		let counter = 2;
+		while (files.some((f) => f.path === `${dir}/${copyName}`)) {
+			copyName = `${baseName}_copie_${(counter += 1)}${ext}`;
+		}
+
+		const newPath = `${dir}/${copyName}`;
+
+		const newPostHash = await bedrockService.duplicateFile(path, newPath);
+		if (!newPostHash) {
+			console.error("File duplication failed");
+			return;
+		}
+
+		setFiles([
+			...files,
+			{
+				...originalFile,
+				path: newPath,
+				name: copyName,
+				created_at: new Date().toISOString(),
+				deleted_at: null,
+				post_hash: newPostHash as string,
+			},
+		]);
+	};
+
 	const handleSoftDelete = (path: string, folder: boolean) => {
 		if (folder) {
 			const filesToDelete = deleteFolder(path);
@@ -289,6 +343,48 @@ const FileList: React.FC<FileListProps> = ({
 			onSelectedItemPathsChange?.(updated);
 			return updated;
 		});
+	};
+
+	const handleCopy = (path: string) => {
+		setcopiedFilePath(path);
+		toast.success(`file copied`);
+	};
+
+	const handlePaste = async () => {
+		if (!copiedFilePath || !bedrockService) return;
+
+		const originalFile = files.find((f) => f.path === copiedFilePath);
+		if (!originalFile) {
+			console.error("File not found");
+			return;
+		}
+
+		const filename = originalFile.path.split("/").pop()!;
+		const hasExtension = filename.includes(".");
+		const ext = hasExtension ? "." + filename.split(".").pop()! : "";
+		const baseName = hasExtension ? filename.slice(0, -ext.length) : filename;
+
+		let copyName = `${baseName}_copie${ext}`;
+		let counter = 2;
+		while (files.some((f) => f.path === `${currentWorkingDirectory}${copyName}`)) {
+			copyName = `${baseName}_copie_${(counter += 1)}${ext}`;
+		}
+
+		const newPath = `${currentWorkingDirectory}${copyName}`;
+		const newPostHash = await bedrockService.duplicateFile(copiedFilePath, newPath);
+
+		setFiles([
+			...files,
+			{
+				...originalFile,
+				path: newPath,
+				name: copyName,
+				created_at: new Date().toISOString(),
+				deleted_at: null,
+				post_hash: newPostHash as string,
+			},
+		]);
+		setcopiedFilePath(null);
 	};
 
 	const selectAll = () => {
@@ -462,19 +558,19 @@ const FileList: React.FC<FileListProps> = ({
 										onDelete={actions.includes("delete") ? () => handleSoftDelete(file.path, false) : undefined}
 										onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
 										onRestore={actions.includes("restore") ? () => handleRestoreFile(file.path) : undefined}
+										onDuplicate={actions.includes("duplicate") ? () => handleDuplicate(file.path, false) : undefined}
+										onCopy={actions.includes("copy") ? () => handleCopy(file.path) : undefined}
 									/>
 								))}
 							</TableBody>
 						</Table>
 					)}
-					{clipboard > 0 && (
+					{copiedFilePath != null && (
 						<>
 							<div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-[#1e81b0] text-white px-6 py-3 rounded-full shadow-lg w-[50%] ml-[10%]">
 								<div className="flex justify-between items-center gap-4">
-									<p>
-										{clipboard} item{clipboard > 1 ? "s" : ""} copied to clipboard.
-									</p>
-									<Button variant="ghost" className="text-white text-sm gap-2">
+									<p>1 item copied to clipboard.</p>
+									<Button variant="ghost" className="text-white text-sm gap-2" onClick={() => handlePaste()}>
 										<ClipboardPaste size={16} />
 										Paste
 									</Button>
@@ -482,7 +578,11 @@ const FileList: React.FC<FileListProps> = ({
 							</div>
 							<div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-39 bg-[#A21511] text-white px-6 py-3 rounded-full shadow-lg w-[50%] ml-[15%]">
 								<div className="flex justify-end items-center">
-									<Button variant="ghost" className="text-white text-sm px-2 py-1">
+									<Button
+										variant="ghost"
+										className="text-white text-sm px-2 py-1"
+										onClick={() => setcopiedFilePath(null)}
+									>
 										<Ban size={16} />
 									</Button>
 								</div>

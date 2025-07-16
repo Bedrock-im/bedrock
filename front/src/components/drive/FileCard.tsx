@@ -1,7 +1,7 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { filesize } from "filesize";
-import { Download, Edit, Share2, FileText, FolderIcon, Move, Trash, ArchiveRestore } from "lucide-react";
+import { Download, Edit, Share2, FileText, FolderIcon, Move, Trash, ArchiveRestore, Copy } from "lucide-react";
 import React from "react";
 
 import ActionIcon from "@/components/drive/ActionIcon";
@@ -23,6 +23,8 @@ export type FileCardProps = {
 	onMove?: () => void;
 	onHardDelete?: () => void;
 	onRestore?: () => void;
+	onDuplicate?: (() => Promise<void>) | undefined;
+	onCopy?: () => void;
 } & (FileCardFileProps | FileCardFolderProps);
 
 type FileCardFileProps = {
@@ -50,6 +52,8 @@ const FileCard = ({
 	onMove,
 	onRestore,
 	onHardDelete,
+	onDuplicate,
+	onCopy,
 }: FileCardProps) => {
 	const {
 		attributes,
@@ -122,6 +126,7 @@ const FileCard = ({
 						{onDelete && <ActionIcon Icon={Trash} onClick={onDelete} tooltip="Delete" />}
 						{onHardDelete && <ActionIcon Icon={Trash} onClick={onHardDelete} tooltip="Definitive delete" />}
 						{onRestore && <ActionIcon Icon={ArchiveRestore} onClick={onRestore} tooltip="Restore" />}
+						{onCopy && <ActionIcon Icon={Copy} onClick={onCopy} tooltip={"copy"} />}
 					</TableCell>
 				</TableRow>
 			</ContextMenuTrigger>
@@ -167,6 +172,18 @@ const FileCard = ({
 					<ContextMenuItem onClick={onRestore}>
 						<ArchiveRestore className="mr-2 h-4 w-4" />
 						Restore
+					</ContextMenuItem>
+				)}
+				{onDuplicate && (
+					<ContextMenuItem onClick={onDuplicate}>
+						<ArchiveRestore className="mr-2 h-4 w-4" />
+						duplicate
+					</ContextMenuItem>
+				)}
+				{onCopy && (
+					<ContextMenuItem onClick={onCopy}>
+						<ArchiveRestore className="mr-2 h-4 w-4" />
+						copy
 					</ContextMenuItem>
 				)}
 			</ContextMenuContent>

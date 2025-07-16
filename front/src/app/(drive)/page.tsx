@@ -6,7 +6,7 @@ export default function Home() {
 	return (
 		<FileList
 			emptyMessage="Your drive is empty."
-			actions={["upload", "download", "rename", "move", "delete", "share"]}
+			actions={["upload", "download", "rename", "move", "delete", "share", "duplicate", "copy"]}
 		/>
 	);
 }
