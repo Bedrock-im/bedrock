@@ -24,11 +24,7 @@ interface UsernameRegistrationModalProps {
 export function FileShareModal({ isOpen, onClose, onComplete, contacts }: UsernameRegistrationModalProps) {
 	const [input, setInput] = useState("");
 
-	console.log(contacts);
-
-	const contact = useMemo(() => {
-		return contacts.find((contact) => contact.name === input);
-	}, [contacts, input]);
+	const contact = contacts.find((contact) => contact.name === input);
 
 	return (
 		<Dialog
