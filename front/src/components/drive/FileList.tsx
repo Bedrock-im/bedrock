@@ -673,16 +673,7 @@ const FileList: React.FC<FileListProps> = ({
 										<Download size={16} />
 										Download
 									</Button>
-									<Button
-										variant="ghost"
-										className="text-white text-sm gap-2"
-										disabled
-										onClick={() => {
-											selectedItems.forEach((file) => {
-												setFileToShare(file);
-											});
-										}}
-									>
+									<Button variant="ghost" className="text-white text-sm gap-2" disabled>
 										<Share2 size={16} />
 										Share
 									</Button>
