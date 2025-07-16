@@ -658,35 +658,54 @@ const FileList: React.FC<FileListProps> = ({
 									</span>
 								</div>
 								<div className="gap-4">
-									<Button variant="ghost" className="text-white text-sm gap-2" onClick={() => {
-										selectedItems.forEach(file => {
-											handleDownloadFile(file);
-										})
-									}}>
+									<Button
+										variant="ghost"
+										className="text-white text-sm gap-2"
+										onClick={() => {
+											selectedItems.forEach((pathFile) => {
+												const file = files.find((f) => f.path === pathFile);
+												if (file) {
+													handleDownloadFile(file);
+												}
+											});
+										}}
+									>
 										<Download size={16} />
 										Download
 									</Button>
-									<Button variant="ghost" className="text-white text-sm gap-2" onClick={() => {
-										selectedItems.forEach(file => {
-											setFileToShare(file);
-										})
-									}}>
+									<Button
+										variant="ghost"
+										className="text-white text-sm gap-2"
+										onClick={() => {
+											selectedItems.forEach((file) => {
+												setFileToShare(file);
+											});
+										}}
+									>
 										<Share2 size={16} />
 										Share
 									</Button>
-									<Button variant="ghost" className="text-white text-sm gap-2" onClick={() => {
-										selectedItems.forEach(file => {
-											setFileToMove({path: file, folder: false});
-										})
-									}}>
+									<Button
+										variant="ghost"
+										className="text-white text-sm gap-2"
+										onClick={() => {
+											selectedItems.forEach((file) => {
+												setFileToMove({ path: file, folder: false });
+											});
+										}}
+									>
 										<Move size={16} />
 										Move
 									</Button>
-									<Button variant="ghost" className="text-white text-sm gap-2" onClick={() => {
-										selectedItems.forEach(file => {
-											handleSoftDelete(file, false);
-										})
-									}}>
+									<Button
+										variant="ghost"
+										className="text-white text-sm gap-2"
+										onClick={() => {
+											selectedItems.forEach((file) => {
+												handleSoftDelete(file, false);
+											});
+										}}
+									>
 										<Trash size={16} />
 										Delete
 									</Button>
