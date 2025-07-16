@@ -526,51 +526,60 @@ export default class BedrockService {
 		await this.alephService.deleteFiles(fileStoreHashes);
 	}
 
-	async moveFile(oldPath: string, newPath: string): Promise<void> {
+	async moveFiles(
+		paths: {
+			oldPath: string;
+			newPath: string;
+		}[],
+	): Promise<void> {
 		await this.alephService.updateAggregate(
 			FILE_ENTRIES_AGGREGATE_KEY,
 			EncryptedFileEntriesSchema,
 			async ({ files }) => {
-				const decryptedFiles = this.decryptFilesPaths(files);
-				const fileIndex = decryptedFiles.findIndex(({ path }) => path === oldPath);
-				if (fileIndex === -1) {
-					console.error(`File not found at path: ${oldPath}`);
-					toast.error(`File not found at path: ${oldPath}`);
-					return { files };
-				}
-				const newFiles = [...decryptedFiles];
-				newFiles[fileIndex] = {
-					...newFiles[fileIndex],
-					path: newPath,
-				};
-				const newFileName = newFiles[fileIndex].path.split("/").pop()!;
-				await this.alephService.updatePost(
-					FILE_POST_TYPE,
-					newFiles[fileIndex].post_hash,
-					undefined,
-					EncryptedFileMetaSchema,
-					({ path: _, name: __, ...rest }) => {
-						const key = Buffer.from(
-							EncryptionService.decryptEcies(rest.key, this.alephService.encryptionPrivateKey.secret),
-							"hex",
-						);
-						const iv = Buffer.from(
-							EncryptionService.decryptEcies(rest.iv, this.alephService.encryptionPrivateKey.secret),
-							"hex",
-						);
-						return {
-							path: EncryptionService.encrypt(newPath, key, iv),
-							name: EncryptionService.encrypt(newFileName, key, iv),
-							...rest,
-						};
-					},
-				);
+				const newFiles = (
+					await Promise.all(
+						this.decryptFilesPaths(files).map(async ({ path, post_hash, shared_with }) => {
+							const newPath = paths.find(({ oldPath }) => oldPath === path)?.newPath;
+
+							if (!newPath) {
+								return;
+							}
+
+							const newFileName = path.split("/").pop()!;
+							await this.alephService.updatePost(
+								FILE_POST_TYPE,
+								post_hash,
+								undefined,
+								EncryptedFileMetaSchema,
+								({ path: _, name: __, ...rest }) => {
+									const key = Buffer.from(
+										EncryptionService.decryptEcies(rest.key, this.alephService.encryptionPrivateKey.secret),
+										"hex",
+									);
+									const iv = Buffer.from(
+										EncryptionService.decryptEcies(rest.iv, this.alephService.encryptionPrivateKey.secret),
+										"hex",
+									);
+									return {
+										path: EncryptionService.encrypt(newPath, key, iv),
+										name: EncryptionService.encrypt(newFileName, key, iv),
+										...rest,
+									};
+								},
+							);
+							return {
+								post_hash,
+								path: EncryptionService.encryptEcies(
+									newPath,
+									this.alephService.encryptionPrivateKey.publicKey.compressed,
+								),
+								shared_with,
+							};
+						}),
+					)
+				).filter((file): file is FileEntry => file !== undefined);
 				return {
-					files: newFiles.map(({ post_hash, path, shared_with }) => ({
-						post_hash,
-						path: EncryptionService.encryptEcies(path, this.alephService.encryptionPrivateKey.publicKey.compressed),
-						shared_with,
-					})),
+					files: newFiles,
 				};
 			},
 		);
