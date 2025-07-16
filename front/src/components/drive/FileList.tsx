@@ -62,6 +62,8 @@ const FileList: React.FC<FileListProps> = ({
 	trash = false,
 	emptyMessage,
 }) => {
+	// TODO: Replace with a real clipboard
+	const clipboard = 0;
 	const [searchQuery, setSearchQuery] = useQueryState("search", { defaultValue: defaultSearchQuery });
 	const [currentWorkingDirectory, setCurrentWorkingDirectory] = useQueryState("cwd", {
 		defaultValue: defaultCwd,
@@ -308,6 +310,8 @@ const FileList: React.FC<FileListProps> = ({
 	};
 
 	const handleMove = (path: string, newPath: string, folder: boolean) => {
+		newPath = newPath.startsWith("/") ? newPath : `/${newPath}`;
+
 		if (!folder) {
 			moveFile(path, newPath);
 			bedrockService?.moveFile(path, newPath);
@@ -315,6 +319,7 @@ const FileList: React.FC<FileListProps> = ({
 			const filesToMove = moveFolder(path, newPath);
 			filesToMove.map(([oldFile, newFile]) => bedrockService?.moveFile(oldFile.path, newFile.path));
 		}
+		setFileToMove(null);
 		toast.success(`The ${folder ? "folder" : "file"} has been moved.`);
 	};
 
@@ -568,6 +573,7 @@ const FileList: React.FC<FileListProps> = ({
 								<div className="flex justify-between items-center gap-4">
 									<p>1 item copied to clipboard.</p>
 									<Button variant="ghost" className="text-white text-sm gap-2" onClick={() => handlePaste()}>
+
 										<ClipboardPaste size={16} />
 										Paste
 									</Button>
