@@ -343,7 +343,6 @@ const FileList: React.FC<FileListProps> = ({
 			bedrockService?.hardDeleteFiles(...filesToDelete);
 		} else {
 			const fileToDelete = files.find((file) => file.path === path);
-			console.log("Hard deleting file:", path);
 			if (!fileToDelete) {
 				console.error("File not found:", path);
 				return;
