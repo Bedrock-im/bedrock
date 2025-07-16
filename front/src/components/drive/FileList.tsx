@@ -62,8 +62,6 @@ const FileList: React.FC<FileListProps> = ({
 	trash = false,
 	emptyMessage,
 }) => {
-	// TODO: Replace with a real clipboard
-	const clipboard = 0;
 	const [searchQuery, setSearchQuery] = useQueryState("search", { defaultValue: defaultSearchQuery });
 	const [currentWorkingDirectory, setCurrentWorkingDirectory] = useQueryState("cwd", {
 		defaultValue: defaultCwd,
@@ -277,7 +275,7 @@ const FileList: React.FC<FileListProps> = ({
 				name: copyName,
 				created_at: new Date().toISOString(),
 				deleted_at: null,
-				post_hash: newPostHash,
+				post_hash: newPostHash as string,
 			},
 		]);
 	};
@@ -383,7 +381,7 @@ const FileList: React.FC<FileListProps> = ({
 				name: copyName,
 				created_at: new Date().toISOString(),
 				deleted_at: null,
-				post_hash: newPostHash,
+				post_hash: newPostHash as string,
 			},
 		]);
 		setcopiedFilePath(null);
