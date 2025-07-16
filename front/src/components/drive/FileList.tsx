@@ -349,7 +349,7 @@ const FileList: React.FC<FileListProps> = ({
 
 	const handleCopy = (path: string) => {
 		setcopiedFilePath(path);
-		toast.success(`${path.length} file(s) copied`);
+		toast.success(`file copied`);
 	};
 
 	const handlePaste = async () => {
