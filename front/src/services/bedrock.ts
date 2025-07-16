@@ -449,8 +449,6 @@ export default class BedrockService {
 							"hex",
 						);
 						filePaths.push();
-						console.log("newPath", newPath);
-						console.log('newPath?.split("/").pop()!', newPath?.split("/").pop());
 						return {
 							deleted_at: EncryptionService.encrypt(deletionDatetime.toISOString(), key, iv),
 							path: newPath === undefined ? EncryptionService.encrypt(newPath + "/" + name, key, iv) : path,
@@ -460,8 +458,6 @@ export default class BedrockService {
 				);
 			}),
 		);
-
-		console.log("filePaths", filePaths);
 
 		await this.alephService.updateAggregate(
 			FILE_ENTRIES_AGGREGATE_KEY,
