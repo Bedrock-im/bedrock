@@ -42,7 +42,7 @@ type FileListProps = {
 		| "hardDelete"
 		| "duplicate"
 		| "copy"
-    | "bulk"
+		| "bulk"
 	)[];
 	defaultCwd?: string;
 	defaultSearchQuery?: string;
