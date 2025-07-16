@@ -48,6 +48,7 @@ type FileListProps = {
 	onSelectedItemPathsChange?: (selectedItemPaths: Set<string>) => void;
 	selectedPaths?: string[];
 	trash?: boolean;
+	knowledgeBase?: boolean;
 	emptyMessage: string;
 };
 
@@ -60,6 +61,7 @@ const FileList: React.FC<FileListProps> = ({
 	onSelectedItemPathsChange,
 	selectedPaths = [],
 	trash = false,
+	knowledgeBase = false,
 	emptyMessage,
 }) => {
 	const [searchQuery, setSearchQuery] = useQueryState("search", { defaultValue: defaultSearchQuery });
@@ -82,7 +84,8 @@ const FileList: React.FC<FileListProps> = ({
 		softDeleteFile,
 		hardDeleteFile,
 		addFolder,
-		deleteFolder,
+		softDeleteFolder,
+		hardDeleteFolder,
 		moveFile,
 		moveFolder,
 		restoreFile,
@@ -128,18 +131,35 @@ const FileList: React.FC<FileListProps> = ({
 				const sharedFiles = sharedFilesByContacts.flat();
 
 				const folderPaths = new Set<string>();
+				const trashFolderPaths = new Set<string>();
 
-				fileEntries.forEach((file) => {
-					const pathParts = file.path.split("/").filter(Boolean);
-					if (pathParts.length > 1) {
-						pathParts.pop();
-						let currentPath = "";
-						pathParts.forEach((part) => {
-							currentPath += `/${part}`;
-							folderPaths.add(currentPath);
-						});
-					}
-				});
+				fullFiles
+					.filter(({ deleted_at }) => deleted_at === null)
+					.forEach((file) => {
+						const pathParts = file.path.split("/").filter(Boolean);
+						if (pathParts.length > 1) {
+							pathParts.pop();
+							let currentPath = "";
+							pathParts.forEach((part) => {
+								currentPath += `/${part}`;
+								folderPaths.add(currentPath);
+							});
+						}
+					});
+
+				fullFiles
+					.filter(({ deleted_at }) => deleted_at !== null)
+					.forEach((file) => {
+						const pathParts = file.path.split("/").filter(Boolean);
+						if (pathParts.length > 1) {
+							pathParts.pop();
+							let currentPath = "";
+							pathParts.forEach((part) => {
+								currentPath += `/${part}`;
+								trashFolderPaths.add(currentPath);
+							});
+						}
+					});
 
 				setFiles(fullFiles);
 				setFolders([
@@ -149,6 +169,15 @@ const FileList: React.FC<FileListProps> = ({
 							path,
 							created_at: new Date().toISOString(),
 							deleted_at: null,
+							shared_with: [],
+							shared_keys: {},
+						})),
+					...Array.from(trashFolderPaths)
+						.filter((path) => path !== "/")
+						.map((path) => ({
+							path,
+							created_at: new Date().toISOString(),
+							deleted_at: new Date().toISOString(),
 							shared_with: [],
 							shared_keys: {},
 						})),
@@ -180,6 +209,15 @@ const FileList: React.FC<FileListProps> = ({
 		}),
 		[currentPathFiles, currentPathFolders, sortColumn, sortOrder],
 	);
+
+	const handleChangeDirectory = (newPath: string) => {
+		if (!knowledgeBase) {
+			const newSelectedItems = new Set<string>();
+			setSelectedItems(newSelectedItems);
+			onSelectedItemPathsChange?.(newSelectedItems);
+		}
+		setCurrentWorkingDirectory(newPath);
+	};
 
 	const handleDownloadFile = async (file: DriveFile) => {
 		if (!bedrockService) return;
@@ -281,22 +319,31 @@ const FileList: React.FC<FileListProps> = ({
 	};
 
 	const handleSoftDelete = (path: string, folder: boolean) => {
+		const deletionDatetime = new Date();
 		if (folder) {
-			const filesToDelete = deleteFolder(path);
-			bedrockService?.hardDeleteFiles(...filesToDelete);
+			const filesToDelete = softDeleteFolder(
+				path,
+				deletionDatetime,
+				currentWorkingDirectory + path.slice(0, path.length).split("/").pop()!,
+			);
+			bedrockService?.softDeleteFiles(
+				filesToDelete,
+				deletionDatetime,
+				currentWorkingDirectory + path.slice(0, path.length).split("/").pop()!,
+			);
 		} else {
-			const deletionDatetime = new Date();
-			const hash = softDeleteFile(path, deletionDatetime);
-			if (hash) bedrockService?.softDeleteFile({ post_hash: hash }, deletionDatetime);
+			const file = softDeleteFile(path, deletionDatetime, `/${path.split("/").pop()!}`);
+			if (file) bedrockService?.softDeleteFiles([file], deletionDatetime, "");
 		}
 	};
 
 	const handleHardDelete = (path: string, folder: boolean) => {
 		if (folder) {
-			const filesToDelete = deleteFolder(path);
+			const filesToDelete = hardDeleteFolder(path);
 			bedrockService?.hardDeleteFiles(...filesToDelete);
 		} else {
 			const fileToDelete = files.find((file) => file.path === path);
+			console.log("Hard deleting file:", path);
 			if (!fileToDelete) {
 				console.error("File not found:", path);
 				return;
@@ -469,7 +516,7 @@ const FileList: React.FC<FileListProps> = ({
 			<DndContext onDragEnd={handleDragEnd}>
 				<Card className="m-2 pb-2 gap-y-4">
 					<div className="m-4 mt-2">
-						<CurrentPath path={currentWorkingDirectory} setPath={setCurrentWorkingDirectory} />
+						<CurrentPath path={currentWorkingDirectory} setPath={handleChangeDirectory} />
 						<Separator orientation="horizontal" />
 					</div>
 					{sortedFiles.length === 0 && sortedFolders.length === 0 ? (
@@ -533,7 +580,7 @@ const FileList: React.FC<FileListProps> = ({
 										selected={selectedItems.has(folder.path + "/")}
 										setSelected={() => selectItem(folder.path + "/")}
 										onLeftClick={() => setClickedItem(folder.path)}
-										onDoubleClick={() => setCurrentWorkingDirectory(folder.path + "/")}
+										onDoubleClick={() => handleChangeDirectory(folder.path + "/")}
 										onDelete={actions.includes("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
 										onHardDelete={
 											actions.includes("hardDelete") ? () => handleHardDelete(folder.path, true) : undefined
