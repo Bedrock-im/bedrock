@@ -275,10 +275,12 @@ const FileList: React.FC<FileListProps> = ({
 
 		if (!folder) {
 			moveFile(path, newPath);
-			bedrockService?.moveFile(path, newPath);
+			bedrockService?.moveFiles([{ oldPath: path, newPath: newPath }]);
 		} else {
 			const filesToMove = moveFolder(path, newPath);
-			filesToMove.map(([oldFile, newFile]) => bedrockService?.moveFile(oldFile.path, newFile.path));
+			const paths = filesToMove.map(([oldFile, newFile]) => ({ oldPath: oldFile.path, newPath: newFile.path }));
+
+			bedrockService?.moveFiles(paths);
 		}
 		setFileToRename(null);
 		toast.success(`The ${folder ? "folder" : "file"} has been renamed.`);
@@ -368,10 +370,12 @@ const FileList: React.FC<FileListProps> = ({
 
 		if (!folder) {
 			moveFile(path, newPath);
-			bedrockService?.moveFile(path, newPath);
+			bedrockService?.moveFiles([{ oldPath: path, newPath }]);
 		} else {
 			const filesToMove = moveFolder(path, newPath);
-			filesToMove.map(([oldFile, newFile]) => bedrockService?.moveFile(oldFile.path, newFile.path));
+			const paths = filesToMove.map(([oldFile, newFile]) => ({ oldPath: oldFile.path, newPath: newFile.path }));
+
+			bedrockService?.moveFiles(paths);
 		}
 		setFileToMove(null);
 		toast.success(`The ${folder ? "folder" : "file"} has been moved.`);
@@ -475,7 +479,7 @@ const FileList: React.FC<FileListProps> = ({
 		if (draggedPath !== targetFolderPath) {
 			const newPath = `${targetFolderPath}/${draggedPath.split("/").pop()}`;
 			moveFile(draggedPath, newPath);
-			bedrockService?.moveFile(draggedPath, newPath);
+			bedrockService?.moveFiles([{ oldPath: draggedPath, newPath }]);
 		}
 	};
 
@@ -597,6 +601,9 @@ const FileList: React.FC<FileListProps> = ({
 										onDelete={actions.includes("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
 										onHardDelete={
 											actions.includes("hardDelete") ? () => handleHardDelete(folder.path, true) : undefined
+										}
+										onMove={
+											actions.includes("move") ? () => setFileToMove({ path: folder.path, folder: true }) : undefined
 										}
 										onRestore={actions.includes("restore") ? () => handleRestoreFile(folder.path) : undefined}
 									/>
