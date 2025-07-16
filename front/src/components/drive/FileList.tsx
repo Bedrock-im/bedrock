@@ -676,6 +676,7 @@ const FileList: React.FC<FileListProps> = ({
 									<Button
 										variant="ghost"
 										className="text-white text-sm gap-2"
+										disabled
 										onClick={() => {
 											selectedItems.forEach((file) => {
 												setFileToShare(file);
@@ -688,6 +689,7 @@ const FileList: React.FC<FileListProps> = ({
 									<Button
 										variant="ghost"
 										className="text-white text-sm gap-2"
+										disabled
 										onClick={() => {
 											selectedItems.forEach((file) => {
 												setFileToMove({ path: file, folder: false });
