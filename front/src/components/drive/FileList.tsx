@@ -42,6 +42,7 @@ type FileListProps = {
 		| "hardDelete"
 		| "duplicate"
 		| "copy"
+    | "bulk"
 	)[];
 	defaultCwd?: string;
 	defaultSearchQuery?: string;
@@ -100,18 +101,27 @@ const FileList: React.FC<FileListProps> = ({
 
 	const cwdRegex = `^${currentWorkingDirectory.replace("/", "\\/")}[^ \\/]+$`;
 
+	const isSearchItem = (query: string, path: string, name: string) => {
+		const lowerCaseQuery = query.toLowerCase();
+		if (lowerCaseQuery.includes("/")) {
+			return path.toLowerCase().includes(lowerCaseQuery);
+		} else {
+			return name.toLowerCase().includes(lowerCaseQuery);
+		}
+	};
+
 	const currentPathFiles = (propFiles ?? files).filter(
 		(file) =>
-			file.path.match(cwdRegex) &&
-			file.path.toLowerCase().includes(searchQuery.toLowerCase()) &&
+			(searchQuery ? isSearchItem(searchQuery, file.path, file.name) : file.path.match(cwdRegex)) &&
 			(trash ? file.deleted_at !== null : file.deleted_at === null),
 	);
 
 	const currentPathFolders = (propFolders ?? folders).filter(
 		(folder) =>
-			folder.path.match(cwdRegex) &&
 			folder.path !== currentWorkingDirectory && // Don't show the current directory
-			folder.path.toLowerCase().includes(searchQuery.toLowerCase()) &&
+			(searchQuery
+				? isSearchItem(searchQuery, folder.path, folder.path.split("/").pop() ?? "")
+				: folder.path.match(cwdRegex)) &&
 			(trash ? folder.deleted_at !== null : folder.deleted_at === null),
 	);
 
@@ -520,7 +530,11 @@ const FileList: React.FC<FileListProps> = ({
 					</div>
 					{sortedFiles.length === 0 && sortedFolders.length === 0 ? (
 						<div className="flex justify-center items-center">
-							<p className="py-4">{currentWorkingDirectory === "/" ? emptyMessage : "This directory is empty."}</p>
+							{searchQuery ? (
+								<p>There is no file or folder matching your search.</p>
+							) : (
+								<p className="py-4">{currentWorkingDirectory === "/" ? emptyMessage : "This directory is empty."}</p>
+							)}
 						</div>
 					) : (
 						<Table>
@@ -635,7 +649,7 @@ const FileList: React.FC<FileListProps> = ({
 							</div>
 						</>
 					)}
-					{selectedItems.size > 0 && (
+					{actions.includes("bulk") && selectedItems.size > 0 && (
 						<div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-[#20243a] text-white px-6 py-3 rounded-full shadow-lg w-[50%]">
 							<div className="flex gap-4 justify-between items-center">
 								<div>
