@@ -573,7 +573,6 @@ const FileList: React.FC<FileListProps> = ({
 								<div className="flex justify-between items-center gap-4">
 									<p>1 item copied to clipboard.</p>
 									<Button variant="ghost" className="text-white text-sm gap-2" onClick={() => handlePaste()}>
-
 										<ClipboardPaste size={16} />
 										Paste
 									</Button>
