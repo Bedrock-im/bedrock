@@ -62,10 +62,6 @@ export default function DocxPreview({ fileUrl, filename }: DocxPreviewProps) {
 			<div
 				className="prose prose-sm max-w-none bg-white p-8 rounded-lg shadow-lg border"
 				dangerouslySetInnerHTML={{ __html: htmlContent }}
-				style={{
-					maxHeight: "70vh",
-					overflowY: "auto",
-				}}
 			/>
 		</div>
 	);

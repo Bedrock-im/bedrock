@@ -6,7 +6,7 @@ interface PDFPreviewProps {
 
 export default function PDFPreview({ fileUrl }: PDFPreviewProps) {
 	return (
-		<div className="flex items-center justify-center w-full h-full min-h-[600px]">
+		<div className="flex items-center justify-center w-full">
 			<iframe
 				src={fileUrl}
 				className="w-full h-[80vh] rounded-lg border shadow-lg"

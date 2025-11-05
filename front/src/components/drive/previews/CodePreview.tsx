@@ -56,11 +56,11 @@ export default function CodePreview({ fileUrl, filename, category }: CodePreview
 	return (
 		<div className="w-full">
 			<pre
-				className={`bg-slate-950 text-slate-50 p-4 rounded-lg overflow-x-auto text-sm font-mono ${
+				className={`bg-slate-950 text-slate-50 p-4 rounded-lg text-sm font-mono whitespace-pre ${
 					isCodeFile ? "language-" + extension : ""
 				}`}
 			>
-				<code>{content}</code>
+				<code className="block">{content}</code>
 			</pre>
 		</div>
 	);

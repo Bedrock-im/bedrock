@@ -112,7 +112,7 @@ export default function XlsxPreview({ fileUrl, filename }: XlsxPreviewProps) {
 				</div>
 			)}
 
-			<div className="overflow-auto max-h-[70vh] border rounded-lg">
+			<div className="border rounded-lg">
 				<table className="min-w-full border-collapse bg-white">
 					<tbody>
 						{currentSheet.data.map((row, rowIndex) => (
