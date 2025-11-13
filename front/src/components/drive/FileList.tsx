@@ -101,8 +101,7 @@ const FileList: React.FC<FileListProps> = ({
 	const { bedrockService } = useAccountStore();
 	const { getInputProps } = useBedrockFileUploadDropzone({});
 
-	const cwdRegex = `^${currentWorkingDirectory.replace("/", "\\/")}[^ \\/]+$`;
-
+	const cwdRegex = `^${currentWorkingDirectory.replace("/", "\\/")}[^\\/]+$`;
 	const isSearchItem = (query: string, path: string, name: string) => {
 		const lowerCaseQuery = query.toLowerCase();
 		if (lowerCaseQuery.includes("/")) {
