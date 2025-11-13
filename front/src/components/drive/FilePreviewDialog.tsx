@@ -1,28 +1,23 @@
 "use client";
 
+import { Download, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { X, Download, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAccountStore } from "@/stores/account";
 import { DriveFile } from "@/stores/drive";
 import { getFileTypeInfo } from "@/utils/file-types";
-import { useAccountStore } from "@/stores/account";
 
-import ImagePreview from "./previews/ImagePreview";
-import CodePreview from "./previews/CodePreview";
-import PDFPreview from "./previews/PDFPreview";
-import VideoPreview from "./previews/VideoPreview";
 import AudioPreview from "./previews/AudioPreview";
+import CodePreview from "./previews/CodePreview";
 import DocxPreview from "./previews/DocxPreview";
-import XlsxPreview from "./previews/XlsxPreview";
+import ImagePreview from "./previews/ImagePreview";
+import PDFPreview from "./previews/PDFPreview";
 import UnsupportedPreview from "./previews/UnsupportedPreview";
+import VideoPreview from "./previews/VideoPreview";
+import XlsxPreview from "./previews/XlsxPreview";
 
 interface FilePreviewDialogProps {
 	file: DriveFile | null;
@@ -31,12 +26,7 @@ interface FilePreviewDialogProps {
 	onDownload?: () => void;
 }
 
-export default function FilePreviewDialog({
-	file,
-	isOpen,
-	onClose,
-	onDownload,
-}: FilePreviewDialogProps) {
+export default function FilePreviewDialog({ file, isOpen, onClose, onDownload }: FilePreviewDialogProps) {
 	const [fileContent, setFileContent] = useState<Blob | null>(null);
 	const [fileUrl, setFileUrl] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +37,7 @@ export default function FilePreviewDialog({
 
 	const fileTypeInfo = useMemo(() => {
 		return file ? getFileTypeInfo(file.path) : null;
-	}, [file?.path]);
+	}, [file]);
 
 	useEffect(() => {
 		return () => {
@@ -92,14 +82,10 @@ export default function FilePreviewDialog({
 
 		(async () => {
 			try {
-                if (!bedrockService) {
-                    throw new Error("Bedrock service failed.");
-                }
-				const buffer = await bedrockService.downloadFileFromStoreHash(
-					file.store_hash,
-					file.key,
-					file.iv,
-				);
+				if (!bedrockService) {
+					throw new Error("Bedrock service failed.");
+				}
+				const buffer = await bedrockService.downloadFileFromStoreHash(file.store_hash, file.key, file.iv);
 
 				const blob = new Blob([buffer], { type: fileTypeInfo.mimeType });
 
@@ -124,7 +110,7 @@ export default function FilePreviewDialog({
 				}
 			}
 		})();
-	}, [file?.store_hash, isOpen, bedrockService]);
+	}, [file, isOpen, bedrockService, fileTypeInfo]);
 
 	const handleDownload = () => {
 		if (onDownload) {
@@ -151,16 +137,9 @@ export default function FilePreviewDialog({
 			<DialogContent className="max-w-6xl max-h-[90vh] h-[90vh] w-full p-0 flex flex-col">
 				<DialogHeader className="px-6 py-4 border-b flex-shrink-0">
 					<div className="flex items-center justify-between">
-						<DialogTitle className="text-lg font-semibold truncate flex-1 mr-4">
-							{filename}
-						</DialogTitle>
+						<DialogTitle className="text-lg font-semibold truncate flex-1 mr-4">{filename}</DialogTitle>
 						<div className="flex items-center gap-2">
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={handleDownload}
-								disabled={isLoading || !fileUrl}
-							>
+							<Button variant="outline" size="sm" onClick={handleDownload} disabled={isLoading || !fileUrl}>
 								<Download className="h-4 w-4 mr-2" />
 								Download
 							</Button>
@@ -184,24 +163,16 @@ export default function FilePreviewDialog({
 							</div>
 						) : fileUrl && fileContent ? (
 							<>
-								{fileTypeInfo.category === "image" && (
-									<ImagePreview fileUrl={fileUrl} filename={filename} />
-								)}
+								{fileTypeInfo.category === "image" && <ImagePreview fileUrl={fileUrl} filename={filename} />}
 								{fileTypeInfo.category === "video" && (
 									<VideoPreview fileUrl={fileUrl} mimeType={fileTypeInfo.mimeType} />
 								)}
 								{fileTypeInfo.category === "audio" && (
 									<AudioPreview fileUrl={fileUrl} mimeType={fileTypeInfo.mimeType} filename={filename} />
 								)}
-								{fileTypeInfo.category === "pdf" && (
-									<PDFPreview fileUrl={fileUrl} />
-								)}
-								{fileTypeInfo.category === "docx" && (
-									<DocxPreview fileUrl={fileUrl} filename={filename} />
-								)}
-								{fileTypeInfo.category === "xlsx" && (
-									<XlsxPreview fileUrl={fileUrl} filename={filename} />
-								)}
+								{fileTypeInfo.category === "pdf" && <PDFPreview fileUrl={fileUrl} />}
+								{fileTypeInfo.category === "docx" && <DocxPreview fileUrl={fileUrl} filename={filename} />}
+								{fileTypeInfo.category === "xlsx" && <XlsxPreview fileUrl={fileUrl} filename={filename} />}
 								{(fileTypeInfo.category === "text" || fileTypeInfo.category === "code") && (
 									<CodePreview fileUrl={fileUrl} filename={filename} category={fileTypeInfo.category} />
 								)}
@@ -218,4 +189,3 @@ export default function FilePreviewDialog({
 		</Dialog>
 	);
 }
-

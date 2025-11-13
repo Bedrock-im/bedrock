@@ -10,4 +10,3 @@ interface TextPreviewProps {
 export default function TextPreview({ fileUrl, filename }: TextPreviewProps) {
 	return <CodePreview fileUrl={fileUrl} filename={filename} category="text" />;
 }
-

@@ -1,19 +1,29 @@
 import {
 	FileText,
 	Image,
-	FileCode,
 	File,
 	Music,
 	Video,
-	FileJson,
 	FileSpreadsheet,
 	Presentation,
 	Archive,
-	FolderIcon,
 	type LucideIcon,
 } from "lucide-react";
 
-export type FileCategory = "image" | "video" | "audio" | "text" | "code" | "pdf" | "document" | "docx" | "spreadsheet" | "xlsx" | "presentation" | "archive" | "other";
+export type FileCategory =
+	| "image"
+	| "video"
+	| "audio"
+	| "text"
+	| "code"
+	| "pdf"
+	| "document"
+	| "docx"
+	| "spreadsheet"
+	| "xlsx"
+	| "presentation"
+	| "archive"
+	| "other";
 
 export interface FileTypeInfo {
 	category: FileCategory;
@@ -56,17 +66,7 @@ const videoExtensions = new Set([
 	"m4v",
 ]);
 
-const audioExtensions = new Set([
-	"mp3",
-	"wav",
-	"oga",
-	"flac",
-	"aac",
-	"m4a",
-	"wma",
-	"opus",
-	"webm",
-]);
+const audioExtensions = new Set(["mp3", "wav", "oga", "flac", "aac", "m4a", "wma", "opus", "webm"]);
 
 const textExtensions = new Set([
 	"txt",
@@ -91,51 +91,47 @@ const textExtensions = new Set([
 	"sass",
 	"less",
 	"styl",
-    "js",
-    "jsx",
-    "ts",
-    "tsx",
-    "py",
-    "java",
-    "cpp",
-    "c",
-    "cc",
-    "cxx",
-    "h",
-    "hpp",
-    "cs",
-    "php",
-    "rb",
-    "go",
-    "rs",
-    "swift",
-    "kt",
-    "scala",
-    "clj",
-    "sh",
-    "bash",
-    "zsh",
-    "fish",
-    "ps1",
-    "bat",
-    "cmd",
-    "vue",
-    "svelte",
-    "dart",
-    "lua",
-    "r",
-    "m",
-    "mm",
-    "pl",
-    "pm",
-    "sql",
-    "graphql",
-    "gql",
-    "",
-]);
-
-const codeExtensions = new Set([
-
+	"js",
+	"jsx",
+	"ts",
+	"tsx",
+	"py",
+	"java",
+	"cpp",
+	"c",
+	"cc",
+	"cxx",
+	"h",
+	"hpp",
+	"cs",
+	"php",
+	"rb",
+	"go",
+	"rs",
+	"swift",
+	"kt",
+	"scala",
+	"clj",
+	"sh",
+	"bash",
+	"zsh",
+	"fish",
+	"ps1",
+	"bat",
+	"cmd",
+	"vue",
+	"svelte",
+	"dart",
+	"lua",
+	"r",
+	"m",
+	"mm",
+	"pl",
+	"pm",
+	"sql",
+	"graphql",
+	"gql",
+	"",
 ]);
 
 const spreadsheetExtensions = new Set(["xls", "xlsx", "ods", "csv", "tsv", "numbers"]);
@@ -198,7 +194,7 @@ export function getFileTypeInfo(filename: string): FileTypeInfo {
 		};
 	}
 
-/*	if (codeExtensions.has(extension)) {
+	/*	if (codeExtensions.has(extension)) {
 		return {
 			category: "code",
 			mimeType: getMimeType(extension),
@@ -351,4 +347,3 @@ export function getMimeType(extension: string): string {
 
 	return mimeTypes[extension.toLowerCase()] || "application/octet-stream";
 }
-

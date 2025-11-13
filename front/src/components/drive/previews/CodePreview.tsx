@@ -65,4 +65,3 @@ export default function CodePreview({ fileUrl, filename, category }: CodePreview
 		</div>
 	);
 }
-

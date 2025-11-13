@@ -13,7 +13,7 @@ interface SheetData {
 	data: string[][];
 }
 
-export default function XlsxPreview({ fileUrl, filename }: XlsxPreviewProps) {
+export default function XlsxPreview({ fileUrl }: XlsxPreviewProps) {
 	const [sheets, setSheets] = useState<SheetData[]>([]);
 	const [activeSheet, setActiveSheet] = useState<string>("");
 	const [isLoading, setIsLoading] = useState(true);
@@ -118,12 +118,7 @@ export default function XlsxPreview({ fileUrl, filename }: XlsxPreviewProps) {
 						{currentSheet.data.map((row, rowIndex) => (
 							<tr key={rowIndex} className={rowIndex === 0 ? "bg-gray-100 font-semibold" : ""}>
 								{row.map((cell, cellIndex) => (
-									<td
-										key={cellIndex}
-										className={`border px-4 py-2 text-sm ${
-											rowIndex === 0 ? "font-semibold" : ""
-										}`}
-									>
+									<td key={cellIndex} className={`border px-4 py-2 text-sm ${rowIndex === 0 ? "font-semibold" : ""}`}>
 										{cell || ""}
 									</td>
 								))}
@@ -135,4 +130,3 @@ export default function XlsxPreview({ fileUrl, filename }: XlsxPreviewProps) {
 		</div>
 	);
 }
-

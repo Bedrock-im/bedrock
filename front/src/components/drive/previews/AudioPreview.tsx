@@ -19,4 +19,3 @@ export default function AudioPreview({ fileUrl, mimeType, filename }: AudioPrevi
 		</div>
 	);
 }
-

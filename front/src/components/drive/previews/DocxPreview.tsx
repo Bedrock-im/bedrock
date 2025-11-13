@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import mammoth from "mammoth";
+import { useEffect, useState } from "react";
 
 interface DocxPreviewProps {
 	fileUrl: string;
 	filename: string;
 }
 
-export default function DocxPreview({ fileUrl, filename }: DocxPreviewProps) {
+export default function DocxPreview({ fileUrl }: DocxPreviewProps) {
 	const [htmlContent, setHtmlContent] = useState<string>("");
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -66,4 +66,3 @@ export default function DocxPreview({ fileUrl, filename }: DocxPreviewProps) {
 		</div>
 	);
 }
-

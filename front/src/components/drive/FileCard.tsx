@@ -120,9 +120,7 @@ const FileCard = ({
 					<TableCell>{new Date(metadata.created_at).toLocaleString()}</TableCell>
 
 					<TableCell className="flex justify-end items-center gap-2 mt-1">
-						{onPreview && fileTypeInfo?.canPreview && (
-							<ActionIcon Icon={Eye} onClick={onPreview} tooltip="Preview" />
-						)}
+						{onPreview && fileTypeInfo?.canPreview && <ActionIcon Icon={Eye} onClick={onPreview} tooltip="Preview" />}
 						{onDownload && <ActionIcon Icon={Download} onClick={onDownload} tooltip="Download" />}
 						{onShare && <ActionIcon Icon={Share2} onClick={onShare} tooltip="Share" />}
 						{onRename && <ActionIcon Icon={Edit} onClick={onRename} tooltip="Rename" />}
