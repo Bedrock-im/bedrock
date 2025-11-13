@@ -626,6 +626,7 @@ const FileList: React.FC<FileListProps> = ({
 										selected={selectedItems.has(file.path)}
 										setSelected={() => selectItem(file.path)}
 										onLeftClick={() => setClickedItem(file.path)}
+										onDoubleClick={() => setFileToPreview(file)}
 										onPreview={() => setFileToPreview(file)}
 										onDownload={actions.includes("download") ? () => handleDownloadFile(file) : undefined}
 										onShare={actions.includes("share") ? () => setFileToShare(file) : undefined}
