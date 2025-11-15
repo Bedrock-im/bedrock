@@ -113,12 +113,14 @@ const FileList: React.FC<FileListProps> = ({
 			(trash ? file.deleted_at !== null : file.deleted_at === null),
 	);
 
-	const currentPathFolders = (propFolders ?? folders).filter((folder) =>
-		folder.path !== currentWorkingDirectory && // Don't show the current directory
-		(searchQuery
-			? isSearchItem(searchQuery, folder.path, folder.path.split("/").pop() ?? "")
-			: folder.path.match(cwdRegex)) &&
-		(trash ? folder.deleted_at !== null : folder.deleted_at === null));
+	const currentPathFolders = (propFolders ?? folders).filter(
+		(folder) =>
+			folder.path !== currentWorkingDirectory && // Don't show the current directory
+			(searchQuery
+				? isSearchItem(searchQuery, folder.path, folder.path.split("/").pop() ?? "")
+				: folder.path.match(cwdRegex)) &&
+			(trash ? folder.deleted_at !== null : folder.deleted_at === null),
+	);
 
 	useEffect(() => {
 		if (!bedrockService) return;
