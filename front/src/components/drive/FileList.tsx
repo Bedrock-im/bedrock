@@ -104,11 +104,9 @@ const FileList: React.FC<FileListProps> = ({
 	const cwdRegex = `^${currentWorkingDirectory.replace("/", "\\/")}[^\\/]+$`;
 	const isSearchItem = (query: string, path: string, name: string) => {
 		const lowerCaseQuery = query.toLowerCase();
-		if (lowerCaseQuery.includes("/")) {
-			return path.toLowerCase().includes(lowerCaseQuery);
-		} else {
-			return name.toLowerCase().includes(lowerCaseQuery);
-		}
+
+		if (lowerCaseQuery.includes("/")) return path.toLowerCase().includes(lowerCaseQuery);
+		else return name.toLowerCase().includes(lowerCaseQuery);
 	};
 
 	const currentPathFiles = (propFiles ?? files).filter(
@@ -127,9 +125,7 @@ const FileList: React.FC<FileListProps> = ({
 	);
 
 	useEffect(() => {
-		if (!bedrockService) {
-			return;
-		}
+		if (!bedrockService) return;
 
 		(async () => {
 			try {
