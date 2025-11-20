@@ -9,7 +9,8 @@ const ScrollArea = React.forwardRef<React.ElementRef<typeof Root>, React.Compone
 	({ className, children, ...props }, ref) => (
 		<Root ref={ref} className={cn("relative overflow-hidden border-primary", className)} {...props}>
 			<Viewport className="h-full w-full rounded-[inherit]">{children}</Viewport>
-			<ScrollBar />
+			<ScrollBar orientation="vertical" />
+			<ScrollBar orientation="horizontal" />
 			<Corner />
 		</Root>
 	),

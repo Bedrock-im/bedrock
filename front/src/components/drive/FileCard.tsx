@@ -1,7 +1,7 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { filesize } from "filesize";
-import { Download, Edit, Share2, FileText, FolderIcon, Move, Trash, ArchiveRestore, Copy } from "lucide-react";
+import { Download, Edit, Share2, FileText, FolderIcon, Move, Trash, ArchiveRestore, Copy, Eye } from "lucide-react";
 import React from "react";
 
 import ActionIcon from "@/components/drive/ActionIcon";
@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { DriveFile, DriveFolder } from "@/stores/drive";
+import { getFileTypeInfo } from "@/utils/file-types";
 
 export type FileCardProps = {
 	clicked?: boolean;
@@ -25,6 +26,7 @@ export type FileCardProps = {
 	onRestore?: () => void;
 	onDuplicate?: (() => Promise<void>) | undefined;
 	onCopy?: () => void;
+	onPreview?: () => void;
 } & (FileCardFileProps | FileCardFolderProps);
 
 type FileCardFileProps = {
@@ -54,7 +56,10 @@ const FileCard = ({
 	onHardDelete,
 	onDuplicate,
 	onCopy,
+	onPreview,
 }: FileCardProps) => {
+	const fileTypeInfo = folder ? null : getFileTypeInfo(metadata.path);
+	const FileIcon = folder ? FolderIcon : fileTypeInfo?.icon || FileText;
 	const {
 		attributes,
 		listeners,
@@ -106,11 +111,7 @@ const FileCard = ({
 							{...(folder ? {} : { ...attributes, ...listeners })}
 							className="flex items-center font-bold gap-2"
 						>
-							{folder ? (
-								<FolderIcon className={metadata.deleted_at ? "text-red-400" : undefined} />
-							) : (
-								<FileText className={metadata.deleted_at ? "text-red-400" : undefined} />
-							)}
+							<FileIcon className={metadata.deleted_at ? "text-red-400" : undefined} />
 							{metadata.path.split("/").pop()}
 						</div>
 					</TableCell>
@@ -119,6 +120,7 @@ const FileCard = ({
 					<TableCell>{new Date(metadata.created_at).toLocaleString()}</TableCell>
 
 					<TableCell className="flex justify-end items-center gap-2 mt-1">
+						{onPreview && fileTypeInfo?.canPreview && <ActionIcon Icon={Eye} onClick={onPreview} tooltip="Preview" />}
 						{onDownload && <ActionIcon Icon={Download} onClick={onDownload} tooltip="Download" />}
 						{onShare && <ActionIcon Icon={Share2} onClick={onShare} tooltip="Share" />}
 						{onRename && <ActionIcon Icon={Edit} onClick={onRename} tooltip="Rename" />}
@@ -132,6 +134,12 @@ const FileCard = ({
 			</ContextMenuTrigger>
 
 			<ContextMenuContent>
+				{onPreview && fileTypeInfo?.canPreview && (
+					<ContextMenuItem onClick={onPreview}>
+						<Eye className="mr-2 h-4 w-4" />
+						Preview
+					</ContextMenuItem>
+				)}
 				{onDownload && (
 					<ContextMenuItem onClick={onDownload}>
 						<Download className="mr-2 h-4 w-4" />

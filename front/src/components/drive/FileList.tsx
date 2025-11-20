@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import CurrentPath from "@/components/drive/CurrentPath";
 import FileCard from "@/components/drive/FileCard";
+import FilePreviewDialog from "@/components/drive/FilePreviewDialog";
 import SortOption from "@/components/drive/SortOption";
 import { FileMoveModal } from "@/components/FileMoveModal";
 import { FileRenameModal } from "@/components/FileRenameModal";
@@ -73,6 +74,7 @@ const FileList: React.FC<FileListProps> = ({
 	const [fileToMove, setFileToMove] = useState<{ path: string; folder: boolean } | null>(null);
 	const [fileToRename, setFileToRename] = useState<FileFullInfos | null>(null);
 	const [fileToShare, setFileToShare] = useState<FileFullInfos | null>(null);
+	const [fileToPreview, setFileToPreview] = useState<DriveFile | null>(null);
 	const [isCreatingFolder, setIsCreatingFolder] = useState(false);
 	const [sortColumn, setSortColumn] = useQueryState("sort", { defaultValue: "path" as SortColumn });
 	const [sortOrder, setSortOrder] = useQueryState("order", { defaultValue: "asc" as SortOrder });
@@ -502,6 +504,14 @@ const FileList: React.FC<FileListProps> = ({
 					contacts={contacts}
 				/>
 			)}
+			{fileToPreview && (
+				<FilePreviewDialog
+					file={fileToPreview}
+					isOpen={true}
+					onClose={() => setFileToPreview(null)}
+					onDownload={() => handleDownloadFile(fileToPreview)}
+				/>
+			)}
 			<FolderCreateModal
 				isOpen={isCreatingFolder}
 				onClose={() => setIsCreatingFolder(false)}
@@ -611,6 +621,8 @@ const FileList: React.FC<FileListProps> = ({
 										selected={selectedItems.has(file.path)}
 										setSelected={() => selectItem(file.path)}
 										onLeftClick={() => setClickedItem(file.path)}
+										onDoubleClick={() => setFileToPreview(file)}
+										onPreview={() => setFileToPreview(file)}
 										onDownload={actions.includes("download") ? () => handleDownloadFile(file) : undefined}
 										onShare={actions.includes("share") ? () => setFileToShare(file) : undefined}
 										onRename={actions.includes("rename") ? () => setFileToRename(file) : undefined}
