@@ -10,6 +10,7 @@ const envSchema = z.object({
 	// Will be transferred in the backend soon™️
 	LIBERTAI_API_URL: z.string().url().default("https://api.libertai.io/v1"),
 	LIBERTAI_API_SECRET_KEY: z.string(),
+	BASE_URL: z.string().url().default("https://app.bedrock.im"),
 });
 
 const env = envSchema.parse({
@@ -20,6 +21,7 @@ const env = envSchema.parse({
 	DEV_SAVE_LOCAL_SIGNATURE: process.env.NEXT_PUBLIC_DEV_SAVE_LOCAL_SIGNATURE,
 	LIBERTAI_API_URL: process.env.NEXT_PUBLIC_LIBERTAI_API_URL,
 	LIBERTAI_API_SECRET_KEY: process.env.NEXT_PUBLIC_LIBERTAI_API_SECRET_KEY,
+	BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
 });
 
 export default env;

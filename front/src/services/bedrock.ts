@@ -1,7 +1,9 @@
+import { AlephHttpClient } from "@aleph-sdk/client";
 import { MessageNotFoundError } from "@aleph-sdk/message";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import env from "@/config/env";
 import { AlephService } from "@/services/aleph";
 import { EncryptionService } from "@/services/encryption";
 
@@ -26,14 +28,23 @@ export const EncryptedFileEntrySchema = z.object({
 	shared_with: z.array(z.string()).default([]),
 });
 
-export const FileMetaSchema = z.object({
+const BaseFileMetaSchema = z.object({
 	name: z.string(),
+	size: z.number().int().nonnegative(),
+	created_at: z.string().datetime(),
+});
+
+const PublicFileMetaSchema = BaseFileMetaSchema.extend({
+	store_hash: z.string(),
+	username: z.string(),
+});
+export type PublicFileMeta = z.infer<typeof PublicFileMetaSchema>;
+
+export const FileMetaSchema = BaseFileMetaSchema.extend({
 	path: z.string(),
 	key: zod64CharHexString,
 	iv: zod32CharHexString,
 	store_hash: zod64CharHexString,
-	size: z.number().int().nonnegative().default(42),
-	created_at: z.string().datetime(),
 	deleted_at: z.string().datetime().nullable(),
 	shared_keys: z.record(
 		z.string(),
@@ -392,6 +403,30 @@ export default class BedrockService {
 				return true;
 			})
 			.map((result) => result.value);
+	}
+
+	static async fetchPublicFileMeta(post_hash: string): Promise<PublicFileMeta | null> {
+		try {
+			const client = new AlephHttpClient(env.ALEPH_API_URL);
+			const post = await client.getPost({
+				channels: [env.ALEPH_GENERAL_CHANNEL],
+				types: [FILE_POST_TYPE],
+				hashes: [post_hash],
+			});
+
+			return PublicFileMetaSchema.parse({
+				...post.content,
+				address: post.address,
+			});
+		} catch (e) {
+			console.log(e);
+			return null;
+		}
+	}
+
+	static async downloadPublicFile(store_hash: string) {
+		const client = new AlephHttpClient(env.ALEPH_API_URL);
+		return await client.downloadFile(store_hash);
 	}
 
 	async resetData(): Promise<void> {
@@ -919,6 +954,22 @@ export default class BedrockService {
 				};
 			},
 		);
+	}
+
+	async shareFilePublicly({ store_hash, key, iv, name, size }: FileFullInfos, sender: string): Promise<string> {
+		const data = await this.downloadFileFromStoreHash(store_hash, key, iv);
+		const { content } = await this.alephService.uploadFile(data);
+
+		const file: PublicFileMeta = {
+			name,
+			size,
+			created_at: new Date().toISOString(),
+			store_hash: content.item_hash,
+			username: sender,
+		};
+		const { item_hash } = await this.alephService.createPost(FILE_POST_TYPE, file);
+
+		return item_hash;
 	}
 
 	async fetchFilesSharedByContact(contact: Pick<Contact, "address" | "public_key">): Promise<FileFullInfos[]> {

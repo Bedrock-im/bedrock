@@ -1,13 +1,12 @@
 "use client";
 
-import { filesize } from "filesize";
-import { DownloadCloud } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
+import PublicFileContent from "@/app/public/[id]/PublicFileContent";
 import { dotsBackground } from "@/components/auth/background";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileFullInfos } from "@/services/bedrock";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import BedrockService, { PublicFileMeta } from "@/services/bedrock";
 
 interface PublicPageProps {
 	params: {
@@ -15,19 +14,39 @@ interface PublicPageProps {
 	};
 }
 
-function getFile(_id: string): Pick<FileFullInfos, "name" | "size"> | null {
-	return null;
-}
-
 export default function Public(props: PublicPageProps) {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
+	const [isLoading, setIsLoading] = useState(true);
+	const [file, setFile] = useState<PublicFileMeta | null>(null);
 
-	// TODO: Add logic to fetch and validate the post ID
-	const file: Pick<FileFullInfos, "name" | "size"> | null = getFile(props.params.id);
-	// TODO: Fetch username from address
-	const username = "luxus.io";
+	useEffect(() => {
+		(async () => {
+			const fetchedFile = await BedrockService.fetchPublicFileMeta(props.params.id);
+			setIsLoading(false);
+			setFile(fetchedFile);
+		})();
+	}, [props.params.id]);
 
-	const background = file ? "bg-gradient-to-br from-red-900 to-orange-900" : "bg-black";
+	const handleDownload = useCallback(async () => {
+		if (!file) return;
+
+		try {
+			const buffer = await BedrockService.downloadPublicFile(file.store_hash);
+			const blob = new Blob([buffer], { type: "application/octet-stream" });
+			const url = URL.createObjectURL(blob);
+
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = file.name || "downloaded-file";
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+		} catch (error) {
+			toast.error("Failed to download file:" + error?.toString());
+		}
+	}, [file]);
+
+	const background = file ? "bg-gradient-to-br from-red-900 to-orange-800" : "bg-black";
 
 	useEffect(() => {
 		dotsBackground(canvasRef);
@@ -41,24 +60,7 @@ export default function Public(props: PublicPageProps) {
 				<CardHeader>
 					<CardTitle>Bedrock Public File System</CardTitle>
 				</CardHeader>
-				{file ? (
-					<CardContent className="flex flex-col items-center gap-8">
-						<div className="flex flex-col items-center gap-4">
-							<div className="flex items-center">
-								<p className="font-bold">{username}</p>&nbsp;shared a file with you.
-							</div>
-							<div className="flex items-center">
-								<p className="font-bold">{file.name}</p>&nbsp;- {filesize(file.size)}
-							</div>
-						</div>
-						<Button variant="secondary">
-							<DownloadCloud size={16} />
-							Download
-						</Button>
-					</CardContent>
-				) : (
-					<CardContent>Sorry, you entered an invalid link.</CardContent>
-				)}
+				<PublicFileContent isLoading={isLoading} onClick={handleDownload} file={file} />
 			</Card>
 		</div>
 	);

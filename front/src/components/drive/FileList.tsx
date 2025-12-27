@@ -25,6 +25,8 @@ import { useAccountStore } from "@/stores/account";
 import { DriveFile, DriveFolder, useDriveStore } from "@/stores/drive";
 
 import UploadButton from "./UploadButton";
+import env from "@/config/env";
+import { PublicFileLinkModal } from "@/components/PublicFileLinkModal";
 
 type SortColumn = "path" | "size" | "created_at";
 type SortOrder = "asc" | "desc";
@@ -66,6 +68,8 @@ const FileList: React.FC<FileListProps> = ({
 	knowledgeBase = false,
 	emptyMessage,
 }) => {
+	const username = useAccountStore((state) => state.username);
+
 	const [searchQuery, setSearchQuery] = useQueryState("search", { defaultValue: defaultSearchQuery });
 	const [currentWorkingDirectory, setCurrentWorkingDirectory] = useQueryState("cwd", {
 		defaultValue: defaultCwd,
@@ -81,6 +85,7 @@ const FileList: React.FC<FileListProps> = ({
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set(selectedPaths));
 	const [copiedFilePath, setcopiedFilePath] = useState<string | null>(null);
 	const [clickedItem, setClickedItem] = useState<string>();
+	const [sharedHash, setSharedHash] = useState<string | null>(null);
 	const {
 		setFiles,
 		setFolders,
@@ -378,10 +383,23 @@ const FileList: React.FC<FileListProps> = ({
 		toast.success(`The ${folder ? "folder" : "file"} has been moved.`);
 	};
 
-	const handleShare = (file: FileFullInfos, contact: Contact) => {
-		bedrockService?.shareFileWithContact(file, contact.public_key);
+	const handleShare = (file: FileFullInfos, contact?: Contact) => {
+		toast.loading(`Sharing file...`);
+		if (contact) {
+			bedrockService?.shareFileWithContact(file, contact.public_key);
+			toast.success(`The file has been shared with contact ${contact.name}.`);
+		} else {
+			bedrockService
+				?.shareFilePublicly(file, username ?? "Unknown")
+				.then((hash) => {
+					toast.success(`The file has been shared publicly.`);
+					setSharedHash(hash);
+				})
+				.catch((_) => {
+					toast.error("Unable to share the file publicly");
+				});
+		}
 		setFileToShare(null);
-		toast.success(`The file has been shared with contact ${contact.name}.`);
 	};
 
 	const handleRestoreFile = (path: string) => {
@@ -482,6 +500,7 @@ const FileList: React.FC<FileListProps> = ({
 
 	return (
 		<div className="flex flex-col h-full bg-gray-200" onClick={() => setClickedItem(undefined)}>
+			<PublicFileLinkModal hash={sharedHash ?? ""} isOpen={!!sharedHash} onClose={() => setSharedHash(null)} />
 			{fileToMove && (
 				<FileMoveModal
 					isOpen={true}
