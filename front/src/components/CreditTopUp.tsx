@@ -1,5 +1,6 @@
 "use client";
 
+import { UserCredit } from "bedrock-ts-sdk";
 import { CheckCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -13,7 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import env from "@/config/env";
 import { thirdwebClient } from "@/config/thirdweb";
-import { UserCredit } from "@/services/credits";
 
 interface CreditTopUpProps {
 	creditBalance: UserCredit;
@@ -22,7 +22,7 @@ interface CreditTopUpProps {
 
 const PAYMENT_RECEIVER_ADDRESS = "0x7Ab98f6b22ECb42E27Dc9C7d2d488F69b5CDD0b2"; // TODO: Replace with actual payment receiver
 
-export default function CreditTopUp({ creditBalance, onTopUpComplete }: CreditTopUpProps) {
+export default function CreditTopUp({ creditBalance, onTopUpComplete }: Readonly<CreditTopUpProps>) {
 	const [amount, setAmount] = useState("");
 	const [showPayment, setShowPayment] = useState(false);
 	const [showSuccess, setShowSuccess] = useState(false);

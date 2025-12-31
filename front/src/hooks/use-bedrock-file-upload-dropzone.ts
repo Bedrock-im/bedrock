@@ -7,33 +7,32 @@ import { useAccountStore } from "@/stores/account";
 import { useDriveStore } from "@/stores/drive";
 
 export default function useBedrockFileUploadDropzone(options: DropzoneOptions) {
-	const bedrockService = useAccountStore((state) => state.bedrockService);
+	const bedrockClient = useAccountStore((state) => state.bedrockClient);
 	const { addFiles } = useDriveStore();
 	const [currentWorkingDirectory] = useQueryState("cwd", { defaultValue: "/" });
 
 	const onDrop = useCallback(
 		async (acceptedFiles: File[]) => {
-			if (!bedrockService) return;
-			const fileInfos = bedrockService.uploadFiles(currentWorkingDirectory, acceptedFiles);
-			toast.promise(fileInfos, {
+			if (!bedrockClient) return;
+
+			// Convert files to FileInput format
+			const fileInputs = await Promise.all(
+				acceptedFiles.map(async (file) => ({
+					name: file.name,
+					path: currentWorkingDirectory === "/" ? file.name : `${currentWorkingDirectory}/${file.name}`,
+					content: Buffer.from(await file.arrayBuffer()),
+				})),
+			);
+
+			const uploadPromise = bedrockClient.files.uploadFiles(fileInputs, currentWorkingDirectory);
+			toast.promise(uploadPromise, {
 				loading: `Uploading ${acceptedFiles.length} files...`,
 				success: (uploadedFiles) => `Successfully uploaded ${uploadedFiles.length} files`,
 				error: (err) => `Failed to upload files: ${err}`,
 			});
-			const awaitedFileInfos = await fileInfos.catch(() => []);
-			if (awaitedFileInfos.length === 0) return;
-			const safeFileInfos = awaitedFileInfos.map((info) => ({
-				...info,
-				shared_keys: info.shared_keys ?? {},
-			}));
-			const fileEntries = bedrockService.saveFiles(...safeFileInfos);
-			toast.promise(fileEntries, {
-				loading: `Saving ${awaitedFileInfos.length} files...`,
-				success: (savedFiles) => `Successfully saved ${savedFiles.length} files`,
-				error: (err) => `Failed to save files: ${err}`,
-			});
+
 			try {
-				const awaitedFileEntries = await fileEntries;
+				const uploadedFiles = await uploadPromise;
 				const fileContents = await Promise.all(
 					acceptedFiles.map(async (file) => ({
 						content: Buffer.from(await file.arrayBuffer()),
@@ -42,20 +41,19 @@ export default function useBedrockFileUploadDropzone(options: DropzoneOptions) {
 				);
 
 				addFiles(
-					awaitedFileInfos.map(({ path, ...fileInfo }) => ({
+					uploadedFiles.map((fileInfo) => ({
 						...fileInfo,
-						path,
-						post_hash: awaitedFileEntries.find((entry) => entry.path === path)!.post_hash,
+						shared_keys: fileInfo.shared_keys ?? {},
 						content: fileContents.find((fileContent) => fileContent.name === fileInfo.name)?.content,
 					})),
 				);
 			} catch (err) {
-				console.error("Failed to save files:", err);
-				toast.error(`Failed to save files: ${err}`);
+				console.error("Failed to upload files:", err);
+				toast.error(`Failed to upload files: ${err}`);
 				return;
 			}
 		},
-		[currentWorkingDirectory, bedrockService, addFiles],
+		[currentWorkingDirectory, bedrockClient, addFiles],
 	);
 
 	// Placing the onDrop function first allows the user to override it in the hooks' options

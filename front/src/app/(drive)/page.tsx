@@ -2,6 +2,8 @@
 
 import FileList from "@/components/drive/FileList";
 
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
 	return (
 		<FileList

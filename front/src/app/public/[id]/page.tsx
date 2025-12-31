@@ -1,12 +1,14 @@
 "use client";
 
+import { FileService, PublicFileMeta } from "bedrock-ts-sdk";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import PublicFileContent from "@/app/public/[id]/PublicFileContent";
 import { dotsBackground } from "@/components/auth/background";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import BedrockService, { PublicFileMeta } from "@/services/bedrock";
+
+export const dynamic = "force-dynamic";
 
 interface PublicPageProps {
 	params: {
@@ -21,7 +23,7 @@ export default function Public(props: PublicPageProps) {
 
 	useEffect(() => {
 		(async () => {
-			const fetchedFile = await BedrockService.fetchPublicFileMeta(props.params.id);
+			const fetchedFile = await FileService.fetchPublicFileMeta(props.params.id);
 			setIsLoading(false);
 			setFile(fetchedFile);
 		})();
@@ -31,7 +33,7 @@ export default function Public(props: PublicPageProps) {
 		if (!file) return;
 
 		try {
-			const buffer = await BedrockService.downloadPublicFile(file.store_hash);
+			const buffer = await FileService.downloadPublicFile(file.store_hash);
 			const blob = new Blob([buffer], { type: "application/octet-stream" });
 			const url = URL.createObjectURL(blob);
 
