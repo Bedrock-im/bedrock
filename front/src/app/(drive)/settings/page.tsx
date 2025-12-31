@@ -5,11 +5,13 @@ import EraseData from "@/components/EraseData";
 import { useCredits } from "@/hooks/use-credits";
 import { useAccountStore } from "@/stores/account";
 
+export const dynamic = 'force-dynamic';
+
 export default function Settings() {
-	const { bedrockService } = useAccountStore();
+	const { bedrockClient } = useAccountStore();
 	const { creditBalance, refreshCredits } = useCredits();
 
-	if (bedrockService === null) {
+	if (bedrockClient === null) {
 		return <></>;
 	}
 

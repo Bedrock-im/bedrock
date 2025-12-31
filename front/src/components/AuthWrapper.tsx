@@ -15,17 +15,17 @@ type AuthWrapperProps = {
 export const AuthWrapper = ({ children }: AuthWrapperProps) => {
 	const { isConnected } = useRequireAuth();
 	const account = useActiveAccount();
-	const { username, bedrockService } = useAccountStore();
+	const { username, bedrockClient } = useAccountStore();
 	const [showRegistrationModal, setShowRegistrationModal] = useState(false);
 
 	useEffect(() => {
-		// If user has wallet connected, bedrock service set up, but no username
-		if (account && bedrockService && !username) {
+		// If user has wallet connected, bedrock client set up, but no username
+		if (account && bedrockClient && !username) {
 			setShowRegistrationModal(true);
 		} else {
 			setShowRegistrationModal(false);
 		}
-	}, [account, bedrockService, username]);
+	}, [account, bedrockClient, username]);
 
 	const handleUsernameComplete = () => {
 		setShowRegistrationModal(false);

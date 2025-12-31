@@ -1,5 +1,9 @@
 "use client";
 
+import { CopyIcon } from "lucide-react";
+import React from "react";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -9,12 +13,8 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { FileFullInfos } from "@/services/bedrock";
 import { Input } from "@/components/ui/input";
-import { CheckIcon, CopyIcon } from "lucide-react";
-import React from "react";
 import env from "@/config/env";
-import { toast } from "sonner";
 
 export interface PublicFileLinkProps {
 	hash: string;
@@ -22,7 +22,7 @@ export interface PublicFileLinkProps {
 	onClose: () => void;
 }
 
-export function PublicFileLinkModal({ hash, isOpen, onClose }: PublicFileLinkProps) {
+export function PublicFileLinkModal({ hash, isOpen, onClose }: Readonly<PublicFileLinkProps>) {
 	const url = `${env.BASE_URL}/public/${hash}`;
 	const copyToClipboard = async () => {
 		try {

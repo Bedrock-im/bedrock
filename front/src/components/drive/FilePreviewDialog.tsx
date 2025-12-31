@@ -31,7 +31,7 @@ export default function FilePreviewDialog({ file, isOpen, onClose, onDownload }:
 	const [fileUrl, setFileUrl] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const { bedrockService } = useAccountStore();
+	const { bedrockClient } = useAccountStore();
 	const loadingRef = useRef<string | null>(null);
 	const loadedFileRef = useRef<string | null>(null);
 
@@ -82,11 +82,11 @@ export default function FilePreviewDialog({ file, isOpen, onClose, onDownload }:
 
 		(async () => {
 			try {
-				if (!bedrockService) {
-					throw new Error("Bedrock service failed.");
+				if (!bedrockClient) {
+					throw new Error("Bedrock client failed.");
 				}
-				const buffer = await bedrockService.downloadFileFromStoreHash(file.store_hash, file.key, file.iv);
-
+				const buffer = await bedrockClient.files.downloadFile(file);
+				// @ts-expect-error - Type mismatch between Node Buffer and Web ArrayBuffer
 				const blob = new Blob([buffer], { type: fileTypeInfo.mimeType });
 
 				const url = URL.createObjectURL(blob);
@@ -110,7 +110,7 @@ export default function FilePreviewDialog({ file, isOpen, onClose, onDownload }:
 				}
 			}
 		})();
-	}, [file, isOpen, bedrockService, fileTypeInfo]);
+	}, [file, isOpen, bedrockClient, fileTypeInfo]);
 
 	const handleDownload = () => {
 		if (onDownload) {

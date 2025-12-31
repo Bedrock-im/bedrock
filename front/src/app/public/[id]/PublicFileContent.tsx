@@ -1,9 +1,9 @@
+import { PublicFileMeta } from "bedrock-ts-sdk";
 import { filesize } from "filesize";
 import { DownloadCloud } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
-import { PublicFileMeta } from "@/services/bedrock";
 
 interface PublicFileContentProps {
 	isLoading: boolean;

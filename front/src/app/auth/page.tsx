@@ -9,12 +9,14 @@ import { UsernameRegistrationModal } from "@/components/UsernameRegistrationModa
 import { thirdwebClient } from "@/config/thirdweb";
 import { useAccountStore } from "@/stores/account";
 
+export const dynamic = 'force-dynamic';
+
 export default function Auth() {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const router = useRouter();
 	const account = useActiveAccount();
 	const wallet = useActiveWallet();
-	const { isConnected, username, bedrockService } = useAccountStore();
+	const { isConnected, username, bedrockClient } = useAccountStore();
 	const [showRegistrationModal, setShowRegistrationModal] = useState(false);
 
 	const handleBack = useCallback(() => {
@@ -24,7 +26,7 @@ export default function Auth() {
 	useEffect(() => {
 		if (account !== undefined && wallet !== undefined) {
 			// User connected but no username registered yet
-			if (bedrockService && !isConnected && !username) {
+			if (bedrockClient && !isConnected && !username) {
 				setShowRegistrationModal(true);
 				return;
 			}
@@ -38,7 +40,7 @@ export default function Auth() {
 
 		// Just setup the background on initial load
 		dotsBackground(canvasRef);
-	}, [account, wallet, isConnected, handleBack, username, bedrockService]);
+	}, [account, wallet, isConnected, handleBack, username, bedrockClient]);
 
 	const handleUsernameComplete = () => {
 		setShowRegistrationModal(false);

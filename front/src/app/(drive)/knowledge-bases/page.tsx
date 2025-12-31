@@ -23,6 +23,8 @@ import { useAccountStore } from "@/stores/account";
 import { useDriveStore } from "@/stores/drive";
 import { KnowledgeBase, useKnowledgeBaseStore } from "@/stores/knowledge-bases";
 
+export const dynamic = 'force-dynamic';
+
 export default function KnowledgeBases() {
 	const [openedAskKBModal, setOpenedAskKBModal] = useState<KnowledgeBase | null>(null);
 	const [openedRenameKBModal, setOpenedRenameKBModal] = useState<KnowledgeBase | null>(null);
@@ -30,7 +32,7 @@ export default function KnowledgeBases() {
 	const [openedModifyFileListKBModal, setOpenedModifyFileListKBModal] = useState<KnowledgeBase | null>(null);
 	const [openNewKBModal, setOpenNewKBModal] = useState(false);
 	const [newKBName, setNewKBName] = useState("");
-	const { bedrockService } = useAccountStore();
+	const { bedrockClient } = useAccountStore();
 	const { files, updateFileContent } = useDriveStore();
 	const {
 		knowledgeBases,
@@ -42,9 +44,9 @@ export default function KnowledgeBases() {
 	} = useKnowledgeBaseStore();
 
 	useEffect(() => {
-		if (!bedrockService) return;
+		if (!bedrockClient) return;
 		(async () => {
-			const knowledgeBases: KnowledgeBase[] = (await bedrockService.fetchKnowledgeBases()).map(
+			const knowledgeBases: KnowledgeBase[] = (await bedrockClient.knowledgeBases.listKnowledgeBases()).map(
 				({ name, file_paths, created_at, updated_at }) => ({
 					name,
 					filePaths: file_paths,
@@ -55,7 +57,7 @@ export default function KnowledgeBases() {
 
 			setKnowledgeBases(knowledgeBases);
 		})();
-	}, [bedrockService, setKnowledgeBases]);
+	}, [bedrockClient, setKnowledgeBases]);
 
 	const handleSearchKBModalOpening = async (base: KnowledgeBase) => {
 		if (openedAskKBModal !== null) return;
@@ -67,11 +69,7 @@ export default function KnowledgeBases() {
 						const driveFile = files.find(({ path }) => path === filePath)!;
 						return {
 							path: filePath,
-							newContent: await bedrockService!.downloadFileFromStoreHash(
-								driveFile.store_hash,
-								driveFile.key,
-								driveFile.iv,
-							),
+							newContent: await bedrockClient!.files.downloadFile(driveFile),
 						};
 					}),
 			)
@@ -102,7 +100,7 @@ export default function KnowledgeBases() {
 				return;
 			}
 
-			await bedrockService?.createKnowledgeBase(trimmedName);
+			await bedrockClient?.knowledgeBases.createKnowledgeBase(trimmedName);
 			addKnowledgeBase({
 				name: trimmedName,
 				filePaths: [],
@@ -120,7 +118,7 @@ export default function KnowledgeBases() {
 
 	const handleDelete = async (kb: KnowledgeBase) => {
 		try {
-			await bedrockService?.deleteKnowledgeBase(kb.name);
+			await bedrockClient?.knowledgeBases.deleteKnowledgeBase(kb.name);
 			removeKnowledgeBase(kb.name);
 			toast.success(`Knowledge base "${kb.name}" deleted successfully`);
 		} catch (error) {
@@ -129,12 +127,12 @@ export default function KnowledgeBases() {
 	};
 
 	const handleRename = async (newName: string, kb: KnowledgeBase) => {
-		await bedrockService?.renameKnowledgeBase(kb.name, newName);
+		await bedrockClient?.knowledgeBases.renameKnowledgeBase(kb.name, newName);
 		renameKnowledgeBase(kb.name, newName);
 	};
 
 	const handleFileSelection = async (newFilePaths: string[], kb: KnowledgeBase) => {
-		await bedrockService?.setKnowledgeBaseFiles(kb.name, newFilePaths);
+		await bedrockClient?.knowledgeBases.setFiles(kb.name, newFilePaths);
 
 		(
 			await Promise.all(
@@ -144,11 +142,7 @@ export default function KnowledgeBases() {
 						const driveFile = files.find(({ path }) => path === filePath)!;
 						return {
 							path: filePath,
-							newContent: await bedrockService!.downloadFileFromStoreHash(
-								driveFile.store_hash,
-								driveFile.key,
-								driveFile.iv,
-							),
+							newContent: await bedrockClient!.files.downloadFile(driveFile),
 						};
 					}),
 			)

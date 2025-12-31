@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const envSchema = z.object({
 	THIRDWEB_CLIENT_ID: z.string(),
-	ALEPH_API_URL: z.string().url().optional(),
+	ALEPH_API_URL: z.string().url().default("https://api2.aleph.im"),
 	ALEPH_GENERAL_CHANNEL: z.string().optional().default("bedrock"),
 	USERNAMES_API_URL: z.string().url(),
 	DEV_SAVE_LOCAL_SIGNATURE: z.string().optional().default("false"),

@@ -15,10 +15,10 @@ import {
 import { useAccountStore } from "@/stores/account";
 
 export default function EraseData() {
-	const { bedrockService } = useAccountStore();
+	const { bedrockClient } = useAccountStore();
 
 	const eraseData = async () => {
-		await bedrockService?.resetData();
+		await bedrockClient?.resetAllData();
 		toast.success("Your account data was erased");
 	};
 

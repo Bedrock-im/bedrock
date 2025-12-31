@@ -1,7 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { Contact } from "bedrock-ts-sdk";
+import { useMemo, useState } from "react";
 
+import { PublicFileShareModal } from "@/components/PublicFileShareModal";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -12,8 +14,6 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import BedrockService, { Contact, FileFullInfos } from "@/services/bedrock";
-import { PublicFileShareModal } from "@/components/PublicFileShareModal";
 
 interface UsernameRegistrationModalProps {
 	isOpen: boolean;
@@ -22,7 +22,7 @@ interface UsernameRegistrationModalProps {
 	contacts: Contact[];
 }
 
-export function FileShareModal({ isOpen, onClose, onComplete, contacts }: UsernameRegistrationModalProps) {
+export function FileShareModal({ isOpen, onClose, onComplete, contacts }: Readonly<UsernameRegistrationModalProps>) {
 	const [input, setInput] = useState("");
 	const [isPublicModalOpen, setIsPublicModalOpen] = useState(false);
 

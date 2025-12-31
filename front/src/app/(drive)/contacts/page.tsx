@@ -1,4 +1,5 @@
 "use client";
+import { Contact } from "bedrock-ts-sdk";
 import { CheckIcon, CopyIcon, Plus } from "lucide-react";
 import { useQueryState } from "nuqs";
 import React, { useEffect, useState } from "react";
@@ -9,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Contact } from "@/services/bedrock";
 import { useAccountStore } from "@/stores/account";
+
+export const dynamic = "force-dynamic";
 
 export interface ContactFormData {
 	name: string;
@@ -19,7 +21,7 @@ export interface ContactFormData {
 }
 
 export default function Contacts() {
-	const { bedrockService } = useAccountStore();
+	const { bedrockClient } = useAccountStore();
 
 	const [publicKey, setPublicKey] = useState<string>("");
 	const [contacts, setContacts] = useState<Contact[]>([]);
@@ -43,7 +45,7 @@ export default function Contacts() {
 
 	const createContact = async ({ name, address, publicKey }: ContactFormData) => {
 		try {
-			await bedrockService?.createContact(name, address, publicKey);
+			await bedrockClient?.contacts.addContact(name, address, publicKey);
 			setContacts([
 				...contacts,
 				{
@@ -57,21 +59,21 @@ export default function Contacts() {
 	};
 
 	useEffect(() => {
-		if (!bedrockService) {
+		if (!bedrockClient) {
 			return;
 		}
 
 		(async () => {
 			try {
-				const contacts = await bedrockService.fetchContacts();
+				const contacts = await bedrockClient.contacts.listContacts();
 
 				setContacts(contacts);
-				setPublicKey(bedrockService.alephPublicKey);
+				setPublicKey(bedrockClient.getPublicKey());
 			} catch (error) {
 				console.error("Failed to fetch contacts:", error);
 			}
 		})();
-	}, [bedrockService, setContacts, setPublicKey]);
+	}, [bedrockClient, setContacts, setPublicKey]);
 
 	return (
 		<>
