@@ -127,8 +127,12 @@ export default function KnowledgeBases() {
 	};
 
 	const handleRename = async (newName: string, kb: KnowledgeBase) => {
-		await bedrockClient?.knowledgeBases.renameKnowledgeBase(kb.name, newName);
-		renameKnowledgeBase(kb.name, newName);
+		try {
+			await bedrockClient?.knowledgeBases.renameKnowledgeBase(kb.name, newName);
+			renameKnowledgeBase(kb.name, newName);
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : "Failed to rename knowledge base");
+		}
 	};
 
 	const handleFileSelection = async (newFilePaths: string[], kb: KnowledgeBase) => {
