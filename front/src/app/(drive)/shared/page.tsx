@@ -3,7 +3,7 @@
 import FileList from "@/components/drive/FileList";
 import { useDriveStore } from "@/stores/drive";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default function Shared() {
 	const { sharedFiles } = useDriveStore();
