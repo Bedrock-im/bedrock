@@ -9,7 +9,7 @@ import { UsernameRegistrationModal } from "@/components/UsernameRegistrationModa
 import { thirdwebClient } from "@/config/thirdweb";
 import { useAccountStore } from "@/stores/account";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default function Auth() {
 	const canvasRef = useRef<HTMLCanvasElement>(null);

@@ -5,7 +5,7 @@ import EraseData from "@/components/EraseData";
 import { useCredits } from "@/hooks/use-credits";
 import { useAccountStore } from "@/stores/account";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default function Settings() {
 	const { bedrockClient } = useAccountStore();

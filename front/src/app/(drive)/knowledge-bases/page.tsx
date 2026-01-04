@@ -23,7 +23,7 @@ import { useAccountStore } from "@/stores/account";
 import { useDriveStore } from "@/stores/drive";
 import { KnowledgeBase, useKnowledgeBaseStore } from "@/stores/knowledge-bases";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default function KnowledgeBases() {
 	const [openedAskKBModal, setOpenedAskKBModal] = useState<KnowledgeBase | null>(null);

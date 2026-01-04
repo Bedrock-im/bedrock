@@ -76,8 +76,7 @@ const chatBubbleMessageVariants = cva("p-4", {
 });
 
 interface ChatBubbleMessageProps
-	extends React.HTMLAttributes<HTMLDivElement>,
-		VariantProps<typeof chatBubbleMessageVariants> {
+	extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof chatBubbleMessageVariants> {
 	isLoading?: boolean;
 }
 
