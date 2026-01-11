@@ -2,7 +2,7 @@
 
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { Contact, FileFullInfo } from "bedrock-ts-sdk";
-import { Ban, ClipboardPaste, Download, LoaderIcon, Move, Share2, Trash } from "lucide-react";
+import { Ban, ClipboardPaste, Download, FolderIcon, Move, Share2, Trash } from "lucide-react";
 import { useQueryState } from "nuqs";
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -235,8 +235,7 @@ const FileList: React.FC<FileListProps> = ({
 
 		try {
 			const arrayBuffer = await bedrockClient.files.downloadFile(file);
-			// @ts-expect-error - Type mismatch between Node Buffer and Web ArrayBuffer
-			const blob = new Blob([arrayBuffer], { type: "application/octet-stream" });
+			const blob = new Blob([arrayBuffer as BlobPart], { type: "application/octet-stream" });
 			const url = URL.createObjectURL(blob);
 
 			const link = document.createElement("a");
@@ -255,8 +254,8 @@ const FileList: React.FC<FileListProps> = ({
 
 		// TODO: this check should be moved to the drive or bedrock service to check against all files, not just those passed to this component
 		// if (folders.some((folder) => folder.path === newFolderPath)) {
-		// 	toast.error("This folder already exists!");
-		// 	return;
+		//      toast.error("This folder already exists!");
+		//      return;
 		// }
 
 		const newFolder: DriveFolder = {
@@ -460,8 +459,11 @@ const FileList: React.FC<FileListProps> = ({
 
 	if (!bedrockClient) {
 		return (
-			<div className="flex items-center justify-center h-screen">
-				<LoaderIcon className="animate-spin m-auto h-[100vh]" />
+			<div className="flex flex-col items-center justify-center h-full gap-4">
+				<div className="relative">
+					<div className="size-12 rounded-full border-4 border-muted border-t-primary animate-spin" />
+				</div>
+				<p className="text-sm text-muted-foreground">Loading your files...</p>
 			</div>
 		);
 	}
@@ -481,7 +483,7 @@ const FileList: React.FC<FileListProps> = ({
 	};
 
 	return (
-		<div className="flex flex-col h-full bg-gray-200" onClick={() => setClickedItem(undefined)}>
+		<div className="flex flex-col h-full" onClick={() => setClickedItem(undefined)}>
 			<PublicFileLinkModal hash={sharedHash ?? ""} isOpen={!!sharedHash} onClose={() => setSharedHash(null)} />
 			{fileToMove && (
 				<FileMoveModal
@@ -528,22 +530,30 @@ const FileList: React.FC<FileListProps> = ({
 					placeholder="Search files and folders..."
 					value={searchQuery}
 					onChange={(e) => setSearchQuery(e.target.value || null)}
-					className="p-2 border border-gray-300 rounded-lg w-full"
+					className="px-4 py-2.5 bg-background border border-border rounded-xl w-full text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
 				/>
 			</div>
 
 			<DndContext onDragEnd={handleDragEnd}>
-				<Card className="m-2 pb-2 gap-y-4">
+				<Card className="m-2 mb-20 shadow-soft rounded-xl border-0 bg-card overflow-hidden">
 					<div className="m-4 mt-2">
 						<CurrentPath path={currentWorkingDirectory} setPath={handleChangeDirectory} />
 						<Separator orientation="horizontal" />
 					</div>
 					{sortedFiles.length === 0 && sortedFolders.length === 0 ? (
-						<div className="flex justify-center items-center">
+						<div className="flex flex-col items-center justify-center py-16 text-center">
+							<div className="size-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
+								<FolderIcon className="size-8 text-muted-foreground/50" />
+							</div>
 							{searchQuery ? (
-								<p>There is no file or folder matching your search.</p>
+								<p className="text-muted-foreground">No files or folders match your search.</p>
 							) : (
-								<p className="py-4">{currentWorkingDirectory === "/" ? emptyMessage : "This directory is empty."}</p>
+								<>
+									<p className="text-muted-foreground font-medium">
+										{currentWorkingDirectory === "/" ? emptyMessage : "This folder is empty"}
+									</p>
+									<p className="text-sm text-muted-foreground/70 mt-1">Upload files or create folders to get started</p>
+								</>
 							)}
 						</div>
 					) : (
@@ -641,38 +651,29 @@ const FileList: React.FC<FileListProps> = ({
 						</Table>
 					)}
 					{copiedFilePath != null && (
-						<>
-							<div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-[#1e81b0] text-white px-6 py-3 rounded-full shadow-lg w-[50%] ml-[10%]">
-								<div className="flex justify-between items-center gap-4">
-									<p>1 item copied to clipboard.</p>
-									<Button variant="ghost" className="text-white text-sm gap-2" onClick={() => handlePaste()}>
-										<ClipboardPaste size={16} />
-										Paste
-									</Button>
-								</div>
-							</div>
-							<div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-39 bg-[#A21511] text-white px-6 py-3 rounded-full shadow-lg w-[50%] ml-[15%]">
-								<div className="flex justify-end items-center">
-									<Button
-										variant="ghost"
-										className="text-white text-sm px-2 py-1"
-										onClick={() => setcopiedFilePath(null)}
-									>
-										<Ban size={16} />
-									</Button>
-								</div>
-							</div>
-						</>
+						<div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-primary text-primary-foreground px-6 py-3 rounded-2xl shadow-glow flex items-center gap-4 animate-slide-up">
+							<p className="text-sm font-medium">1 item copied to clipboard</p>
+							<Button variant="secondary" size="sm" className="rounded-xl gap-2" onClick={() => handlePaste()}>
+								<ClipboardPaste size={14} />
+								Paste
+							</Button>
+							<Button
+								variant="ghost"
+								size="sm"
+								className="text-primary-foreground/80 hover:text-primary-foreground rounded-lg"
+								onClick={() => setcopiedFilePath(null)}
+							>
+								<Ban size={14} />
+							</Button>
+						</div>
 					)}
 					{actions.includes("bulk") && selectedItems.size > 0 && (
-						<div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-[#20243a] text-white px-6 py-3 rounded-full shadow-lg w-[50%]">
-							<div className="flex gap-4 justify-between items-center">
-								<div>
-									<span className="text-sm">
-										{selectedItems.size} item{selectedItems.size > 1 ? "s" : ""} selected
-									</span>
-								</div>
-								<div className="gap-4">
+						<div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-foreground text-background px-4 md:px-6 py-3 rounded-2xl shadow-soft-lg animate-slide-up max-w-[90vw] md:max-w-fit">
+							<div className="flex flex-wrap gap-3 md:gap-6 items-center justify-center">
+								<span className="text-sm font-medium whitespace-nowrap">
+									{selectedItems.size} item{selectedItems.size > 1 ? "s" : ""} selected
+								</span>
+								<div className="flex items-center gap-1 flex-wrap justify-center">
 									<Button
 										variant="ghost"
 										className="text-white text-sm gap-2"
