@@ -26,9 +26,7 @@ export function FileShareModal({ isOpen, onClose, onComplete, contacts }: Readon
 	const [input, setInput] = useState("");
 	const [isPublicModalOpen, setIsPublicModalOpen] = useState(false);
 
-	const contact = useMemo(() => {
-		return contacts.find((contact) => contact.name === input);
-	}, [contacts, input]);
+	const contact = contacts.find((contact) => contact.name === input);
 
 	return (
 		<Dialog
