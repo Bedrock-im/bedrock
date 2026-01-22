@@ -19,6 +19,7 @@ export type FileCategory =
 	| "pdf"
 	| "document"
 	| "docx"
+	| "odt"
 	| "spreadsheet"
 	| "xlsx"
 	| "presentation"
@@ -136,7 +137,7 @@ const textExtensions = new Set([
 
 const spreadsheetExtensions = new Set(["xls", "xlsx", "ods", "csv", "tsv", "numbers"]);
 
-const presentationExtensions = new Set(["ppt", "pptx", "odp", "key"]);
+const presentationExtensions = new Set(["pptx"]);
 
 const archiveExtensions = new Set([
 	"zip",
@@ -194,15 +195,6 @@ export function getFileTypeInfo(filename: string): FileTypeInfo {
 		};
 	}
 
-	/*	if (codeExtensions.has(extension)) {
-		return {
-			category: "code",
-			mimeType: getMimeType(extension),
-			icon: FileCode,
-			canPreview: true,
-		};
-	}*/
-
 	if (textExtensions.has(extension)) {
 		return {
 			category: "text",
@@ -225,6 +217,15 @@ export function getFileTypeInfo(filename: string): FileTypeInfo {
 		return {
 			category: "docx",
 			mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+			icon: FileText,
+			canPreview: true,
+		};
+	}
+
+	if (extension === "odt") {
+		return {
+			category: "odt",
+			mimeType: "application/vnd.oasis.opendocument.text",
 			icon: FileText,
 			canPreview: true,
 		};
@@ -253,7 +254,7 @@ export function getFileTypeInfo(filename: string): FileTypeInfo {
 			category: "presentation",
 			mimeType: getMimeType(extension),
 			icon: Presentation,
-			canPreview: false,
+			canPreview: true,
 		};
 	}
 
