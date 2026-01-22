@@ -6,48 +6,63 @@ export interface PandocConversionResult {
 }
 
 export async function convertToMarkdown(file: File): Promise<string> {
-	const formData = new FormData();
-	formData.append("file", file);
-	formData.append("action", "to-markdown");
-
-	const response = await fetch("/api/pandoc", {
-		method: "POST",
-		body: formData,
-	});
-
-	if (!response.ok) {
-		const error = await response.json().catch(() => ({ error: "Unknown error" }));
-		throw new Error(error.error || `Failed to convert to markdown: ${response.statusText}`);
-	}
-
-	return await response.text();
+	const markdownBlob = await convertFile(file, "md");
+	return await markdownBlob.text();
 }
+
+export async function convertFile(file: File, outputFormat: string): Promise<Blob> {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("outputFormat", outputFormat);
+ 
+    const response = await fetch("/api/pandoc", {
+       method: "POST",
+       body: formData,
+    });
+ 
+    if (!response.ok) {
+       const data = await response.json().catch(() => ({}));
+       throw new Error(data.error || `Conversion failed: ${response.statusText}`);
+    }
+ 
+    return await response.blob();
+ }
 
 export async function convertFromMarkdown(
 	markdownContent: string,
 	originalFilename: string,
+	originalFileType?: string,
 ): Promise<Blob> {
-	const formData = new FormData();
 	const markdownBlob = new Blob([markdownContent], { type: "text/markdown" });
 	const markdownFile = new File([markdownBlob], "content.md", { type: "text/markdown" });
 
-	formData.append("file", markdownFile);
-	formData.append("action", "from-markdown");
-
-	const extension = getFileExtension(originalFilename);
-	formData.append("targetFormat", extension);
-
-	const response = await fetch("/api/pandoc", {
-		method: "POST",
-		body: formData,
-	});
-
-	if (!response.ok) {
-		const error = await response.json().catch(() => ({ error: "Unknown error" }));
-		throw new Error(error.error || `Failed to convert from markdown: ${response.statusText}`);
+	let extension = getFileExtension(originalFilename);
+	
+	// If no extension found, try to infer from MIME type
+	if (!extension && originalFileType) {
+		const mimeToExt: Record<string, string> = {
+			"application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+			"application/msword": "doc",
+			"application/vnd.oasis.opendocument.text": "odt",
+			"application/rtf": "rtf",
+			"text/html": "html",
+			"text/htm": "html",
+			"application/pdf": "pdf",
+			"application/epub+zip": "epub",
+			"application/x-tex": "tex",
+			"application/x-latex": "latex",
+			"application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
+			"application/vnd.ms-powerpoint": "ppt",
+			"application/vnd.oasis.opendocument.presentation": "odp",
+		};
+		extension = mimeToExt[originalFileType];
+	}
+	
+	if (!extension) {
+		throw new Error(`Cannot determine output format from filename: "${originalFilename}". Please ensure the file has a valid extension (e.g., .docx, .odt, .rtf).`);
 	}
 
-	return await response.blob();
+	return await convertFile(markdownFile, extension);
 }
 
 export function canConvertWithPandoc(filename: string): boolean {

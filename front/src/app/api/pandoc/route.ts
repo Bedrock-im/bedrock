@@ -8,115 +8,104 @@ import { tmpdir } from "os";
 const execAsync = promisify(exec);
 
 export async function POST(request: NextRequest) {
-	try {
-		const formData = await request.formData();
-		const file = formData.get("file") as File;
-		const action = formData.get("action") as string; // "to-markdown" or "from-markdown"
-		const targetFormat = formData.get("targetFormat") as string; // original file extension
+  const tempFiles: string[] = [];
 
-		if (!file || !action) {
-			return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-		}
+  try {
+    const formData = await request.formData();
+    const file = formData.get("file") as File;
+    const outputFormat = formData.get("outputFormat") as string;
 
-		const arrayBuffer = await file.arrayBuffer();
-		const buffer = Buffer.from(arrayBuffer);
+    if (!file || !outputFormat) {
+      return NextResponse.json(
+        { error: "Missing file or outputFormat" },
+        { status: 400 }
+      );
+    }
 
-		const tempDir = tmpdir();
-		const inputExt = action === "to-markdown" ? getFileExtension(file.name) : "md";
-		const outputExt = action === "to-markdown" ? "md" : targetFormat || getFileExtension(file.name);
-		const inputFile = join(tempDir, `input-${Date.now()}.${inputExt}`);
-		const outputFile = join(tempDir, `output-${Date.now()}.${outputExt}`);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const tempDir = tmpdir();
+    
+    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+    const inputExt = getFileExtension(safeName);
+    
+    if (!inputExt) {
+      return NextResponse.json(
+        { error: "Cannot determine input file format from filename" },
+        { status: 400 }
+      );
+    }
+    
+    const inputFile = join(tempDir, `input-${Date.now()}.${inputExt}`);
+    const outputFile = join(tempDir, `output-${Date.now()}.${outputFormat}`);
 
-		try {
-			await writeFile(inputFile, buffer);
-			let command: string;
-			if (action === "to-markdown") {
-				command = `pandoc "${inputFile}" -t markdown -o "${outputFile}"`;
-			} else {
-				command = `pandoc "${inputFile}" -f markdown -t ${getPandocFormat(outputExt)} -o "${outputFile}"`;
-			}
-			try {
-				await execAsync(command, { timeout: 30000 }); // 30 second timeout
-			} catch (execError: any) {
-				// Check if pandoc is not found
-				if (execError.code === 127 || execError.message?.includes("pandoc: not found")) {
-					throw new Error("Pandoc is not installed on the server. Please install pandoc to use this feature.");
-				}
-				throw execError;
-			}
-			const outputBuffer = await readFile(outputFile);
-			await unlink(inputFile).catch(() => {});
-			await unlink(outputFile).catch(() => {});
-			return new NextResponse(outputBuffer, {
-				headers: {
-					"Content-Type": action === "to-markdown" ? "text/markdown" : getMimeType(outputExt),
-					"Content-Disposition": `attachment; filename="converted.${outputExt}"`,
-				},
-			});
-		} catch (error) {
-			// Clean up on error
-			await unlink(inputFile).catch(() => {});
-			await unlink(outputFile).catch(() => {});
+    tempFiles.push(inputFile, outputFile);
+    await writeFile(inputFile, buffer);
 
-			console.error("Pandoc conversion error:", error);
-			return NextResponse.json(
-				{ error: `Pandoc conversion failed: ${error instanceof Error ? error.message : String(error)}` },
-				{ status: 500 },
-			);
-		}
-	} catch (error) {
-		console.error("API route error:", error);
-		return NextResponse.json(
-			{ error: error instanceof Error ? error.message : "Internal server error" },
-			{ status: 500 },
-		);
-	}
+
+    let command = `pandoc "${inputFile}" -o "${outputFile}"`;
+
+    // Determine input format from file extension
+    const isInputMarkdown = inputExt === "md" || inputExt === "markdown";
+    
+    if (outputFormat === "html") {
+        // Embed images for HTML preview so they don't break
+        command += ` --standalone --embed-resources --metadata title="Preview"`;
+        if (isInputMarkdown) {
+            command += ` -f markdown`;
+        }
+    } else if (outputFormat === "md" || outputFormat === "markdown") {
+        // Converting TO markdown - specify markdown output format
+        command += ` -t markdown_strict+pipe_tables+backtick_code_blocks --wrap=none`;
+    } else {
+        // Converting FROM markdown TO other formats (docx, odt, etc.)
+        if (isInputMarkdown) {
+            command += ` -f markdown`;
+        }
+        // Pandoc will auto-detect input format if not markdown
+    }
+
+    try {
+      await execAsync(command, { timeout: 30000 });
+    } catch (execError: any) {
+      console.error("Pandoc execution failed:", execError);
+      if (execError.code === 127) {
+        throw new Error("Pandoc not found on server");
+      }
+      throw new Error("Conversion failed");
+    }
+
+    const outputBuffer = await readFile(outputFile);
+
+    return new NextResponse(outputBuffer, {
+      headers: {
+        "Content-Type": getMimeType(outputFormat),
+        "Content-Disposition": `attachment; filename="converted.${outputFormat}"`,
+      },
+    });
+
+  } catch (error) {
+    console.error("API error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal Server Error" },
+      { status: 500 }
+    );
+  } finally {
+    // Cleanup temp files
+    await Promise.all(tempFiles.map(f => unlink(f).catch(() => {})));
+  }
 }
 
 function getFileExtension(filename: string): string {
-	const parts = filename.split(".");
-	if (parts.length < 2) return "";
-	return parts[parts.length - 1].toLowerCase();
-}
-
-function getPandocFormat(extension: string): string {
-	const formatMap: Record<string, string> = {
-		docx: "docx",
-		doc: "docx",
-		odt: "odt",
-		rtf: "rtf",
-		html: "html",
-		htm: "html",
-		pdf: "pdf",
-		epub: "epub",
-		tex: "latex",
-		latex: "latex",
-		pptx: "pptx",
-		ppt: "pptx",
-		odp: "odp",
-	};
-
-	return formatMap[extension.toLowerCase()] || extension.toLowerCase();
+  return filename.split(".").pop()?.toLowerCase() || "";
 }
 
 function getMimeType(extension: string): string {
-	const mimeTypes: Record<string, string> = {
-		docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-		doc: "application/msword",
-		odt: "application/vnd.oasis.opendocument.text",
-		rtf: "application/rtf",
-		html: "text/html",
-		htm: "text/html",
-		pdf: "application/pdf",
-		epub: "application/epub+zip",
-		tex: "application/x-tex",
-		latex: "application/x-latex",
-		pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-		ppt: "application/vnd.ms-powerpoint",
-		odp: "application/vnd.oasis.opendocument.presentation",
-		md: "text/markdown",
-	};
-
-	return mimeTypes[extension.toLowerCase()] || "application/octet-stream";
+  const map: Record<string, string> = {
+    html: "text/html",
+    md: "text/markdown",
+    markdown: "text/markdown",
+    odt: "application/vnd.oasis.opendocument.text",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  };
+  return map[extension] || "application/octet-stream";
 }
-
