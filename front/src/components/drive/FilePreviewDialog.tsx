@@ -6,10 +6,10 @@ import { toast } from "sonner";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { canConvertWithPandoc } from "@/services/pandoc";
 import { useAccountStore } from "@/stores/account";
 import { DriveFile, useDriveStore } from "@/stores/drive";
 import { getFileTypeInfo } from "@/utils/file-types";
-import { canConvertWithPandoc } from "@/services/pandoc";
 
 import AudioPreview from "./previews/AudioPreview";
 import CodePreview from "./previews/CodePreview";
@@ -29,13 +29,21 @@ interface FilePreviewDialogProps {
 	onDownload?: () => void;
 }
 
-export default function FilePreviewDialog({ file, isOpen, onClose, onDownload }: FilePreviewDialogProps) {
+export default function FilePreviewDialog({
+																						file,
+																						isOpen,
+																						onClose,
+																						onDownload
+																					}: FilePreviewDialogProps) {
 	const [fileContent, setFileContent] = useState<Blob | null>(null);
 	const [fileUrl, setFileUrl] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const { bedrockClient } = useAccountStore();
-	const { setFiles, files } = useDriveStore();
+	const {
+		setFiles,
+		files
+	} = useDriveStore();
 	const loadingRef = useRef<string | null>(null);
 	const loadedFileRef = useRef<string | null>(null);
 
@@ -116,7 +124,6 @@ export default function FilePreviewDialog({ file, isOpen, onClose, onDownload }:
 		})();
 	}, [file, isOpen, bedrockClient, fileTypeInfo]);
 
-
 	const handleSaveEdit = async (editedFile: File) => {
 		if (!bedrockClient || !file) {
 			toast.error("Bedrock client not available");
@@ -127,45 +134,30 @@ export default function FilePreviewDialog({ file, isOpen, onClose, onDownload }:
 			const arrayBuffer = await editedFile.arrayBuffer();
 			const buffer = Buffer.from(arrayBuffer);
 
-			const pathParts = file.path.split("/");
-			pathParts.pop();
-			const directory = pathParts.length > 0 ? pathParts.join("/") : "/";
+			const uploadPromise = bedrockClient.files.editFileContent(file, buffer);
 
-			const uploadPromise = bedrockClient.files.uploadFiles(
-				[
-					{
-						name: file.name,
-						path: file.path,
-						content: buffer,
-					},
-				],
-				directory,
-			);
+			Buffer.from("Bonjour", "ascii");
 
 			toast.promise(uploadPromise, {
 				loading: "Saving file...",
 				success: "File saved successfully",
-				error: (err) => `Failed to save file: ${err}`,
+				error: (err) => `Failed to save file: ${err}`
 			});
 
-			const uploadedFiles = await uploadPromise;
-			
+			const updatedFile = await uploadPromise;
+
 			// Update the file in the store instead of creating a new one
-			if (uploadedFiles && uploadedFiles.length > 0) {
-				const updatedFile = uploadedFiles[0];
-				setFiles(
-					files.map((f) =>
-						f.path === file.path
-							? {
-									...updatedFile,
-									shared_keys: updatedFile.shared_keys ?? f.shared_keys ?? {},
-									content: buffer, // Keep the content in memory
-								}
-							: f,
-					),
-				);
-			}
-			
+			setFiles(
+				files.map((f) =>
+					f.path === file.path
+						? {
+							...updatedFile,
+							content: buffer // Keep the content in memory
+						}
+						: f
+				)
+			);
+
 			loadedFileRef.current = null;
 			setFileContent(null);
 			setFileUrl(null);
@@ -194,78 +186,58 @@ export default function FilePreviewDialog({ file, isOpen, onClose, onDownload }:
 
 				<div className="flex-1 min-h-0 overflow-hidden">
 					<ScrollArea className="h-full px-6 py-4">
-							{isLoading ? (
-								<div className="flex items-center justify-center h-64">
-									<Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-									<span className="ml-2 text-muted-foreground">Loading file...</span>
+						{isLoading ? (
+							<div className="flex items-center justify-center h-64">
+								<Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+								<span className="ml-2 text-muted-foreground">Loading file...</span>
+							</div>
+						) : error ? (
+							<div className="flex items-center justify-center h-64">
+								<div className="text-center">
+									<p className="text-destructive font-medium">Error loading file</p>
+									<p className="text-sm text-muted-foreground mt-2">{error}</p>
 								</div>
-							) : error ? (
-								<div className="flex items-center justify-center h-64">
-									<div className="text-center">
-										<p className="text-destructive font-medium">Error loading file</p>
-										<p className="text-sm text-muted-foreground mt-2">{error}</p>
-									</div>
-								</div>
-							) : fileUrl && fileContent ? (
-								<>
-									{fileTypeInfo.category === "image" && <ImagePreview fileUrl={fileUrl} filename={filename} />}
-									{fileTypeInfo.category === "video" && (
-										<VideoPreview fileUrl={fileUrl} mimeType={fileTypeInfo.mimeType} />
-									)}
-									{fileTypeInfo.category === "audio" && (
-										<AudioPreview fileUrl={fileUrl} mimeType={fileTypeInfo.mimeType} filename={filename} />
-									)}
-									{fileTypeInfo.category === "pdf" && (
-										<PDFPreview 
-											fileUrl={fileUrl} 
-											filename={filename}
-											onSave={canEdit ? handleSaveEdit : undefined}
-										/>
-									)}
-									{fileTypeInfo.category === "docx" && (
-										<DocxPreview 
-											fileUrl={fileUrl} 
-											filename={filename} 
-											onSave={canEdit ? handleSaveEdit : undefined}
-										/>
-									)}
-									{fileTypeInfo.category === "odt" && (
-										<OdtPreview 
-											fileUrl={fileUrl} 
-											filename={filename} 
-											onSave={canEdit ? handleSaveEdit : undefined}
-										/>
-									)}
-									{fileTypeInfo.category === "presentation" && (
-										<PptxPreview 
-											fileUrl={fileUrl} 
-											filename={filename}
-											onSave={canEdit ? handleSaveEdit : undefined}
-										/>
-									)}
-									{fileTypeInfo.category === "xlsx" && (
-										<XlsxPreview 
-											fileUrl={fileUrl} 
-											filename={filename}
-											onSave={undefined}
-										/>
-									)}
-									{(fileTypeInfo.category === "text" || fileTypeInfo.category === "code") && (
-										<CodePreview 
-											fileUrl={fileUrl} 
-											filename={filename} 
-											category={fileTypeInfo.category}
-											onSave={handleSaveEdit}
-										/>
-									)}
-									{!fileTypeInfo.canPreview && (
-										<UnsupportedPreview filename={filename} fileType={fileTypeInfo.category} />
-									)}
-								</>
-							) : (
-								<UnsupportedPreview filename={filename} fileType={fileTypeInfo.category} />
-							)}
-						</ScrollArea>
+							</div>
+						) : fileUrl && fileContent ? (
+							<>
+								{fileTypeInfo.category === "image" && <ImagePreview fileUrl={fileUrl} filename={filename} />}
+								{fileTypeInfo.category === "video" && (
+									<VideoPreview fileUrl={fileUrl} mimeType={fileTypeInfo.mimeType} />
+								)}
+								{fileTypeInfo.category === "audio" && (
+									<AudioPreview fileUrl={fileUrl} mimeType={fileTypeInfo.mimeType} filename={filename} />
+								)}
+								{fileTypeInfo.category === "pdf" && (
+									<PDFPreview fileUrl={fileUrl} filename={filename} onSave={canEdit ? handleSaveEdit : undefined} />
+								)}
+								{fileTypeInfo.category === "docx" && (
+									<DocxPreview fileUrl={fileUrl} filename={filename} onSave={canEdit ? handleSaveEdit : undefined} />
+								)}
+								{fileTypeInfo.category === "odt" && (
+									<OdtPreview fileUrl={fileUrl} filename={filename} onSave={canEdit ? handleSaveEdit : undefined} />
+								)}
+								{fileTypeInfo.category === "presentation" && (
+									<PptxPreview fileUrl={fileUrl} filename={filename} onSave={canEdit ? handleSaveEdit : undefined} />
+								)}
+								{fileTypeInfo.category === "xlsx" && (
+									<XlsxPreview fileUrl={fileUrl} filename={filename} onSave={undefined} />
+								)}
+								{(fileTypeInfo.category === "text" || fileTypeInfo.category === "code") && (
+									<CodePreview
+										fileUrl={fileUrl}
+										filename={filename}
+										category={fileTypeInfo.category}
+										onSave={handleSaveEdit}
+									/>
+								)}
+								{!fileTypeInfo.canPreview && (
+									<UnsupportedPreview filename={filename} fileType={fileTypeInfo.category} />
+								)}
+							</>
+						) : (
+							<UnsupportedPreview filename={filename} fileType={fileTypeInfo.category} />
+						)}
+					</ScrollArea>
 				</div>
 			</DialogContent>
 		</Dialog>
