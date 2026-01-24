@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Loader2, FileSpreadsheet } from "lucide-react";
+import { useEffect, useState } from "react";
 import * as XLSXLib from "xlsx";
 
 interface XlsxPreviewProps {

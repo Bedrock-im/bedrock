@@ -283,10 +283,18 @@ const FileList: React.FC<FileListProps> = ({
 
 		if (!folder) {
 			moveFile(path, newPath);
-			bedrockClient?.files.moveFiles([{ oldPath: path, newPath: newPath }]);
+			bedrockClient?.files.moveFiles([
+				{
+					oldPath: path,
+					newPath: newPath,
+				},
+			]);
 		} else {
 			const filesToMove = moveFolder(path, newPath);
-			const paths = filesToMove.map(([oldFile, newFile]) => ({ oldPath: oldFile.path, newPath: newFile.path }));
+			const paths = filesToMove.map(([oldFile, newFile]) => ({
+				oldPath: oldFile.path,
+				newPath: newFile.path,
+			}));
 
 			bedrockClient?.files.moveFiles(paths);
 		}
@@ -367,10 +375,18 @@ const FileList: React.FC<FileListProps> = ({
 
 		if (!folder) {
 			moveFile(path, newPath);
-			bedrockClient?.files.moveFiles([{ oldPath: path, newPath }]);
+			bedrockClient?.files.moveFiles([
+				{
+					oldPath: path,
+					newPath,
+				},
+			]);
 		} else {
 			const filesToMove = moveFolder(path, newPath);
-			const paths = filesToMove.map(([oldFile, newFile]) => ({ oldPath: oldFile.path, newPath: newFile.path }));
+			const paths = filesToMove.map(([oldFile, newFile]) => ({
+				oldPath: oldFile.path,
+				newPath: newFile.path,
+			}));
 
 			bedrockClient?.files.moveFiles(paths);
 		}
@@ -485,7 +501,12 @@ const FileList: React.FC<FileListProps> = ({
 		if (draggedPath !== targetFolderPath) {
 			const newPath = `${targetFolderPath}/${draggedPath.split("/").pop()}`;
 			moveFile(draggedPath, newPath);
-			bedrockClient?.files.moveFiles([{ oldPath: draggedPath, newPath }]);
+			bedrockClient?.files.moveFiles([
+				{
+					oldPath: draggedPath,
+					newPath,
+				},
+			]);
 		}
 	};
 
@@ -626,7 +647,13 @@ const FileList: React.FC<FileListProps> = ({
 											actions.includes("hardDelete") ? () => handleHardDelete(folder.path, true) : undefined
 										}
 										onMove={
-											actions.includes("move") ? () => setFileToMove({ path: folder.path, folder: true }) : undefined
+											actions.includes("move")
+												? () =>
+														setFileToMove({
+															path: folder.path,
+															folder: true,
+														})
+												: undefined
 										}
 										onRestore={actions.includes("restore") ? () => handleRestoreFile(folder.path) : undefined}
 									/>
@@ -645,7 +672,13 @@ const FileList: React.FC<FileListProps> = ({
 										onShare={actions.includes("share") ? () => setFileToShare(file) : undefined}
 										onRename={actions.includes("rename") ? () => setFileToRename(file) : undefined}
 										onMove={
-											actions.includes("move") ? () => setFileToMove({ path: file.path, folder: false }) : undefined
+											actions.includes("move")
+												? () =>
+														setFileToMove({
+															path: file.path,
+															folder: false,
+														})
+												: undefined
 										}
 										onDelete={actions.includes("delete") ? () => handleSoftDelete(file.path, false) : undefined}
 										onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
@@ -706,7 +739,10 @@ const FileList: React.FC<FileListProps> = ({
 										disabled
 										onClick={() => {
 											selectedItems.forEach((file) => {
-												setFileToMove({ path: file, folder: false });
+												setFileToMove({
+													path: file,
+													folder: false,
+												});
 											});
 										}}
 									>

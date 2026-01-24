@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Loader2, Pencil, Save, X, FileText } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
 import { convertFile } from "@/services/pandoc";
 
 interface PDFPreviewProps {
@@ -16,9 +17,9 @@ interface PDFPreviewProps {
 export default function PDFPreview({ fileUrl, filename, onSave }: PDFPreviewProps) {
 	const [currentFile, setCurrentFile] = useState<File | null>(null);
 	const [viewMode, setViewMode] = useState<"preview" | "edit">("preview");
-	
+
 	const [markdownContent, setMarkdownContent] = useState<string>("");
-	
+
 	const [isLoadingFile, setIsLoadingFile] = useState(true);
 	const [isConverting, setIsConverting] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
@@ -29,7 +30,7 @@ export default function PDFPreview({ fileUrl, filename, onSave }: PDFPreviewProp
 				setIsLoadingFile(true);
 				const res = await fetch(fileUrl);
 				if (!res.ok) throw new Error("Failed to fetch file");
-				
+
 				const blob = await res.blob();
 				const file = new File([blob], filename || "document.pdf", { type: blob.type });
 				setCurrentFile(file);
@@ -46,7 +47,7 @@ export default function PDFPreview({ fileUrl, filename, onSave }: PDFPreviewProp
 
 	const handleEditClick = async () => {
 		if (!currentFile) return;
-		
+
 		setIsConverting(true);
 		try {
 			const mdBlob = await convertFile(currentFile, "md");
@@ -66,17 +67,17 @@ export default function PDFPreview({ fileUrl, filename, onSave }: PDFPreviewProp
 		try {
 			const markdownBlob = new Blob([markdownContent], { type: "text/markdown" });
 			const markdownFile = new File([markdownBlob], "source.md");
-			
-			const originalExt = filename?.split('.').pop() || "pdf";
+
+			const originalExt = filename?.split(".").pop() || "pdf";
 			const newPdfBlob = await convertFile(markdownFile, originalExt);
-			const newPdfFile = new File([newPdfBlob], filename || "document.pdf", { 
-				type: "application/pdf" 
+			const newPdfFile = new File([newPdfBlob], filename || "document.pdf", {
+				type: "application/pdf",
 			});
 
 			setCurrentFile(newPdfFile);
-			
+
 			if (onSave) await onSave(newPdfFile);
-			
+
 			setViewMode("preview");
 			toast.success("File saved successfully");
 		} catch (e) {
@@ -139,7 +140,7 @@ export default function PDFPreview({ fileUrl, filename, onSave }: PDFPreviewProp
 						<iframe src={fileUrl} className="w-full h-full rounded-lg border-0" title="PDF Preview" />
 					</div>
 				) : (
-					<Textarea 
+					<Textarea
 						value={markdownContent}
 						onChange={(e) => setMarkdownContent(e.target.value)}
 						className="w-full h-full min-h-[600px] p-6 font-mono text-sm resize-none border-0 focus-visible:ring-0"

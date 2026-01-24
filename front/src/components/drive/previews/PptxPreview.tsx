@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import JSZip from "jszip";
 import { Presentation, Loader2, Pencil, Save, X, FileText } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
 import { convertFile } from "@/services/pandoc";
-import JSZip from "jszip";
 
 interface PptxPreviewProps {
 	fileUrl: string;
@@ -23,11 +24,11 @@ interface SlideInfo {
 export default function PptxPreview({ fileUrl, filename, onSave }: PptxPreviewProps) {
 	const [currentFile, setCurrentFile] = useState<File | null>(null);
 	const [viewMode, setViewMode] = useState<"preview" | "edit">("preview");
-	
+
 	const [slides, setSlides] = useState<SlideInfo[]>([]);
 	const [currentSlide, setCurrentSlide] = useState(0);
 	const [markdownContent, setMarkdownContent] = useState<string>("");
-	
+
 	const [isLoadingFile, setIsLoadingFile] = useState(true);
 	const [isConverting, setIsConverting] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
@@ -39,11 +40,11 @@ export default function PptxPreview({ fileUrl, filename, onSave }: PptxPreviewPr
 				setIsLoadingFile(true);
 				const res = await fetch(fileUrl);
 				if (!res.ok) throw new Error("Failed to fetch file");
-				
+
 				const blob = await res.blob();
 				const file = new File([blob], filename, { type: blob.type });
 				setCurrentFile(file);
-				
+
 				await loadSlides(file);
 			} catch (error) {
 				toast.error("Failed to load document");
@@ -61,10 +62,8 @@ export default function PptxPreview({ fileUrl, filename, onSave }: PptxPreviewPr
 		try {
 			const arrayBuffer = await file.arrayBuffer();
 			const zip = await JSZip.loadAsync(arrayBuffer);
-			
-			const slideFiles = Object.keys(zip.files).filter((name) =>
-				name.match(/^ppt\/slides\/slide\d+\.xml$/),
-			);
+
+			const slideFiles = Object.keys(zip.files).filter((name) => name.match(/^ppt\/slides\/slide\d+\.xml$/));
 
 			if (slideFiles.length === 0) {
 				throw new Error("No slides found in presentation");
@@ -74,9 +73,7 @@ export default function PptxPreview({ fileUrl, filename, onSave }: PptxPreviewPr
 				slideFiles.map(async (slidePath, index) => {
 					const slideContent = await zip.files[slidePath].async("string");
 					const textMatch = slideContent.match(/<a:t[^>]*>([^<]*)<\/a:t>/g);
-					const texts = textMatch
-						? textMatch.map((match) => match.replace(/<[^>]*>/g, "").trim()).filter(Boolean)
-						: [];
+					const texts = textMatch ? textMatch.map((match) => match.replace(/<[^>]*>/g, "").trim()).filter(Boolean) : [];
 					const title = texts[0] || `Slide ${index + 1}`;
 					const content = texts.slice(1).join(" ") || "No content";
 
@@ -97,7 +94,7 @@ export default function PptxPreview({ fileUrl, filename, onSave }: PptxPreviewPr
 
 	const handleEditClick = async () => {
 		if (!currentFile) return;
-		
+
 		setIsConverting(true);
 		try {
 			const mdBlob = await convertFile(currentFile, "md");
@@ -117,18 +114,18 @@ export default function PptxPreview({ fileUrl, filename, onSave }: PptxPreviewPr
 		try {
 			const markdownBlob = new Blob([markdownContent], { type: "text/markdown" });
 			const markdownFile = new File([markdownBlob], "source.md");
-			
-			const originalExt = filename.split('.').pop() || "pptx";
+
+			const originalExt = filename.split(".").pop() || "pptx";
 			const newPptxBlob = await convertFile(markdownFile, originalExt);
-			const newPptxFile = new File([newPptxBlob], filename, { 
-				type: "application/vnd.openxmlformats-officedocument.presentationml.presentation" 
+			const newPptxFile = new File([newPptxBlob], filename, {
+				type: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 			});
 
 			setCurrentFile(newPptxFile);
 			await loadSlides(newPptxFile);
-			
+
 			if (onSave) await onSave(newPptxFile);
-			
+
 			setViewMode("preview");
 			toast.success("File saved successfully");
 		} catch (e) {
@@ -168,7 +165,8 @@ export default function PptxPreview({ fileUrl, filename, onSave }: PptxPreviewPr
 						<h3 className="text-lg font-semibold mb-2">PowerPoint Presentation</h3>
 						<p className="text-sm text-muted-foreground mb-4">{filename}</p>
 						<p className="text-sm text-muted-foreground">
-							{error || "Unable to preview this presentation. Please download the file to view it in Microsoft PowerPoint or another presentation application."}
+							{error ||
+								"Unable to preview this presentation. Please download the file to view it in Microsoft PowerPoint or another presentation application."}
 						</p>
 					</div>
 				</div>
@@ -244,7 +242,7 @@ export default function PptxPreview({ fileUrl, filename, onSave }: PptxPreviewPr
 						</div>
 					</div>
 				) : (
-					<Textarea 
+					<Textarea
 						value={markdownContent}
 						onChange={(e) => setMarkdownContent(e.target.value)}
 						className="w-full h-full min-h-[600px] p-6 font-mono text-sm resize-none border-0 focus-visible:ring-0"

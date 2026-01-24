@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { Save, X } from "lucide-react";
+import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -13,11 +14,7 @@ interface EditableTextPreviewProps {
 	onCancel: () => void;
 }
 
-export default function EditableTextPreview({
-	initialContent,
-	onSave,
-	onCancel,
-}: EditableTextPreviewProps) {
+export default function EditableTextPreview({ initialContent, onSave, onCancel }: EditableTextPreviewProps) {
 	const [content, setContent] = useState(initialContent);
 	const [isSaving, setIsSaving] = useState(false);
 
@@ -53,5 +50,3 @@ export default function EditableTextPreview({
 		</div>
 	);
 }
-
-
