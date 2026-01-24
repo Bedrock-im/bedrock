@@ -52,15 +52,6 @@ export default function FilePreviewDialog({
 	}, [file]);
 
 	useEffect(() => {
-		return () => {
-			if (fileUrl) {
-				URL.revokeObjectURL(fileUrl);
-				setFileUrl(null);
-			}
-		};
-	}, [fileUrl]);
-
-	useEffect(() => {
 		if (!isOpen || !file) {
 			setFileContent(null);
 			setFileUrl(null);
@@ -156,9 +147,12 @@ export default function FilePreviewDialog({
 				)
 			);
 
-			loadedFileRef.current = null;
-			setFileContent(null);
-			setFileUrl(null);
+			// @ts-expect-error - Type mismatch between Node Buffer and Web ArrayBuffer
+			const blob = new Blob([buffer], { type: fileTypeInfo.mimeType });
+
+			const url = URL.createObjectURL(blob);
+			if (fileUrl) URL.revokeObjectURL(fileUrl);
+			setFileUrl(url);
 		} catch (err) {
 			console.error("Failed to save file:", err);
 			toast.error(`Failed to save file: ${err instanceof Error ? err.message : String(err)}`);
@@ -174,6 +168,8 @@ export default function FilePreviewDialog({
 	}
 
 	const filename = file.path.split("/").pop() || file.path;
+
+	console.log("fileUrl:", fileUrl, "fileContent", fileContent, "fileTypeInfo:", fileTypeInfo);
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
