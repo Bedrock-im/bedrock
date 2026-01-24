@@ -136,8 +136,6 @@ export default function FilePreviewDialog({
 
 			const uploadPromise = bedrockClient.files.editFileContent(file, buffer);
 
-			Buffer.from("Bonjour", "ascii");
-
 			toast.promise(uploadPromise, {
 				loading: "Saving file...",
 				success: "File saved successfully",
