@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Loader2, Pencil, Save, X, FileText } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
 import { convertFile } from "@/services/pandoc";
 
 interface DocxPreviewProps {
@@ -16,10 +17,10 @@ interface DocxPreviewProps {
 export default function DocxPreview({ fileUrl, filename, onSave }: DocxPreviewProps) {
 	const [currentFile, setCurrentFile] = useState<File | null>(null);
 	const [viewMode, setViewMode] = useState<"preview" | "edit">("preview");
-	
+
 	const [htmlContent, setHtmlContent] = useState<string>("");
 	const [markdownContent, setMarkdownContent] = useState<string>("");
-	
+
 	const [isLoadingFile, setIsLoadingFile] = useState(true);
 	const [isConverting, setIsConverting] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
@@ -30,11 +31,11 @@ export default function DocxPreview({ fileUrl, filename, onSave }: DocxPreviewPr
 				setIsLoadingFile(true);
 				const res = await fetch(fileUrl);
 				if (!res.ok) throw new Error("Failed to fetch file");
-				
+
 				const blob = await res.blob();
 				const file = new File([blob], filename, { type: blob.type });
 				setCurrentFile(file);
-				
+
 				// Initial Preview (DOCX -> HTML)
 				await generateHtmlPreview(file);
 			} catch (error) {
@@ -61,7 +62,7 @@ export default function DocxPreview({ fileUrl, filename, onSave }: DocxPreviewPr
 
 	const handleEditClick = async () => {
 		if (!currentFile) return;
-		
+
 		setIsConverting(true);
 		try {
 			const mdBlob = await convertFile(currentFile, "md");
@@ -81,19 +82,19 @@ export default function DocxPreview({ fileUrl, filename, onSave }: DocxPreviewPr
 		try {
 			const markdownBlob = new Blob([markdownContent], { type: "text/markdown" });
 			const markdownFile = new File([markdownBlob], "source.md");
-			
-			const originalExt = filename.split('.').pop() || "docx";
+
+			const originalExt = filename.split(".").pop() || "docx";
 			const newDocxBlob = await convertFile(markdownFile, originalExt);
-			const newDocxFile = new File([newDocxBlob], filename, { 
-				type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+			const newDocxFile = new File([newDocxBlob], filename, {
+				type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 			});
 
 			setCurrentFile(newDocxFile);
-			
+
 			await generateHtmlPreview(newDocxFile);
-			
+
 			if (onSave) await onSave(newDocxFile);
-			
+
 			setViewMode("preview");
 			toast.success("File saved successfully");
 		} catch (e) {
@@ -156,7 +157,7 @@ export default function DocxPreview({ fileUrl, filename, onSave }: DocxPreviewPr
 						<div dangerouslySetInnerHTML={{ __html: htmlContent }} />
 					</div>
 				) : (
-					<Textarea 
+					<Textarea
 						value={markdownContent}
 						onChange={(e) => setMarkdownContent(e.target.value)}
 						className="w-full h-full min-h-[600px] p-6 font-mono text-sm resize-none border-0 focus-visible:ring-0"

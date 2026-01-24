@@ -11,22 +11,22 @@ export async function convertToMarkdown(file: File): Promise<string> {
 }
 
 export async function convertFile(file: File, outputFormat: string): Promise<Blob> {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("outputFormat", outputFormat);
- 
-    const response = await fetch("/api/pandoc", {
-       method: "POST",
-       body: formData,
-    });
- 
-    if (!response.ok) {
-       const data = await response.json().catch(() => ({}));
-       throw new Error(data.error || `Conversion failed: ${response.statusText}`);
-    }
- 
-    return await response.blob();
- }
+	const formData = new FormData();
+	formData.append("file", file);
+	formData.append("outputFormat", outputFormat);
+
+	const response = await fetch("/api/pandoc", {
+		method: "POST",
+		body: formData,
+	});
+
+	if (!response.ok) {
+		const data = await response.json().catch(() => ({}));
+		throw new Error(data.error || `Conversion failed: ${response.statusText}`);
+	}
+
+	return await response.blob();
+}
 
 export async function convertFromMarkdown(
 	markdownContent: string,
@@ -37,7 +37,7 @@ export async function convertFromMarkdown(
 	const markdownFile = new File([markdownBlob], "content.md", { type: "text/markdown" });
 
 	let extension = getFileExtension(originalFilename);
-	
+
 	// If no extension found, try to infer from MIME type
 	if (!extension && originalFileType) {
 		const mimeToExt: Record<string, string> = {
@@ -57,9 +57,11 @@ export async function convertFromMarkdown(
 		};
 		extension = mimeToExt[originalFileType];
 	}
-	
+
 	if (!extension) {
-		throw new Error(`Cannot determine output format from filename: "${originalFilename}". Please ensure the file has a valid extension (e.g., .docx, .odt, .rtf).`);
+		throw new Error(
+			`Cannot determine output format from filename: "${originalFilename}". Please ensure the file has a valid extension (e.g., .docx, .odt, .rtf).`,
+		);
 	}
 
 	return await convertFile(markdownFile, extension);
@@ -83,7 +85,7 @@ export function canConvertWithPandoc(filename: string): boolean {
 		"odp",
 		"md",
 		"markdown",
-        "",
+		"",
 	]);
 
 	return supportedFormats.has(extension.toLowerCase());
@@ -94,6 +96,3 @@ function getFileExtension(filename: string): string {
 	if (parts.length < 2) return "";
 	return parts[parts.length - 1].toLowerCase();
 }
-
-
-

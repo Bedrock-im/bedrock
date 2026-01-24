@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Loader2, Pencil, Save, X, FileText } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
 
 interface CodePreviewProps {
 	fileUrl: string;
@@ -49,7 +50,7 @@ export default function CodePreview({ fileUrl, filename, category, onSave }: Cod
 
 	const handleSave = async () => {
 		if (!onSave) return;
-		
+
 		setIsSaving(true);
 		try {
 			const blob = new Blob([content], { type: "text/plain" });
@@ -119,9 +120,7 @@ export default function CodePreview({ fileUrl, filename, category, onSave }: Cod
 					</div>
 					<div>
 						<h3 className="font-medium text-sm">{filename}</h3>
-						<p className="text-xs text-muted-foreground">
-							{viewMode === "preview" ? "Read-only Preview" : "Editor"}
-						</p>
+						<p className="text-xs text-muted-foreground">{viewMode === "preview" ? "Read-only Preview" : "Editor"}</p>
 					</div>
 				</div>
 
@@ -157,7 +156,7 @@ export default function CodePreview({ fileUrl, filename, category, onSave }: Cod
 						<code className="block">{content}</code>
 					</pre>
 				) : (
-					<Textarea 
+					<Textarea
 						value={content}
 						onChange={(e) => setContent(e.target.value)}
 						className="w-full h-full min-h-[600px] p-6 font-mono text-sm resize-none border-0 focus-visible:ring-0"
