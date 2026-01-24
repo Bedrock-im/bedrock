@@ -169,8 +169,6 @@ export default function FilePreviewDialog({
 
 	const filename = file.path.split("/").pop() || file.path;
 
-	console.log("fileUrl:", fileUrl, "fileContent", fileContent, "fileTypeInfo:", fileTypeInfo);
-
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
 			<DialogContent className="max-w-6xl max-h-[90vh] h-[90vh] w-full p-0 flex flex-col">
