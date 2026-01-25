@@ -70,7 +70,7 @@ export const BedrockSidebar = ({ children }: BedrockSidebarProps) => {
 						<SidebarMenuItem>
 							<SidebarMenuButton size="lg" asChild className="hover:bg-transparent">
 								<Link href="/" className="flex items-center gap-3">
-									<div className="flex aspect-square items-center justify-center rounded-xl shadow-soft">
+									<div className="flex aspect-square items-center justify-center rounded-xl">
 										<Image src="/logo.png" alt="Bedrock Logo" width={48} height={48} />
 									</div>
 									<div className="grid flex-1 text-left leading-tight">

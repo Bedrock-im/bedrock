@@ -80,7 +80,7 @@ export default function Contacts() {
 			<CreateContactDialog isOpen={isDialogOpen} onOpenChange={setIsDialogOpen} createContact={createContact} />
 			<div className="flex items-center m-2 gap-4">
 				<button
-					className="ml-2 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all transform hover:scale-100 scale-90 focus:outline-none focus:ring-4 focus:ring-blue-300 flex items-center justify-center"
+					className="ml-2 bg-purple-600 text-white p-4 rounded-full shadow-lg hover:bg-purple-700 transition-all transform hover:scale-100 scale-90 focus:outline-none focus:ring-4 focus:ring-purple-300 flex items-center justify-center"
 					aria-label="Add"
 					onClick={() => setIsDialogOpen(true)}
 				>
@@ -88,7 +88,7 @@ export default function Contacts() {
 				</button>
 				<div className="w-full">
 					<label htmlFor="sensitive-input" className="block text-sm font-medium mb-2">
-						Your Public key
+						Your Public Key
 					</label>
 					<div className="relative">
 						<Input type="text" id="public-key" value={publicKey} className="pr-10" disabled />
@@ -96,7 +96,7 @@ export default function Contacts() {
 							type="button"
 							variant="ghost"
 							size="icon"
-							className="absolute right-0 top-0 h-full px-2"
+							className="absolute right-0 top-0 h-full px-2 text-muted-foreground"
 							onClick={copyToClipboard}
 							disabled={!publicKey}
 							aria-label="Copy sensitive data to clipboard"

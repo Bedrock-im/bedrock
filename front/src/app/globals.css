@@ -5,81 +5,81 @@
 @layer base {
   :root {
     --background: 0 0% 99%;
-    --foreground: 222 47% 11%;
+    --foreground: 270 30% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 270 30% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 221 83% 53%;
+    --popover-foreground: 270 30% 11%;
+    --primary: 280 67% 50%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    --secondary: 280 30% 96%;
+    --secondary-foreground: 270 30% 11%;
+    --muted: 280 30% 96%;
+    --muted-foreground: 270 16% 47%;
+    --accent: 280 30% 96%;
+    --accent-foreground: 270 30% 11%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
-    --chart-1: 221 83% 53%;
+    --border: 280 20% 91%;
+    --input: 280 20% 91%;
+    --ring: 280 67% 50%;
+    --chart-1: 280 67% 50%;
     --chart-2: 142 76% 36%;
     --chart-3: 38 92% 50%;
-    --chart-4: 280 67% 60%;
+    --chart-4: 320 67% 60%;
     --chart-5: 340 75% 55%;
     --radius: 0.75rem;
     --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 221 83% 53%;
+    --sidebar-foreground: 270 30% 11%;
+    --sidebar-primary: 280 67% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 221 83% 96%;
-    --sidebar-accent-foreground: 221 83% 40%;
-    --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 221 83% 53%;
+    --sidebar-accent: 280 67% 96%;
+    --sidebar-accent-foreground: 280 67% 40%;
+    --sidebar-border: 280 20% 91%;
+    --sidebar-ring: 280 67% 50%;
   }
 
   .dark {
-    --background: 222 47% 5%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 7%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 7%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 5%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --background: 270 30% 5%;
+    --foreground: 280 30% 98%;
+    --card: 270 30% 8%;
+    --card-foreground: 280 30% 98%;
+    --popover: 270 30% 8%;
+    --popover-foreground: 280 30% 98%;
+    --primary: 280 67% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 280 30% 17%;
+    --secondary-foreground: 280 30% 98%;
+    --muted: 280 30% 17%;
+    --muted-foreground: 280 20% 65%;
+    --accent: 280 30% 17%;
+    --accent-foreground: 280 30% 98%;
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
     --success: 142 70% 45%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 217 91% 60%;
-    --chart-1: 217 91% 60%;
+    --border: 280 30% 20%;
+    --input: 280 30% 20%;
+    --ring: 280 67% 60%;
+    --chart-1: 280 67% 60%;
     --chart-2: 142 70% 45%;
     --chart-3: 38 92% 50%;
-    --chart-4: 280 67% 60%;
+    --chart-4: 320 67% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 222 47% 7%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-background: 270 30% 8%;
+    --sidebar-foreground: 280 30% 98%;
+    --sidebar-primary: 280 67% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 217 91% 70%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent: 280 30% 17%;
+    --sidebar-accent-foreground: 280 67% 70%;
+    --sidebar-border: 280 30% 20%;
+    --sidebar-ring: 280 67% 60%;
   }
 }
 
@@ -112,11 +112,11 @@
   }
 
   .gradient-primary {
-    @apply bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700;
+    @apply bg-gradient-to-br from-purple-500 via-purple-600 to-violet-700;
   }
 
   .gradient-accent {
-    @apply bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500;
+    @apply bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500;
   }
 
   .animate-fade-in {

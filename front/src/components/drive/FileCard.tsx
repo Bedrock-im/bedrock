@@ -129,7 +129,7 @@ const FileCard = ({
                                                                 ${
 																																	folder
 																																		? "bg-amber-100 text-amber-600 group-hover:bg-amber-200"
-																																		: "bg-blue-50 text-blue-500 group-hover:bg-blue-100"
+																																		: "bg-purple-50 text-purple-500 group-hover:bg-purple-100"
 																																}
                                                                 ${metadata.deleted_at ? "opacity-50" : ""}
                                                         `}
