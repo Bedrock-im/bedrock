@@ -24,6 +24,7 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components
 import useBedrockFileUploadDropzone from "@/hooks/use-bedrock-file-upload-dropzone";
 import { useAccountStore } from "@/stores/account";
 import { DriveFile, DriveFolder, useDriveStore } from "@/stores/drive";
+import { notNullGuard } from "@/utils/types";
 
 import UploadButton from "./UploadButton";
 
@@ -137,9 +138,15 @@ const FileList: React.FC<FileListProps> = ({
 				const fullFiles = await bedrockClient.files.fetchFilesMetaFromEntries(fileEntries);
 				const contacts = await bedrockClient.contacts.listContacts();
 				const sharedFilesByContacts = await Promise.all(
-					contacts.map((c) => bedrockClient.contacts.fetchFilesSharedByContact(c.public_key)),
+					contacts.map(async (c) => {
+						try {
+							return await bedrockClient.contacts.fetchFilesSharedByContact(c.public_key);
+						} catch (_) {
+							return null;
+						}
+					}),
 				);
-				const sharedFiles = sharedFilesByContacts.flat();
+				const sharedFiles = sharedFilesByContacts.filter(notNullGuard).flat();
 
 				const folderPaths = new Set<string>();
 				const trashFolderPaths = new Set<string>();
