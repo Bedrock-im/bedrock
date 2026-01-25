@@ -29,21 +29,13 @@ interface FilePreviewDialogProps {
 	onDownload?: () => void;
 }
 
-export default function FilePreviewDialog({
-																						file,
-																						isOpen,
-																						onClose,
-																						onDownload
-																					}: FilePreviewDialogProps) {
+export default function FilePreviewDialog({ file, isOpen, onClose, onDownload }: FilePreviewDialogProps) {
 	const [fileContent, setFileContent] = useState<Blob | null>(null);
 	const [fileUrl, setFileUrl] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const { bedrockClient } = useAccountStore();
-	const {
-		setFiles,
-		files
-	} = useDriveStore();
+	const { setFiles, files } = useDriveStore();
 	const loadingRef = useRef<string | null>(null);
 	const loadedFileRef = useRef<string | null>(null);
 
@@ -130,7 +122,7 @@ export default function FilePreviewDialog({
 			toast.promise(uploadPromise, {
 				loading: "Saving file...",
 				success: "File saved successfully",
-				error: (err) => `Failed to save file: ${err}`
+				error: (err) => `Failed to save file: ${err}`,
 			});
 
 			const updatedFile = await uploadPromise;
@@ -140,11 +132,11 @@ export default function FilePreviewDialog({
 				files.map((f) =>
 					f.path === file.path
 						? {
-							...updatedFile,
-							content: buffer // Keep the content in memory
-						}
-						: f
-				)
+								...updatedFile,
+								content: buffer, // Keep the content in memory
+							}
+						: f,
+				),
 			);
 
 			// @ts-expect-error - Type mismatch between Node Buffer and Web ArrayBuffer
