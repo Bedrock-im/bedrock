@@ -535,14 +535,7 @@ const FileList: React.FC<FileListProps> = ({
 					contacts={contacts}
 				/>
 			)}
-			{fileToPreview && (
-				<FilePreviewDialog
-					file={fileToPreview}
-					isOpen={true}
-					onClose={() => setFileToPreview(null)}
-					onDownload={() => handleDownloadFile(fileToPreview)}
-				/>
-			)}
+			{fileToPreview && <FilePreviewDialog file={fileToPreview} isOpen={true} onClose={() => setFileToPreview(null)} />}
 			<FolderCreateModal
 				isOpen={isCreatingFolder}
 				onClose={() => setIsCreatingFolder(false)}

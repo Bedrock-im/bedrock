@@ -7,14 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 interface EditableTextPreviewProps {
-	fileUrl: string;
-	filename: string;
 	initialContent: string;
 	onSave: (content: string) => Promise<void>;
 	onCancel: () => void;
 }
 
-export default function EditableTextPreview({ initialContent, onSave, onCancel }: EditableTextPreviewProps) {
+export default function EditableTextPreview({ initialContent, onSave, onCancel }: Readonly<EditableTextPreviewProps>) {
 	const [content, setContent] = useState(initialContent);
 	const [isSaving, setIsSaving] = useState(false);
 

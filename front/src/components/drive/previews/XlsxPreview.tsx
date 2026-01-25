@@ -1,13 +1,12 @@
 "use client";
 
-import { Loader2, FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet } from "lucide-react";
 import { useEffect, useState } from "react";
 import * as XLSXLib from "xlsx";
 
 interface XlsxPreviewProps {
 	fileUrl: string;
 	filename: string;
-	onSave?: (newFile: File) => Promise<void>;
 }
 
 interface SheetData {
@@ -15,7 +14,7 @@ interface SheetData {
 	data: string[][];
 }
 
-export default function XlsxPreview({ fileUrl, filename, onSave }: XlsxPreviewProps) {
+export default function XlsxPreview({ fileUrl, filename }: Readonly<XlsxPreviewProps>) {
 	const [sheets, setSheets] = useState<SheetData[]>([]);
 	const [activeSheet, setActiveSheet] = useState<string>("");
 	const [isLoading, setIsLoading] = useState(true);
