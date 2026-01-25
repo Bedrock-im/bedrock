@@ -1,15 +1,17 @@
+import { BEDROCK_MESSAGE, BedrockClient } from "bedrock-ts-sdk";
+import { ethers5Adapter } from "thirdweb/adapters/ethers5";
+import { ethereum } from "thirdweb/chains";
 import { Account, Wallet } from "thirdweb/wallets";
 import { create } from "zustand";
 
 import { getAvatarUsernameUsernameAvatarGet, getUsernameAddressGet } from "@/apis/usernames";
 import env from "@/config/env";
-import { AlephService, BEDROCK_MESSAGE } from "@/services/aleph";
-import BedrockService from "@/services/bedrock";
+import { thirdwebClient } from "@/config/thirdweb";
 import { LibertaiService } from "@/services/libertai";
 
 type AccountStoreState = {
 	isConnected: boolean;
-	bedrockService: BedrockService | null;
+	bedrockClient: BedrockClient | null;
 	libertaiService: LibertaiService | null;
 	username: string | null;
 	avatarUrl: string | null;
@@ -24,7 +26,7 @@ type AccountStoreActions = {
 
 export const useAccountStore = create<AccountStoreState & AccountStoreActions>((set, get) => ({
 	isConnected: false,
-	bedrockService: null,
+	bedrockClient: null,
 	libertaiService: null,
 	username: null,
 	avatarUrl: null,
@@ -37,7 +39,7 @@ export const useAccountStore = create<AccountStoreState & AccountStoreActions>((
 			return;
 		}
 
-		let hash: `0x${string}` = "0x";
+		let hash: `0x${string}`;
 
 		const localSignatureKey = `bedrock-signature-${account.address}`;
 
@@ -55,10 +57,6 @@ export const useAccountStore = create<AccountStoreState & AccountStoreActions>((
 			// Always ask for signature, don't store
 			hash = await account.signMessage({ message: BEDROCK_MESSAGE });
 		}
-		const alephService = await AlephService.initialize(hash, wallet);
-		if (alephService === undefined) {
-			return;
-		}
 
 		// Check if user has a username before setting isConnected
 		try {
@@ -66,14 +64,29 @@ export const useAccountStore = create<AccountStoreState & AccountStoreActions>((
 				path: { address: account.address },
 			});
 			const username = result.data?.username;
+			let providerSignature: string | undefined;
+
+			if (!["io.rabby", "io.metamask"].includes(wallet.id)) {
+				// External wallet, generating an additional signature
+				const signer = await ethers5Adapter.signer.toEthers({
+					client: thirdwebClient,
+					chain: ethereum,
+					account: wallet.getAccount()!,
+				});
+				providerSignature = await signer.signMessage("Generating Aleph account...");
+			}
 
 			const libertaiService = new LibertaiService();
-			const bedrockService = new BedrockService(alephService);
-			await bedrockService.setup();
+			const bedrockClient = await BedrockClient.fromSignature(hash, wallet, {
+				apiServer: env.ALEPH_API_URL,
+				channel: env.ALEPH_GENERAL_CHANNEL,
+				// @ts-expect-error typing error
+				providerSignature,
+			});
 
 			// Only mark as connected if a username exists
 			set({
-				bedrockService,
+				bedrockClient,
 				libertaiService,
 				username: username || null,
 				isConnected: Boolean(username), // Only true if username exists
@@ -90,7 +103,7 @@ export const useAccountStore = create<AccountStoreState & AccountStoreActions>((
 	},
 	onDisconnect: () => {
 		set({
-			bedrockService: null,
+			bedrockClient: null,
 			isConnected: false,
 			username: null,
 			avatarUrl: null,
@@ -98,7 +111,7 @@ export const useAccountStore = create<AccountStoreState & AccountStoreActions>((
 	},
 	setUsername: (username) => {
 		const state = get();
-		if (state.bedrockService) {
+		if (state.bedrockClient) {
 			set({ username, isConnected: true });
 			// Fetch avatar when username is set
 			state.fetchAvatar(username);

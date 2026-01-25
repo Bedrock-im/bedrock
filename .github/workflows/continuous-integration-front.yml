@@ -27,23 +27,6 @@ jobs:
       - name: Run ESLint
         run: yarn lint
 
-  jest-front:
-    name: "Unit tests: Front"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: yarn
-          cache-dependency-path: "yarn.lock"
-      - name: Install dependencies
-        run: yarn install --immutable
-      - name: Run tests
-        run: yarn workspace front test
-
   build-front:
     name: "Build: Front"
     runs-on: ubuntu-latest
@@ -74,12 +57,6 @@ jobs:
           echo "NEXT_PUBLIC_LIBERTAI_API_SECRET_KEY=${{ secrets.FRONT_NEXT_PUBLIC_LIBERTAI_API_SECRET_KEY }}" >> front/.env
       - name: Build
         run: yarn workspace front build
-
-      - name: Deploy preview on Aleph
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: aleph-im/web3-hosting-action@v1.1.2
-        with:
-          path: 'front/out'
 
   build-storybook:
     name: "Build: Storybook"

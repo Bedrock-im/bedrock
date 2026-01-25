@@ -1,6 +1,5 @@
+import { Contact, FileFullInfo } from "bedrock-ts-sdk";
 import { create } from "zustand";
-
-import { Contact, FileFullInfos } from "@/services/bedrock";
 
 type DriveStoreState = {
 	files: DriveFile[];
@@ -9,7 +8,7 @@ type DriveStoreState = {
 	contacts: Contact[];
 };
 
-export type DriveFile = FileFullInfos & { content?: Buffer };
+export type DriveFile = FileFullInfo & { content?: Buffer };
 export type DriveFolder = Omit<DriveFile, "store_hash" | "post_hash" | "size" | "key" | "iv" | "name" | "content">;
 
 type DriveStoreActions = {

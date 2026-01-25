@@ -1,6 +1,7 @@
 "use client";
 
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
+import { Contact, FileFullInfo } from "bedrock-ts-sdk";
 import { Ban, ClipboardPaste, Download, LoaderIcon, Move, Share2, Trash } from "lucide-react";
 import { useQueryState } from "nuqs";
 import React, { useEffect, useMemo, useState } from "react";
@@ -14,13 +15,13 @@ import { FileMoveModal } from "@/components/FileMoveModal";
 import { FileRenameModal } from "@/components/FileRenameModal";
 import { FileShareModal } from "@/components/FileShareModal";
 import { FolderCreateModal } from "@/components/FolderCreateModal";
+import { PublicFileLinkModal } from "@/components/PublicFileLinkModal";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import useBedrockFileUploadDropzone from "@/hooks/use-bedrock-file-upload-dropzone";
-import { Contact, FileFullInfos } from "@/services/bedrock";
 import { useAccountStore } from "@/stores/account";
 import { DriveFile, DriveFolder, useDriveStore } from "@/stores/drive";
 
@@ -66,14 +67,16 @@ const FileList: React.FC<FileListProps> = ({
 	knowledgeBase = false,
 	emptyMessage,
 }) => {
+	const username = useAccountStore((state) => state.username);
+
 	const [searchQuery, setSearchQuery] = useQueryState("search", { defaultValue: defaultSearchQuery });
 	const [currentWorkingDirectory, setCurrentWorkingDirectory] = useQueryState("cwd", {
 		defaultValue: defaultCwd,
 		history: "push",
 	});
 	const [fileToMove, setFileToMove] = useState<{ path: string; folder: boolean } | null>(null);
-	const [fileToRename, setFileToRename] = useState<FileFullInfos | null>(null);
-	const [fileToShare, setFileToShare] = useState<FileFullInfos | null>(null);
+	const [fileToRename, setFileToRename] = useState<FileFullInfo | null>(null);
+	const [fileToShare, setFileToShare] = useState<FileFullInfo | null>(null);
 	const [fileToPreview, setFileToPreview] = useState<DriveFile | null>(null);
 	const [isCreatingFolder, setIsCreatingFolder] = useState(false);
 	const [sortColumn, setSortColumn] = useQueryState("sort", { defaultValue: "path" as SortColumn });
@@ -81,6 +84,7 @@ const FileList: React.FC<FileListProps> = ({
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set(selectedPaths));
 	const [copiedFilePath, setcopiedFilePath] = useState<string | null>(null);
 	const [clickedItem, setClickedItem] = useState<string>();
+	const [sharedHash, setSharedHash] = useState<string | null>(null);
 	const {
 		setFiles,
 		setFolders,
@@ -98,7 +102,7 @@ const FileList: React.FC<FileListProps> = ({
 		setContacts,
 		contacts,
 	} = useDriveStore();
-	const { bedrockService } = useAccountStore();
+	const { bedrockClient } = useAccountStore();
 	const { getInputProps } = useBedrockFileUploadDropzone({});
 
 	const cwdRegex = `^${currentWorkingDirectory.replace("/", "\\/")}[^\\/]+$`;
@@ -125,15 +129,15 @@ const FileList: React.FC<FileListProps> = ({
 	);
 
 	useEffect(() => {
-		if (!bedrockService) return;
+		if (!bedrockClient) return;
 
 		(async () => {
 			try {
-				const fileEntries = await bedrockService.fetchFileEntries();
-				const fullFiles = await bedrockService.fetchFilesMetaFromEntries(fileEntries);
-				const contacts = await bedrockService.fetchContacts();
+				const fileEntries = await bedrockClient.files.fetchFileEntries();
+				const fullFiles = await bedrockClient.files.fetchFilesMetaFromEntries(fileEntries);
+				const contacts = await bedrockClient.contacts.listContacts();
 				const sharedFilesByContacts = await Promise.all(
-					contacts.map((c) => bedrockService.fetchFilesSharedByContact(c)),
+					contacts.map((c) => bedrockClient.contacts.fetchFilesSharedByContact(c.public_key)),
 				);
 				const sharedFiles = sharedFilesByContacts.flat();
 
@@ -195,7 +199,7 @@ const FileList: React.FC<FileListProps> = ({
 				console.error("Failed to fetch files:", error);
 			}
 		})();
-	}, [bedrockService, setFolders, setFiles, setSharedFiles, setContacts]);
+	}, [bedrockClient, setFolders, setFiles, setSharedFiles, setContacts]);
 
 	const { sortedFiles, sortedFolders } = useMemo(
 		() => ({
@@ -227,11 +231,12 @@ const FileList: React.FC<FileListProps> = ({
 	};
 
 	const handleDownloadFile = async (file: DriveFile) => {
-		if (!bedrockService) return;
+		if (!bedrockClient) return;
 
 		try {
-			const buffer = await bedrockService.downloadFileFromStoreHash(file.store_hash, file.key, file.iv);
-			const blob = new Blob([buffer], { type: "application/octet-stream" });
+			const arrayBuffer = await bedrockClient.files.downloadFile(file);
+			// @ts-expect-error - Type mismatch between Node Buffer and Web ArrayBuffer
+			const blob = new Blob([arrayBuffer], { type: "application/octet-stream" });
 			const url = URL.createObjectURL(blob);
 
 			const link = document.createElement("a");
@@ -272,12 +277,12 @@ const FileList: React.FC<FileListProps> = ({
 
 		if (!folder) {
 			moveFile(path, newPath);
-			bedrockService?.moveFiles([{ oldPath: path, newPath: newPath }]);
+			bedrockClient?.files.moveFiles([{ oldPath: path, newPath: newPath }]);
 		} else {
 			const filesToMove = moveFolder(path, newPath);
 			const paths = filesToMove.map(([oldFile, newFile]) => ({ oldPath: oldFile.path, newPath: newFile.path }));
 
-			bedrockService?.moveFiles(paths);
+			bedrockClient?.files.moveFiles(paths);
 		}
 		setFileToRename(null);
 		toast.success(`The ${folder ? "folder" : "file"} has been renamed.`);
@@ -290,7 +295,7 @@ const FileList: React.FC<FileListProps> = ({
 		}
 
 		const originalFile = files.find((f) => f.path === path);
-		if (!originalFile || !bedrockService) return;
+		if (!originalFile || !bedrockClient) return;
 
 		const nameParts = path.split("/");
 		const filename = nameParts.pop()!;
@@ -308,23 +313,13 @@ const FileList: React.FC<FileListProps> = ({
 
 		const newPath = `${dir}/${copyName}`;
 
-		const newPostHash = await bedrockService.duplicateFile(path, newPath);
-		if (!newPostHash) {
+		const newFile = await bedrockClient.files.duplicateFile(path, newPath);
+		if (!newFile) {
 			console.error("File duplication failed");
 			return;
 		}
 
-		setFiles([
-			...files,
-			{
-				...originalFile,
-				path: newPath,
-				name: copyName,
-				created_at: new Date().toISOString(),
-				deleted_at: null,
-				post_hash: newPostHash as string,
-			},
-		]);
+		setFiles([...files, newFile]);
 	};
 
 	const handleSoftDelete = (path: string, folder: boolean) => {
@@ -335,21 +330,20 @@ const FileList: React.FC<FileListProps> = ({
 				deletionDatetime,
 				currentWorkingDirectory + path.slice(0, path.length).split("/").pop()!,
 			);
-			bedrockService?.softDeleteFiles(
-				filesToDelete,
+			bedrockClient?.files.softDeleteFiles(
+				filesToDelete.map((f) => f.path),
 				deletionDatetime,
-				currentWorkingDirectory + path.slice(0, path.length).split("/").pop()!,
 			);
 		} else {
 			const file = softDeleteFile(path, deletionDatetime, `/${path.split("/").pop()!}`);
-			if (file) bedrockService?.softDeleteFiles([file], deletionDatetime, "");
+			if (file) bedrockClient?.files.softDeleteFiles([file.path], deletionDatetime);
 		}
 	};
 
 	const handleHardDelete = (path: string, folder: boolean) => {
 		if (folder) {
 			const filesToDelete = hardDeleteFolder(path);
-			bedrockService?.hardDeleteFiles(...filesToDelete);
+			bedrockClient?.files.hardDeleteFiles(filesToDelete.map((f) => f.path));
 		} else {
 			const fileToDelete = files.find((file) => file.path === path);
 			if (!fileToDelete) {
@@ -357,7 +351,7 @@ const FileList: React.FC<FileListProps> = ({
 				return;
 			}
 			hardDeleteFile(fileToDelete.path);
-			bedrockService?.hardDeleteFiles(fileToDelete);
+			bedrockClient?.files.hardDeleteFiles([fileToDelete.path]);
 		}
 		toast.success(`The ${folder ? "folder" : "file"} has been permanently deleted.`);
 	};
@@ -367,26 +361,42 @@ const FileList: React.FC<FileListProps> = ({
 
 		if (!folder) {
 			moveFile(path, newPath);
-			bedrockService?.moveFiles([{ oldPath: path, newPath }]);
+			bedrockClient?.files.moveFiles([{ oldPath: path, newPath }]);
 		} else {
 			const filesToMove = moveFolder(path, newPath);
 			const paths = filesToMove.map(([oldFile, newFile]) => ({ oldPath: oldFile.path, newPath: newFile.path }));
 
-			bedrockService?.moveFiles(paths);
+			bedrockClient?.files.moveFiles(paths);
 		}
 		setFileToMove(null);
 		toast.success(`The ${folder ? "folder" : "file"} has been moved.`);
 	};
 
-	const handleShare = (file: FileFullInfos, contact: Contact) => {
-		bedrockService?.shareFileWithContact(file, contact.public_key);
+	const handleShare = (file: FileFullInfo, contact?: Contact) => {
+		toast.loading(`Sharing file...`);
+		if (contact) {
+			bedrockClient?.files.shareFile(file.path, contact.public_key);
+			toast.success(`The file has been shared with contact ${contact.name}.`);
+		} else {
+			bedrockClient?.files
+				.shareFilePublicly(file, username ?? "Unknown")
+				.then((hash) => {
+					toast.success(`The file has been shared publicly.`);
+					setSharedHash(hash);
+				})
+				.catch((_) => {
+					toast.error("Unable to share the file publicly");
+				});
+		}
 		setFileToShare(null);
-		toast.success(`The file has been shared with contact ${contact.name}.`);
 	};
 
 	const handleRestoreFile = (path: string) => {
 		const hash = restoreFile(path);
-		if (hash) bedrockService?.restoreFile({ post_hash: hash });
+		if (hash) {
+			const fileToRestore = files.find((f) => f.post_hash === hash);
+			if (fileToRestore) bedrockClient?.files.restoreFiles([fileToRestore.path]);
+		}
 	};
 
 	const selectItem = (path: string) => {
@@ -408,7 +418,7 @@ const FileList: React.FC<FileListProps> = ({
 	};
 
 	const handlePaste = async () => {
-		if (!copiedFilePath || !bedrockService) return;
+		if (!copiedFilePath || !bedrockClient) return;
 
 		const originalFile = files.find((f) => f.path === copiedFilePath);
 		if (!originalFile) {
@@ -428,19 +438,9 @@ const FileList: React.FC<FileListProps> = ({
 		}
 
 		const newPath = `${currentWorkingDirectory}${copyName}`;
-		const newPostHash = await bedrockService.duplicateFile(copiedFilePath, newPath);
+		const newFile = await bedrockClient.files.duplicateFile(copiedFilePath, newPath);
 
-		setFiles([
-			...files,
-			{
-				...originalFile,
-				path: newPath,
-				name: copyName,
-				created_at: new Date().toISOString(),
-				deleted_at: null,
-				post_hash: newPostHash as string,
-			},
-		]);
+		setFiles([...files, newFile]);
 		setcopiedFilePath(null);
 	};
 
@@ -458,7 +458,7 @@ const FileList: React.FC<FileListProps> = ({
 		});
 	};
 
-	if (!bedrockService) {
+	if (!bedrockClient) {
 		return (
 			<div className="flex items-center justify-center h-screen">
 				<LoaderIcon className="animate-spin m-auto h-[100vh]" />
@@ -476,12 +476,13 @@ const FileList: React.FC<FileListProps> = ({
 		if (draggedPath !== targetFolderPath) {
 			const newPath = `${targetFolderPath}/${draggedPath.split("/").pop()}`;
 			moveFile(draggedPath, newPath);
-			bedrockService?.moveFiles([{ oldPath: draggedPath, newPath }]);
+			bedrockClient?.files.moveFiles([{ oldPath: draggedPath, newPath }]);
 		}
 	};
 
 	return (
 		<div className="flex flex-col h-full bg-gray-200" onClick={() => setClickedItem(undefined)}>
+			<PublicFileLinkModal hash={sharedHash ?? ""} isOpen={!!sharedHash} onClose={() => setSharedHash(null)} />
 			{fileToMove && (
 				<FileMoveModal
 					isOpen={true}

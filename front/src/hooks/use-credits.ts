@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { UserCredit } from "bedrock-ts-sdk";
 import { useActiveAccount } from "thirdweb/react";
 
 import { getCreditsRouteCreditsAddressGet } from "@/apis/usernames";
-import { UserCredit } from "@/services/credits";
 
 export function useCredits() {
 	const account = useActiveAccount();

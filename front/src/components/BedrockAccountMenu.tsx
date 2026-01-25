@@ -46,10 +46,10 @@ export const BedrockAccountMenu = () => {
 	const wallet = useActiveWallet();
 	const { disconnect } = useDisconnect();
 	const router = useRouter();
-	const { bedrockService } = useAccountStore();
+	const { bedrockClient } = useAccountStore();
 	const { setFiles, setFolders } = useDriveStore();
 
-	if (wallet === undefined || bedrockService === null) {
+	if (wallet === undefined || bedrockClient === null) {
 		return null;
 	}
 
@@ -57,7 +57,7 @@ export const BedrockAccountMenu = () => {
 		setConfirmDataResetDialogOpen(false);
 
 		try {
-			await bedrockService.resetData();
+			await bedrockClient.resetAllData();
 			toast.success("All data has been deleted");
 			setFiles([]);
 			setFolders([]);
