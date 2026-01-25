@@ -1,7 +1,7 @@
 "use client";
 
 import JSZip from "jszip";
-import { Presentation, Loader2, Pencil, Save, X, FileText } from "lucide-react";
+import { Presentation, Loader2, Pencil, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
