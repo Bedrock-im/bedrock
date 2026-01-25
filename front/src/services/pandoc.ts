@@ -76,7 +76,6 @@ export function canConvertWithPandoc(filename: string): boolean {
 		"rtf",
 		"html",
 		"htm",
-		"pdf",
 		"epub",
 		"tex",
 		"latex",
