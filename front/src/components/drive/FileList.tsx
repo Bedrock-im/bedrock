@@ -311,10 +311,10 @@ const FileList: React.FC<FileListProps> = ({
 		const ext = hasExtension ? "." + filename.split(".").pop()! : "";
 		const baseName = hasExtension ? filename.slice(0, -ext.length) : filename;
 
-		let copyName = `${baseName}_copie${ext}`;
+		let copyName = `${baseName}_copy${ext}`;
 		let counter = 2;
 		while (files.some((f) => f.path === `${dir}/${copyName}`)) {
-			copyName = `${baseName}_copie_${(counter += 1)}${ext}`;
+			copyName = `${baseName}_copy_${(counter += 1)}${ext}`;
 		}
 
 		const newPath = `${dir}/${copyName}`;
@@ -437,10 +437,10 @@ const FileList: React.FC<FileListProps> = ({
 		const ext = hasExtension ? "." + filename.split(".").pop()! : "";
 		const baseName = hasExtension ? filename.slice(0, -ext.length) : filename;
 
-		let copyName = `${baseName}_copie${ext}`;
+		let copyName = `${baseName}_copy${ext}`;
 		let counter = 2;
 		while (files.some((f) => f.path === `${currentWorkingDirectory}${copyName}`)) {
-			copyName = `${baseName}_copie_${(counter += 1)}${ext}`;
+			copyName = `${baseName}_copy_${(counter += 1)}${ext}`;
 		}
 
 		const newPath = `${currentWorkingDirectory}${copyName}`;
@@ -567,7 +567,7 @@ const FileList: React.FC<FileListProps> = ({
 						<Table>
 							<TableHeader>
 								<TableRow>
-									<TableHead className="w-[40px]">
+									<TableHead className="w-12 pl-4">
 										<Checkbox
 											checked={selectedItems.size === files.length + folders.length}
 											onClick={(e) => {
@@ -658,7 +658,7 @@ const FileList: React.FC<FileListProps> = ({
 						</Table>
 					)}
 					{copiedFilePath != null && (
-						<div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-primary text-primary-foreground px-6 py-3 rounded-2xl shadow-glow flex items-center gap-4 animate-slide-up">
+						<div className="fixed bottom-24 left-1/5 -translate-x-1/5 z-50 bg-primary text-primary-foreground px-6 py-3 rounded-2xl shadow-glow flex items-center gap-4 animate-slide-up">
 							<p className="text-sm font-medium">1 item copied to clipboard</p>
 							<Button variant="secondary" size="sm" className="rounded-xl gap-2" onClick={() => handlePaste()}>
 								<ClipboardPaste size={14} />
@@ -675,7 +675,7 @@ const FileList: React.FC<FileListProps> = ({
 						</div>
 					)}
 					{actions.includes("bulk") && selectedItems.size > 0 && (
-						<div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-foreground text-background px-4 md:px-6 py-3 rounded-2xl shadow-soft-lg animate-slide-up max-w-[90vw] md:max-w-fit">
+						<div className="fixed bottom-6 left-3/5 -translate-x-3/5 z-50 bg-foreground text-background px-4 md:px-6 py-3 rounded-2xl shadow-soft-lg animate-slide-up max-w-[90vw] md:max-w-fit">
 							<div className="flex flex-wrap gap-3 md:gap-6 items-center justify-center">
 								<span className="text-sm font-medium whitespace-nowrap">
 									{selectedItems.size} item{selectedItems.size > 1 ? "s" : ""} selected
@@ -720,6 +720,7 @@ const FileList: React.FC<FileListProps> = ({
 											selectedItems.forEach((file) => {
 												handleSoftDelete(file, false);
 											});
+											setSelectedItems(new Set());
 										}}
 									>
 										<Trash size={16} />
