@@ -59,11 +59,8 @@ export async function POST(request: NextRequest) {
 
 		try {
 			await execAsync(command, { timeout: 30000 });
-		} catch (execError: any) {
+		} catch (execError: unknown) {
 			console.error("Pandoc execution failed:", execError);
-			if (execError.code === 127) {
-				throw new Error("Pandoc not found on server");
-			}
 			throw new Error("Conversion failed");
 		}
 
@@ -83,7 +80,7 @@ export async function POST(request: NextRequest) {
 		);
 	} finally {
 		// Cleanup temp files
-		await Promise.all(tempFiles.map((f) => unlink(f).catch(() => {})));
+		await Promise.all(tempFiles.map((f) => unlink(f).catch(() => { })));
 	}
 }
 
