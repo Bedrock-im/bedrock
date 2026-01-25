@@ -5,6 +5,7 @@ import { type ReactNode } from "react";
 import { ThirdwebProvider } from "thirdweb/react";
 
 import { client as usernamesClient } from "@/apis/usernames/client.gen";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import env from "@/config/env";
 import { Watchers } from "@/layouts/watchers";
 
@@ -14,7 +15,6 @@ type ProvidersProps = {
 
 const queryClient = new QueryClient();
 
-// Configure the usernames client with the given base URL
 usernamesClient.setConfig({
 	baseURL: env.USERNAMES_API_URL,
 });
@@ -23,7 +23,9 @@ export function Providers({ children }: ProvidersProps) {
 	return (
 		<QueryClientProvider client={queryClient}>
 			<ThirdwebProvider>
-				<Watchers>{children}</Watchers>
+				<ThemeProvider>
+					<Watchers>{children}</Watchers>
+				</ThemeProvider>
 			</ThirdwebProvider>
 		</QueryClientProvider>
 	);

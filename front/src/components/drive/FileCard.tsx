@@ -6,7 +6,13 @@ import React from "react";
 
 import ActionIcon from "@/components/drive/ActionIcon";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
+import {
+	ContextMenu,
+	ContextMenuContent,
+	ContextMenuItem,
+	ContextMenuSeparator,
+	ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { DriveFile, DriveFolder } from "@/stores/drive";
 import { getFileTypeInfo } from "@/utils/file-types";
@@ -77,9 +83,9 @@ const FileCard = ({
 
 	const style = {
 		transform: CSS.Translate.toString(transform) || undefined,
-		backgroundColor: folder && isOver ? "rgba(0, 128, 0, 0.08)" : undefined,
-		transition: "background-color 0.2s ease",
 	};
+
+	const fileName = metadata.path.split("/").pop();
 
 	return (
 		<ContextMenu>
@@ -92,9 +98,14 @@ const FileCard = ({
 						if (onLeftClick) onLeftClick();
 					}}
 					onDoubleClick={onDoubleClick}
-					className={clicked ? "bg-secondary/30 hover:bg-secondary/40" : ""}
+					className={`
+                                                group transition-all duration-200 cursor-pointer border-b border-transparent
+                                                ${clicked ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/50"}
+                                                ${selected ? "bg-primary/10" : ""}
+                                                ${isOver ? "bg-success/10 ring-2 ring-success/30 ring-inset" : ""}
+                                        `}
 				>
-					<TableCell>
+					<TableCell className="w-12 pl-4">
 						<Checkbox
 							disabled={!setSelected}
 							checked={selected}
@@ -102,96 +113,137 @@ const FileCard = ({
 								e.stopPropagation();
 								if (setSelected) setSelected();
 							}}
+							className="transition-transform duration-200 hover:scale-110"
 						/>
 					</TableCell>
 
-					<TableCell>
+					<TableCell className="py-3">
 						<div
 							ref={!folder ? setDraggableRef : undefined}
 							{...(folder ? {} : { ...attributes, ...listeners })}
-							className="flex items-center font-bold gap-2"
+							className="flex items-center gap-3"
 						>
-							<FileIcon className={metadata.deleted_at ? "text-red-400" : undefined} />
-							{metadata.path.split("/").pop()}
+							<div
+								className={`
+                                                                flex items-center justify-center size-10 rounded-xl transition-all duration-200
+                                                                ${
+																																	folder
+																																		? "bg-amber-100 text-amber-600 group-hover:bg-amber-200"
+																																		: "bg-purple-50 text-purple-500 group-hover:bg-purple-100"
+																																}
+                                                                ${metadata.deleted_at ? "opacity-50" : ""}
+                                                        `}
+							>
+								<FileIcon className="size-5" />
+							</div>
+							<div className="flex flex-col min-w-0">
+								<span
+									className={`font-medium text-sm truncate ${metadata.deleted_at ? "text-muted-foreground line-through" : ""}`}
+								>
+									{fileName}
+								</span>
+								{!folder && fileTypeInfo && (
+									<span className="text-xs text-muted-foreground capitalize">{fileTypeInfo.category}</span>
+								)}
+							</div>
 						</div>
 					</TableCell>
 
-					<TableCell>{folder ? "" : filesize(metadata.size)}</TableCell>
-					<TableCell>{new Date(metadata.created_at).toLocaleString()}</TableCell>
+					<TableCell className="text-muted-foreground text-sm">
+						{folder ? <span className="text-xs bg-muted px-2 py-1 rounded-md">Folder</span> : filesize(metadata.size)}
+					</TableCell>
 
-					<TableCell className="flex justify-end items-center gap-2 mt-1">
-						{onPreview && fileTypeInfo?.canPreview && <ActionIcon Icon={Eye} onClick={onPreview} tooltip="Preview" />}
-						{onDownload && <ActionIcon Icon={Download} onClick={onDownload} tooltip="Download" />}
-						{onShare && <ActionIcon Icon={Share2} onClick={onShare} tooltip="Share" />}
-						{onRename && <ActionIcon Icon={Edit} onClick={onRename} tooltip="Rename" />}
-						{onMove && <ActionIcon Icon={Move} onClick={onMove} tooltip="Move" />}
-						{onDelete && <ActionIcon Icon={Trash} onClick={onDelete} tooltip="Delete" />}
-						{onHardDelete && <ActionIcon Icon={Trash} onClick={onHardDelete} tooltip="Definitive delete" />}
-						{onRestore && <ActionIcon Icon={ArchiveRestore} onClick={onRestore} tooltip="Restore" />}
-						{onCopy && <ActionIcon Icon={Copy} onClick={onCopy} tooltip={"copy"} />}
+					<TableCell className="text-muted-foreground text-sm">
+						{new Date(metadata.created_at).toLocaleDateString(undefined, {
+							year: "numeric",
+							month: "short",
+							day: "numeric",
+						})}
+					</TableCell>
+
+					<TableCell className="pr-4">
+						<div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+							{onPreview && fileTypeInfo?.canPreview && <ActionIcon Icon={Eye} onClick={onPreview} tooltip="Preview" />}
+							{onDownload && <ActionIcon Icon={Download} onClick={onDownload} tooltip="Download" />}
+							{onShare && <ActionIcon Icon={Share2} onClick={onShare} tooltip="Share" />}
+							{onRename && <ActionIcon Icon={Edit} onClick={onRename} tooltip="Rename" />}
+							{onMove && <ActionIcon Icon={Move} onClick={onMove} tooltip="Move" />}
+							{onDelete && <ActionIcon Icon={Trash} onClick={onDelete} tooltip="Delete" />}
+							{onHardDelete && <ActionIcon Icon={Trash} onClick={onHardDelete} tooltip="Delete permanently" />}
+							{onRestore && <ActionIcon Icon={ArchiveRestore} onClick={onRestore} tooltip="Restore" />}
+							{onCopy && <ActionIcon Icon={Copy} onClick={onCopy} tooltip="Copy" />}
+						</div>
 					</TableCell>
 				</TableRow>
 			</ContextMenuTrigger>
 
-			<ContextMenuContent>
+			<ContextMenuContent className="w-56 rounded-xl shadow-soft-lg border-0 p-1.5">
 				{onPreview && fileTypeInfo?.canPreview && (
-					<ContextMenuItem onClick={onPreview}>
-						<Eye className="mr-2 h-4 w-4" />
-						Preview
+					<ContextMenuItem onClick={onPreview} className="rounded-lg gap-3 py-2.5">
+						<Eye className="size-4 text-muted-foreground" />
+						<span>Preview</span>
 					</ContextMenuItem>
 				)}
 				{onDownload && (
-					<ContextMenuItem onClick={onDownload}>
-						<Download className="mr-2 h-4 w-4" />
-						Download
+					<ContextMenuItem onClick={onDownload} className="rounded-lg gap-3 py-2.5">
+						<Download className="size-4 text-muted-foreground" />
+						<span>Download</span>
 					</ContextMenuItem>
 				)}
+				{(onPreview || onDownload) && (onShare || onRename || onMove) && <ContextMenuSeparator className="my-1" />}
 				{onShare && (
-					<ContextMenuItem onClick={onShare}>
-						<Share2 className="mr-2 h-4 w-4" />
-						Share
+					<ContextMenuItem onClick={onShare} className="rounded-lg gap-3 py-2.5">
+						<Share2 className="size-4 text-muted-foreground" />
+						<span>Share</span>
 					</ContextMenuItem>
 				)}
 				{onRename && (
-					<ContextMenuItem onClick={onRename}>
-						<Edit className="mr-2 h-4 w-4" />
-						Rename
+					<ContextMenuItem onClick={onRename} className="rounded-lg gap-3 py-2.5">
+						<Edit className="size-4 text-muted-foreground" />
+						<span>Rename</span>
 					</ContextMenuItem>
 				)}
 				{onMove && (
-					<ContextMenuItem onClick={onMove}>
-						<Move className="mr-2 h-4 w-4" />
-						Move
-					</ContextMenuItem>
-				)}
-				{onDelete && (
-					<ContextMenuItem onClick={onDelete}>
-						<Trash className="mr-2 h-4 w-4" />
-						Delete
-					</ContextMenuItem>
-				)}
-				{onHardDelete && (
-					<ContextMenuItem onClick={onHardDelete}>
-						<Trash className="mr-2 h-4 w-4" />
-						Definitive delete
-					</ContextMenuItem>
-				)}
-				{onRestore && (
-					<ContextMenuItem onClick={onRestore}>
-						<ArchiveRestore className="mr-2 h-4 w-4" />
-						Restore
+					<ContextMenuItem onClick={onMove} className="rounded-lg gap-3 py-2.5">
+						<Move className="size-4 text-muted-foreground" />
+						<span>Move to...</span>
 					</ContextMenuItem>
 				)}
 				{onDuplicate && (
-					<ContextMenuItem onClick={onDuplicate}>
-						<ArchiveRestore className="mr-2 h-4 w-4" />
-						duplicate
+					<ContextMenuItem onClick={onDuplicate} className="rounded-lg gap-3 py-2.5">
+						<Copy className="size-4 text-muted-foreground" />
+						<span>Duplicate</span>
 					</ContextMenuItem>
 				)}
 				{onCopy && (
-					<ContextMenuItem onClick={onCopy}>
-						<ArchiveRestore className="mr-2 h-4 w-4" />
-						copy
+					<ContextMenuItem onClick={onCopy} className="rounded-lg gap-3 py-2.5">
+						<Copy className="size-4 text-muted-foreground" />
+						<span>Copy</span>
+					</ContextMenuItem>
+				)}
+				{(onDelete || onHardDelete || onRestore) && <ContextMenuSeparator className="my-1" />}
+				{onDelete && (
+					<ContextMenuItem
+						onClick={onDelete}
+						className="rounded-lg gap-3 py-2.5 text-destructive focus:text-destructive"
+					>
+						<Trash className="size-4" />
+						<span>Move to Trash</span>
+					</ContextMenuItem>
+				)}
+				{onHardDelete && (
+					<ContextMenuItem
+						onClick={onHardDelete}
+						className="rounded-lg gap-3 py-2.5 text-destructive focus:text-destructive"
+					>
+						<Trash className="size-4" />
+						<span>Delete permanently</span>
+					</ContextMenuItem>
+				)}
+				{onRestore && (
+					<ContextMenuItem onClick={onRestore} className="rounded-lg gap-3 py-2.5 text-success focus:text-success">
+						<ArchiveRestore className="size-4" />
+						<span>Restore</span>
 					</ContextMenuItem>
 				)}
 			</ContextMenuContent>

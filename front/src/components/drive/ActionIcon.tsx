@@ -23,7 +23,7 @@ export default function ActionIcon({ Icon, onClick, tooltip }: ActionIconProps) 
 			<TooltipTrigger>
 				<Icon
 					size={16}
-					color={isLoading ? "gray" : "black"}
+					color={isLoading ? "gray" : "currentColor"}
 					className={isLoading ? "hover:cursor-progress" : "hover:cursor-pointer"}
 					onClick={() => {
 						if (isLoading) return;

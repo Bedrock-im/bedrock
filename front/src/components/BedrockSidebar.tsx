@@ -1,7 +1,9 @@
 "use client";
 
-import { Command, FolderIcon, Library, Share2, Trash2, Users } from "lucide-react";
+import { FolderIcon, Library, Share2, Trash2, Users } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 
 import { BedrockAccountMenu } from "@/components/BedrockAccountMenu";
@@ -20,12 +22,12 @@ import {
 
 const items = [
 	{
-		name: "My files",
+		name: "My Files",
 		url: "/",
 		icon: FolderIcon,
 	},
 	{
-		name: "Shared with me",
+		name: "Shared with Me",
 		url: "/shared",
 		icon: Share2,
 	},
@@ -51,41 +53,58 @@ type BedrockSidebarProps = {
 };
 
 export const BedrockSidebar = ({ children }: BedrockSidebarProps) => {
+	const pathname = usePathname();
+
+	const isActive = (url: string) => {
+		if (url === "/") {
+			return pathname === "/";
+		}
+		return pathname.startsWith(url);
+	};
+
 	return (
 		<SidebarProvider>
-			<Sidebar collapsible="icon">
-				<SidebarHeader>
+			<Sidebar collapsible="icon" className="border-r-0">
+				<SidebarHeader className="p-4">
 					<SidebarMenu>
 						<SidebarMenuItem>
-							<SidebarMenuButton size="lg" asChild>
-								<a href="#">
-									<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-										<Command className="size-4" />
+							<SidebarMenuButton size="lg" asChild className="hover:bg-transparent">
+								<Link href="/" className="flex items-center gap-3">
+									<div className="flex aspect-square items-center justify-center rounded-xl">
+										<Image src="/logo.png" alt="Bedrock Logo" width={48} height={48} />
 									</div>
-									<div className="grid flex-1 text-left text-sm leading-tight">
-										<span className="truncate font-semibold">Bedrock</span>
+									<div className="grid flex-1 text-left leading-tight">
+										<span className="truncate text-lg font-bold tracking-tight">Bedrock</span>
 									</div>
-								</a>
+								</Link>
 							</SidebarMenuButton>
 						</SidebarMenuItem>
 					</SidebarMenu>
 				</SidebarHeader>
-				<SidebarContent>
-					<SidebarMenu>
-						{items.map((item) => (
-							<SidebarMenuItem key={item.name}>
-								<SidebarMenuButton asChild>
-									<Link href={item.url}>
-										<item.icon />
-										<span>{item.name}</span>
-									</Link>
-								</SidebarMenuButton>
-							</SidebarMenuItem>
-						))}
+				<SidebarContent className="px-3 py-2">
+					<SidebarMenu className="space-y-1">
+						{items.map((item) => {
+							const active = isActive(item.url);
+							return (
+								<SidebarMenuItem key={item.name}>
+									<SidebarMenuButton
+										asChild
+										className={`
+											h-11 rounded-xl transition-all duration-200
+											${active ? "bg-primary text-primary-foreground shadow-soft hover:bg-primary/90" : "hover:bg-accent"}
+										`}
+									>
+										<Link href={item.url} className="flex items-center gap-3 px-3">
+											<item.icon className={`size-5 ${active ? "text-primary-foreground" : "text-muted-foreground"}`} />
+											<span className={`font-medium ${active ? "" : "text-foreground"}`}>{item.name}</span>
+										</Link>
+									</SidebarMenuButton>
+								</SidebarMenuItem>
+							);
+						})}
 					</SidebarMenu>
 				</SidebarContent>
-				{/*TODO: add a progress for file storage size like Proton*/}
-				<SidebarFooter>
+				<SidebarFooter className="p-3">
 					<SidebarMenu>
 						<SidebarMenuItem>
 							<BedrockAccountMenu />
@@ -94,7 +113,7 @@ export const BedrockSidebar = ({ children }: BedrockSidebarProps) => {
 				</SidebarFooter>
 				<SidebarRail />
 			</Sidebar>
-			<SidebarInset>{children}</SidebarInset>
+			<SidebarInset className="bg-background">{children}</SidebarInset>
 		</SidebarProvider>
 	);
 };

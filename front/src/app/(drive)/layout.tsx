@@ -10,13 +10,13 @@ export default function DriveLayout({ children }: Readonly<{ children: ReactNode
 		<AuthWrapper>
 			<BedrockSidebar>
 				<NuqsAdapter>
-					<section className="h-screen">
-						<header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-							<div className="flex items-center gap-2 px-4">
-								<SidebarTrigger />
-							</div>
+					<section className="flex flex-col h-screen">
+						<header className="flex h-14 shrink-0 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 sticky top-0 z-10">
+							<SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors" />
+							<div className="h-4 w-px bg-border" />
+							<div className="flex-1" />
 						</header>
-						{children}
+						<main className="flex-1 overflow-auto p-6 animate-fade-in">{children}</main>
 					</section>
 				</NuqsAdapter>
 			</BedrockSidebar>

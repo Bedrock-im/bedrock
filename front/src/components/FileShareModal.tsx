@@ -1,7 +1,7 @@
 "use client";
 
 import { Contact } from "bedrock-ts-sdk";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { PublicFileShareModal } from "@/components/PublicFileShareModal";
 import { Button } from "@/components/ui/button";
