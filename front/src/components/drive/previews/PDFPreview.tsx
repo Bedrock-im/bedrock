@@ -98,8 +98,8 @@ export default function PDFPreview({ fileUrl, filename, onSave }: PDFPreviewProp
 	}
 
 	return (
-		<div className="flex flex-col gap-4 w-full h-full max-w-4xl mx-auto">
-			<div className="flex items-center justify-between p-4 border rounded-lg bg-white shadow-sm">
+		<div className="flex flex-col gap-4 w-full max-w-4xl mx-auto">
+			<div className="flex items-center justify-between p-4 border rounded-lg bg-white shadow-sm flex-shrink-0">
 				<div className="flex items-center gap-3">
 					<div className="p-2 bg-blue-100 rounded-md">
 						<FileText className="h-5 w-5 text-blue-600" />
@@ -134,16 +134,14 @@ export default function PDFPreview({ fileUrl, filename, onSave }: PDFPreviewProp
 				</div>
 			</div>
 
-			<div className="flex-1 min-h-[500px] border rounded-lg shadow-sm bg-white overflow-hidden">
+			<div className="h-[calc(90vh-200px)] border rounded-lg shadow-sm bg-white overflow-hidden">
 				{viewMode === "preview" ? (
-					<div className="flex items-center justify-center w-full h-full">
-						<iframe src={fileUrl} className="w-full h-full rounded-lg border-0" title="PDF Preview" />
-					</div>
+					<iframe src={fileUrl} className="w-full h-full rounded-lg border-0" title="PDF Preview" />
 				) : (
 					<Textarea
 						value={markdownContent}
 						onChange={(e) => setMarkdownContent(e.target.value)}
-						className="w-full h-full min-h-[600px] p-6 font-mono text-sm resize-none border-0 focus-visible:ring-0"
+						className="w-full h-full p-6 font-mono text-sm resize-none border-0 focus-visible:ring-0"
 						placeholder="# Start typing..."
 					/>
 				)}
