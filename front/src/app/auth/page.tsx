@@ -21,12 +21,12 @@ const features = [
 	{
 		icon: Lock,
 		title: "You Own Your Data",
-		description: "No central authority can access your files",
+		description: "No central authority nor administrator can access your files",
 	},
 	{
 		icon: HardDrive,
 		title: "Decentralized Storage",
-		description: "Files stored across a distributed network",
+		description: "Files stored across Aleph, a decentralized distributed network",
 	},
 ];
 

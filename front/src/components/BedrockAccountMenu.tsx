@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, ChevronsUpDown, LogOut, WrenchIcon } from "lucide-react";
+import { ChevronsUpDown, LogOut, WrenchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -95,10 +95,6 @@ export const BedrockAccountMenu = () => {
 						<DropdownMenuItem onClick={() => router.push("/settings")}>
 							<WrenchIcon />
 							Settings
-						</DropdownMenuItem>
-						<DropdownMenuItem disabled>
-							<Bell />
-							Notifications
 						</DropdownMenuItem>
 					</DropdownMenuGroup>
 					<DropdownMenuSeparator />

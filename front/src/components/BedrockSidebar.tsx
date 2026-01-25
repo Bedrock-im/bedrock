@@ -1,6 +1,7 @@
 "use client";
 
-import { FolderIcon, HardDrive, Library, Share2, Trash2, Users } from "lucide-react";
+import { FolderIcon, Library, Share2, Trash2, Users } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
@@ -69,12 +70,11 @@ export const BedrockSidebar = ({ children }: BedrockSidebarProps) => {
 						<SidebarMenuItem>
 							<SidebarMenuButton size="lg" asChild className="hover:bg-transparent">
 								<Link href="/" className="flex items-center gap-3">
-									<div className="flex aspect-square size-10 items-center justify-center rounded-xl gradient-primary shadow-soft">
-										<HardDrive className="size-5 text-white" />
+									<div className="flex aspect-square items-center justify-center rounded-xl shadow-soft">
+										<Image src="/logo.png" alt="Bedrock Logo" width={48} height={48} />
 									</div>
 									<div className="grid flex-1 text-left leading-tight">
 										<span className="truncate text-lg font-bold tracking-tight">Bedrock</span>
-										<span className="truncate text-xs text-muted-foreground">Decentralized Storage</span>
 									</div>
 								</Link>
 							</SidebarMenuButton>
@@ -105,16 +105,6 @@ export const BedrockSidebar = ({ children }: BedrockSidebarProps) => {
 					</SidebarMenu>
 				</SidebarContent>
 				<SidebarFooter className="p-3">
-					<div className="rounded-xl bg-accent/50 p-3 mb-2">
-						<div className="flex items-center justify-between mb-2">
-							<span className="text-xs font-medium text-muted-foreground">Storage Used</span>
-							<span className="text-xs font-semibold text-foreground">2.4 GB</span>
-						</div>
-						<div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-							<div className="h-full w-1/4 rounded-full gradient-primary transition-all duration-500" />
-						</div>
-						<p className="text-2xs text-muted-foreground mt-1.5">of 10 GB used</p>
-					</div>
 					<SidebarMenu>
 						<SidebarMenuItem>
 							<BedrockAccountMenu />
