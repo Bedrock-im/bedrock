@@ -1,5 +1,6 @@
 "use client";
 
+import { FileText, Loader2, Pencil, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -13,7 +14,7 @@ interface CodePreviewProps {
 	onSave?: (newFile: File) => Promise<void>;
 }
 
-export default function CodePreview({ fileUrl, filename, category, onSave }: CodePreviewProps) {
+export default function CodePreview({ fileUrl, filename, category, onSave }: Readonly<CodePreviewProps>) {
 	const [content, setContent] = useState<string>("");
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);

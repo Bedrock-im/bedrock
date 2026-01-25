@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Pencil, Save, X, FileText, Download } from "lucide-react";
+import { FileText, Loader2, Pencil, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -14,7 +14,7 @@ interface OdtDocumentManagerProps {
 	onSave?: (newFile: File) => Promise<void>;
 }
 
-export default function OdtDocumentManager({ fileUrl, filename, onSave }: OdtDocumentManagerProps) {
+export default function OdtDocumentManager({ fileUrl, filename, onSave }: Readonly<OdtDocumentManagerProps>) {
 	const [currentFile, setCurrentFile] = useState<File | null>(null);
 	const [viewMode, setViewMode] = useState<"preview" | "edit">("preview");
 
@@ -51,18 +51,9 @@ export default function OdtDocumentManager({ fileUrl, filename, onSave }: OdtDoc
 
 	const generateHtmlPreview = async (file: File) => {
 		try {
-			const extension = filename.split(".").pop()?.toLowerCase();
-			if (extension === "md" || extension === "markdown") {
-				const text = await file.text();
-				// For markdown, we can convert it to HTML for preview
-				const htmlBlob = await convertFile(file, "html");
-				const htmlString = await htmlBlob.text();
-				setHtmlContent(htmlString);
-			} else {
-				const htmlBlob = await convertFile(file, "html");
-				const htmlString = await htmlBlob.text();
-				setHtmlContent(htmlString);
-			}
+			const htmlBlob = await convertFile(file, "html");
+			const htmlString = await htmlBlob.text();
+			setHtmlContent(htmlString);
 		} catch (e) {
 			console.error(e);
 			toast.error("Failed to generate preview");

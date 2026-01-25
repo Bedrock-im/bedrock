@@ -1,12 +1,12 @@
 "use client";
 
-import { Save, X, Loader2, Edit } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { Edit, Loader2, Save, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { convertToMarkdown, convertFromMarkdown } from "@/services/pandoc";
+import { convertFromMarkdown, convertToMarkdown } from "@/services/pandoc";
 
 interface EditablePandocPreviewProps {
 	file: File;
@@ -15,7 +15,12 @@ interface EditablePandocPreviewProps {
 	onCancel: () => void;
 }
 
-export default function EditablePandocPreview({ file, filename, onSave, onCancel }: EditablePandocPreviewProps) {
+export default function EditablePandocPreview({
+	file,
+	filename,
+	onSave,
+	onCancel,
+}: Readonly<EditablePandocPreviewProps>) {
 	const [markdownContent, setMarkdownContent] = useState<string>("");
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
@@ -24,19 +29,6 @@ export default function EditablePandocPreview({ file, filename, onSave, onCancel
 	const isInternalUpdate = useRef(false);
 
 	const currentFileNameRef = useRef(filename);
-
-	useEffect(() => {
-		if (isInternalUpdate.current) {
-			isInternalUpdate.current = false;
-			return;
-		}
-
-		if (filename !== currentFileNameRef.current) {
-			currentFileNameRef.current = filename;
-		}
-
-		loadAndConvert();
-	}, [file, filename]);
 
 	const loadAndConvert = async () => {
 		setIsLoading(true);
@@ -52,6 +44,20 @@ export default function EditablePandocPreview({ file, filename, onSave, onCancel
 			setIsLoading(false);
 		}
 	};
+
+	useEffect(() => {
+		if (isInternalUpdate.current) {
+			isInternalUpdate.current = false;
+			return;
+		}
+
+		if (filename !== currentFileNameRef.current) {
+			currentFileNameRef.current = filename;
+		}
+
+		loadAndConvert();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [file, filename]);
 
 	const handleSave = async () => {
 		setIsSaving(true);

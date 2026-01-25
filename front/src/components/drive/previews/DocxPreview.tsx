@@ -1,5 +1,6 @@
 "use client";
 
+import { FileText, Loader2, Pencil, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -13,7 +14,7 @@ interface DocxPreviewProps {
 	onSave?: (newFile: File) => Promise<void>;
 }
 
-export default function DocxPreview({ fileUrl, filename, onSave }: DocxPreviewProps) {
+export default function DocxPreview({ fileUrl, filename, onSave }: Readonly<DocxPreviewProps>) {
 	const [currentFile, setCurrentFile] = useState<File | null>(null);
 	const [viewMode, setViewMode] = useState<"preview" | "edit">("preview");
 

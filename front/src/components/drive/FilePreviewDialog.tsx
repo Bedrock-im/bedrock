@@ -26,10 +26,9 @@ interface FilePreviewDialogProps {
 	file: DriveFile | null;
 	isOpen: boolean;
 	onClose: () => void;
-	onDownload?: () => void;
 }
 
-export default function FilePreviewDialog({ file, isOpen, onClose, onDownload }: FilePreviewDialogProps) {
+export default function FilePreviewDialog({ file, isOpen, onClose }: Readonly<FilePreviewDialogProps>) {
 	const [fileContent, setFileContent] = useState<Blob | null>(null);
 	const [fileUrl, setFileUrl] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
@@ -203,9 +202,7 @@ export default function FilePreviewDialog({ file, isOpen, onClose, onDownload }:
 								{fileTypeInfo.category === "presentation" && (
 									<PptxPreview fileUrl={fileUrl} filename={filename} onSave={canEdit ? handleSaveEdit : undefined} />
 								)}
-								{fileTypeInfo.category === "xlsx" && (
-									<XlsxPreview fileUrl={fileUrl} filename={filename} onSave={undefined} />
-								)}
+								{fileTypeInfo.category === "xlsx" && <XlsxPreview fileUrl={fileUrl} filename={filename} />}
 								{(fileTypeInfo.category === "text" || fileTypeInfo.category === "code") && (
 									<CodePreview
 										fileUrl={fileUrl}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { FileText, Loader2, Pencil, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -14,7 +14,7 @@ interface PDFPreviewProps {
 	onSave?: (newFile: File) => Promise<void>;
 }
 
-export default function PDFPreview({ fileUrl, filename, onSave }: PDFPreviewProps) {
+export default function PDFPreview({ fileUrl, filename, onSave }: Readonly<PDFPreviewProps>) {
 	const [currentFile, setCurrentFile] = useState<File | null>(null);
 	const [viewMode, setViewMode] = useState<"preview" | "edit">("preview");
 
