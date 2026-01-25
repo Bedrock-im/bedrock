@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
 		);
 	} finally {
 		// Cleanup temp files
-		await Promise.all(tempFiles.map((f) => unlink(f).catch(() => { })));
+		await Promise.all(tempFiles.map((f) => unlink(f).catch(() => {})));
 	}
 }
 
