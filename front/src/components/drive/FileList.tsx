@@ -643,7 +643,7 @@ const FileList: React.FC<FileListProps> = ({
 	};
 
 	return (
-		<div className="flex flex-col h-full" onClick={() => setClickedItem(undefined)}>
+		<div className="flex flex-col" onClick={() => setClickedItem(undefined)}>
 			<PublicFileLinkModal hash={sharedHash ?? ""} isOpen={!!sharedHash} onClose={() => setSharedHash(null)} />
 			{fileToMove && (
 				<FolderBrowserModal
