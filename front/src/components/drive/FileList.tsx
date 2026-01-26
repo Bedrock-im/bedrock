@@ -549,7 +549,7 @@ const FileList: React.FC<FileListProps> = ({
 			if (!newFile) {
 				throw new Error("File duplication failed");
 			}
-			setFiles([...files, newFile]);
+			setFiles((prevFiles) => [...prevFiles, newFile]);
 			setFileToCopy(null);
 			toast.success("File copied successfully", { id: toastId });
 		} catch {
