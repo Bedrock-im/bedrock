@@ -756,7 +756,8 @@ const FileList: React.FC<FileListProps> = ({
 			}
 		}
 	};
-
+	console.log("files", files);
+	console.log("folders", folders);
 	return (
 		<div className="flex flex-col" onClick={() => setClickedItem(undefined)}>
 			<PublicFileLinkModal hash={sharedHash ?? ""} isOpen={!!sharedHash} onClose={() => setSharedHash(null)} />
