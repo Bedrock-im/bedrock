@@ -1,3 +1,4 @@
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ export type RenameDialogProps = {
 	name: string;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	onRename: (newName: string) => void;
+	onRename: (newName: string) => Promise<void> | void;
 	title?: string;
 	description?: string;
 };
@@ -30,16 +31,20 @@ export default function RenameDialog({
 }: RenameDialogProps) {
 	const [newName, setNewName] = useState(name);
 	const [error, setError] = useState<string>();
+	const [isLoading, setIsLoading] = useState(false);
 
-	const handleSave = () => {
+	const handleSave = async () => {
 		const trimmedName = newName.trim();
-		if (trimmedName !== "") {
+		if (trimmedName !== "" && !isLoading) {
+			setIsLoading(true);
 			try {
-				onRename(trimmedName);
+				await onRename(trimmedName);
 				setError(undefined);
 				onOpenChange(false);
 			} catch (error) {
 				setError(error instanceof Error ? error.message : "Failed to rename knowledge item");
+			} finally {
+				setIsLoading(false);
 			}
 		}
 	};
@@ -68,10 +73,13 @@ export default function RenameDialog({
 					{error && <p className="text-sm font-medium text-red-500">{error}</p>}
 				</div>
 				<DialogFooter className="flex justify-end gap-2">
-					<Button variant="outline" onClick={handleCancel}>
+					<Button variant="outline" onClick={handleCancel} disabled={isLoading}>
 						Cancel
 					</Button>
-					<Button onClick={handleSave}>Save</Button>
+					<Button onClick={handleSave} disabled={isLoading} className="gap-2">
+						{isLoading ? <Loader2 size={16} className="animate-spin" /> : null}
+						Save
+					</Button>
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>

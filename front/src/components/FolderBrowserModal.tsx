@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, FolderIcon, Home } from "lucide-react";
+import { ChevronRight, FolderIcon, Home, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import { getParentPath, normalizePath } from "@/utils/path";
 interface FolderBrowserModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onComplete: (destinationPath: string) => void;
+	onComplete: (destinationPath: string) => Promise<void> | void;
 	mode: "move" | "copy";
 	itemName: string;
 	initialPath?: string;
@@ -36,6 +36,7 @@ export function FolderBrowserModal({
 	sourcePath,
 }: Readonly<FolderBrowserModalProps>) {
 	const [currentPath, setCurrentPath] = useState(initialPath);
+	const [isLoading, setIsLoading] = useState(false);
 	const allFolders = useDriveStore((state) => state.folders);
 
 	useEffect(() => {
@@ -75,11 +76,17 @@ export function FolderBrowserModal({
 		}
 	};
 
-	const handleComplete = () => {
+	const handleComplete = async () => {
 		if (mode === "move" && isInvalidDestination) return;
+		if (isLoading) return;
 		const normalizedPath = normalizePath(currentPath);
-		onComplete(normalizedPath);
-		setCurrentPath(initialPath);
+		setIsLoading(true);
+		try {
+			await onComplete(normalizedPath);
+			setCurrentPath(initialPath);
+		} finally {
+			setIsLoading(false);
+		}
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -162,10 +169,15 @@ export function FolderBrowserModal({
 				</ScrollArea>
 
 				<DialogFooter className="flex-row gap-2 sm:justify-between">
-					<Button variant="outline" onClick={handleClose}>
+					<Button variant="outline" onClick={handleClose} disabled={isLoading}>
 						Cancel
 					</Button>
-					<Button onClick={handleComplete} className="gap-2" disabled={mode === "move" && isInvalidDestination}>
+					<Button
+						onClick={handleComplete}
+						className="gap-2"
+						disabled={(mode === "move" && isInvalidDestination) || isLoading}
+					>
+						{isLoading ? <Loader2 size={16} className="animate-spin" /> : null}
 						{mode === "move" ? "Move here" : "Copy here"}
 					</Button>
 				</DialogFooter>

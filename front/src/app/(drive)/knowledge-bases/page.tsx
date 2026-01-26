@@ -8,6 +8,7 @@ import DeleteDialog from "@/components/drive/DeleteDialog";
 import KnowledgeBaseAskDialog from "@/components/drive/KnowledgeBaseAskDialog";
 import KnowledgeBaseFileSelector from "@/components/drive/KnowledgeBaseFileSelector";
 import RenameDialog from "@/components/drive/RenameDialog";
+import { TableSkeleton } from "@/components/drive/TableSkeleton";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -35,6 +36,7 @@ export default function KnowledgeBases() {
 	const [openNewKBModal, setOpenNewKBModal] = useState(false);
 	const [newKBName, setNewKBName] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
+	const [isLoading, setIsLoading] = useState(true);
 	const { bedrockClient } = useAccountStore();
 	const { files, updateFileContent } = useDriveStore();
 	const {
@@ -48,17 +50,22 @@ export default function KnowledgeBases() {
 
 	useEffect(() => {
 		if (!bedrockClient) return;
+		setIsLoading(true);
 		(async () => {
-			const knowledgeBases: KnowledgeBase[] = (await bedrockClient.knowledgeBases.listKnowledgeBases()).map(
-				({ name, file_paths, created_at, updated_at }) => ({
-					name,
-					filePaths: file_paths,
-					created_at: new Date(created_at),
-					updated_at: new Date(updated_at),
-				}),
-			);
+			try {
+				const knowledgeBases: KnowledgeBase[] = (await bedrockClient.knowledgeBases.listKnowledgeBases()).map(
+					({ name, file_paths, created_at, updated_at }) => ({
+						name,
+						filePaths: file_paths,
+						created_at: new Date(created_at),
+						updated_at: new Date(updated_at),
+					}),
+				);
 
-			setKnowledgeBases(knowledgeBases);
+				setKnowledgeBases(knowledgeBases);
+			} finally {
+				setIsLoading(false);
+			}
 		})();
 	}, [bedrockClient, setKnowledgeBases]);
 
@@ -183,7 +190,13 @@ export default function KnowledgeBases() {
 					<h2 className="text-lg font-semibold py-2">Knowledge Bases</h2>
 					<Separator orientation="horizontal" />
 				</div>
-				{filteredKnowledgeBases.length === 0 ? (
+				{isLoading ? (
+					<TableSkeleton
+						columns={6}
+						rows={4}
+						headers={["Name", "Files", "Size", "Created", "Last edited", "Actions"]}
+					/>
+				) : filteredKnowledgeBases.length === 0 ? (
 					<div className="flex flex-col items-center justify-center py-16 text-center">
 						<div className="size-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
 							<BookOpen className="size-8 text-muted-foreground/50" />

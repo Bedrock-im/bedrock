@@ -1,3 +1,6 @@
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
+
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -12,7 +15,7 @@ import {
 export type DeleteDialogProps = {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	onDelete: () => void;
+	onDelete: () => Promise<void> | void;
 	title?: string;
 	description?: string;
 	cancelText?: string;
@@ -28,9 +31,17 @@ export default function DeleteDialog({
 	cancelText = "Cancel",
 	confirmText = "Delete",
 }: DeleteDialogProps) {
-	const handleDelete = () => {
-		onDelete();
-		onOpenChange(false);
+	const [isLoading, setIsLoading] = useState(false);
+
+	const handleDelete = async () => {
+		if (isLoading) return;
+		setIsLoading(true);
+		try {
+			await onDelete();
+			onOpenChange(false);
+		} finally {
+			setIsLoading(false);
+		}
 	};
 
 	return (
@@ -41,10 +52,11 @@ export default function DeleteDialog({
 					<AlertDialogDescription>{description}</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>
-					<AlertDialogCancel onClick={() => onOpenChange(false)} autoFocus>
+					<AlertDialogCancel onClick={() => onOpenChange(false)} autoFocus disabled={isLoading}>
 						{cancelText}
 					</AlertDialogCancel>
-					<AlertDialogAction className="bg-red-500 hover:bg-red-600" onClick={handleDelete}>
+					<AlertDialogAction className="bg-red-500 hover:bg-red-600 gap-2" onClick={handleDelete} disabled={isLoading}>
+						{isLoading ? <Loader2 size={16} className="animate-spin" /> : null}
 						{confirmText}
 					</AlertDialogAction>
 				</AlertDialogFooter>

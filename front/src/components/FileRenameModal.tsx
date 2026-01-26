@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -16,15 +17,21 @@ import { Input } from "@/components/ui/input";
 interface UsernameRegistrationModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onComplete: (newName: string) => void;
+	onComplete: (newName: string) => Promise<void> | void;
 }
 
 export function FileRenameModal({ isOpen, onClose, onComplete }: UsernameRegistrationModalProps) {
 	const [input, setInput] = useState("");
+	const [isLoading, setIsLoading] = useState(false);
 
-	const handleSubmit = () => {
-		if (input.length > 0) {
-			onComplete(input);
+	const handleSubmit = async () => {
+		if (input.length > 0 && !isLoading) {
+			setIsLoading(true);
+			try {
+				await onComplete(input);
+			} finally {
+				setIsLoading(false);
+			}
 		}
 	};
 
@@ -58,7 +65,8 @@ export function FileRenameModal({ isOpen, onClose, onComplete }: UsernameRegistr
 					/>
 				</div>
 				<DialogFooter className="justify-end">
-					<Button onClick={handleSubmit} disabled={input.length === 0}>
+					<Button onClick={handleSubmit} disabled={input.length === 0 || isLoading} className="gap-2">
+						{isLoading ? <Loader2 size={16} className="animate-spin" /> : null}
 						Rename
 					</Button>
 				</DialogFooter>

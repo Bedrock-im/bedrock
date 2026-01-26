@@ -2,7 +2,7 @@
 
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { Contact, FileFullInfo } from "bedrock-ts-sdk";
-import { Copy, Download, FolderIcon, FolderPlus, Move, Trash, Upload } from "lucide-react";
+import { Copy, Download, FolderIcon, FolderPlus, Loader2, Move, Trash, Upload } from "lucide-react";
 import { useQueryState } from "nuqs";
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import CurrentPath from "@/components/drive/CurrentPath";
 import FileCard from "@/components/drive/FileCard";
 import FilePreviewDialog from "@/components/drive/FilePreviewDialog";
 import SortOption from "@/components/drive/SortOption";
+import { TableSkeleton } from "@/components/drive/TableSkeleton";
 import { FileRenameModal } from "@/components/FileRenameModal";
 import { FileShareModal } from "@/components/FileShareModal";
 import { FolderBrowserModal } from "@/components/FolderBrowserModal";
@@ -89,6 +90,8 @@ const FileList: React.FC<FileListProps> = ({
 	const [bulkCopyMode, setBulkCopyMode] = useState(false);
 	const [clickedItem, setClickedItem] = useState<string>();
 	const [sharedHash, setSharedHash] = useState<string | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
+	const [actionLoading, setActionLoading] = useState<string | null>(null);
 	const {
 		setFiles,
 		setFolders,
@@ -135,6 +138,7 @@ const FileList: React.FC<FileListProps> = ({
 	useEffect(() => {
 		if (!bedrockClient) return;
 
+		setIsLoading(true);
 		(async () => {
 			try {
 				const fileEntries = await bedrockClient.files.fetchFileEntries();
@@ -207,6 +211,8 @@ const FileList: React.FC<FileListProps> = ({
 				setContacts(contacts);
 			} catch (error) {
 				console.error("Failed to fetch files:", error);
+			} finally {
+				setIsLoading(false);
 			}
 		})();
 	}, [bedrockClient, setFolders, setFiles, setSharedFiles, setContacts]);
@@ -282,28 +288,44 @@ const FileList: React.FC<FileListProps> = ({
 		toast.success(`The folder "${folderName}" has been created.`);
 	};
 
-	const handleRename = (path: string, folder: boolean, newName: string) => {
+	const handleRename = async (path: string, folder: boolean, newName: string) => {
 		const newPath = `${path.split("/").slice(0, -1).join("/")}/${newName}`;
+		setActionLoading("rename");
 
-		if (!folder) {
-			moveFile(path, newPath);
-			bedrockClient?.files.moveFiles([
-				{
-					oldPath: path,
-					newPath: newPath,
-				},
-			]);
-		} else {
-			const filesToMove = moveFolder(path, newPath);
-			const paths = filesToMove.map(([oldFile, newFile]) => ({
-				oldPath: oldFile.path,
-				newPath: newFile.path,
-			}));
+		try {
+			if (!folder) {
+				await bedrockClient?.files.moveFiles([
+					{
+						oldPath: path,
+						newPath: newPath,
+					},
+				]);
+				moveFile(path, newPath);
+			} else {
+				const filesToMove = folders
+					.filter((f) => f.path.startsWith(path))
+					.map((f) => ({
+						oldPath: f.path,
+						newPath: newPath + f.path.slice(path.length),
+					}));
+				const filesMoves = files
+					.filter((f) => f.path.startsWith(path))
+					.map((f) => ({
+						oldPath: f.path,
+						newPath: newPath + f.path.slice(path.length),
+					}));
+				const allMoves = [...filesToMove, ...filesMoves];
 
-			bedrockClient?.files.moveFiles(paths);
+				await bedrockClient?.files.moveFiles(allMoves);
+				moveFolder(path, newPath);
+			}
+			toast.success(`The ${folder ? "folder" : "file"} has been renamed.`);
+		} catch (error) {
+			toast.error(`Failed to rename ${folder ? "folder" : "file"}: ${error?.toString()}`);
+		} finally {
+			setFileToRename(null);
+			setActionLoading(null);
 		}
-		setFileToRename(null);
-		toast.success(`The ${folder ? "folder" : "file"} has been renamed.`);
 	};
 
 	const handleDuplicate = async (path: string, folder: boolean) => {
@@ -315,66 +337,90 @@ const FileList: React.FC<FileListProps> = ({
 		const originalFile = files.find((f) => f.path === path);
 		if (!originalFile || !bedrockClient) return;
 
-		const nameParts = path.split("/");
-		const filename = nameParts.pop()!;
-		const dir = nameParts.join("/");
+		setActionLoading("duplicate");
+		try {
+			const nameParts = path.split("/");
+			const filename = nameParts.pop()!;
+			const dir = nameParts.join("/");
 
-		const hasExtension = filename.includes(".");
-		const ext = hasExtension ? "." + filename.split(".").pop()! : "";
-		const baseName = hasExtension ? filename.slice(0, -ext.length) : filename;
+			const hasExtension = filename.includes(".");
+			const ext = hasExtension ? "." + filename.split(".").pop()! : "";
+			const baseName = hasExtension ? filename.slice(0, -ext.length) : filename;
 
-		let copyName = `${baseName}_copy${ext}`;
-		let counter = 2;
-		while (files.some((f) => f.path === `${dir}/${copyName}`)) {
-			copyName = `${baseName}_copy_${(counter += 1)}${ext}`;
-		}
+			let copyName = `${baseName}_copy${ext}`;
+			let counter = 2;
+			while (files.some((f) => f.path === `${dir}/${copyName}`)) {
+				copyName = `${baseName}_copy_${(counter += 1)}${ext}`;
+			}
 
-		const newPath = `${dir}/${copyName}`;
+			const newPath = `${dir}/${copyName}`;
 
-		const newFile = await bedrockClient.files.duplicateFile(path, newPath);
-		if (!newFile) {
-			console.error("File duplication failed");
-			return;
-		}
-
-		setFiles([...files, newFile]);
-	};
-
-	const handleSoftDelete = (path: string, folder: boolean) => {
-		const deletionDatetime = new Date();
-		if (folder) {
-			const filesToDelete = softDeleteFolder(
-				path,
-				deletionDatetime,
-				currentWorkingDirectory + path.slice(0, path.length).split("/").pop()!,
-			);
-			bedrockClient?.files.softDeleteFiles(
-				filesToDelete.map((f) => f.path),
-				deletionDatetime,
-			);
-		} else {
-			const file = softDeleteFile(path, deletionDatetime, `/${path.split("/").pop()!}`);
-			if (file) bedrockClient?.files.softDeleteFiles([file.path], deletionDatetime);
-		}
-	};
-
-	const handleHardDelete = (path: string, folder: boolean) => {
-		if (folder) {
-			const filesToDelete = hardDeleteFolder(path);
-			bedrockClient?.files.hardDeleteFiles(filesToDelete.map((f) => f.path));
-		} else {
-			const fileToDelete = files.find((file) => file.path === path);
-			if (!fileToDelete) {
-				console.error("File not found:", path);
+			const newFile = await bedrockClient.files.duplicateFile(path, newPath);
+			if (!newFile) {
+				toast.error("File duplication failed");
 				return;
 			}
-			hardDeleteFile(fileToDelete.path);
-			bedrockClient?.files.hardDeleteFiles([fileToDelete.path]);
+
+			setFiles([...files, newFile]);
+			toast.success("File duplicated successfully");
+		} catch (error) {
+			toast.error(`Failed to duplicate file: ${error?.toString()}`);
+		} finally {
+			setActionLoading(null);
 		}
-		toast.success(`The ${folder ? "folder" : "file"} has been permanently deleted.`);
 	};
 
-	const handleMove = (path: string, newPath: string, folder: boolean) => {
+	const handleSoftDelete = async (path: string, folder: boolean) => {
+		const deletionDatetime = new Date();
+		setActionLoading("delete");
+
+		try {
+			if (folder) {
+				const filePaths = files.filter((f) => f.path.startsWith(path)).map((f) => f.path);
+				await bedrockClient?.files.softDeleteFiles(filePaths, deletionDatetime);
+				softDeleteFolder(
+					path,
+					deletionDatetime,
+					currentWorkingDirectory + path.slice(0, path.length).split("/").pop()!,
+				);
+			} else {
+				await bedrockClient?.files.softDeleteFiles([path], deletionDatetime);
+				softDeleteFile(path, deletionDatetime, `/${path.split("/").pop()!}`);
+			}
+			toast.success(`The ${folder ? "folder" : "file"} has been moved to trash.`);
+		} catch (error) {
+			toast.error(`Failed to delete ${folder ? "folder" : "file"}: ${error?.toString()}`);
+		} finally {
+			setActionLoading(null);
+		}
+	};
+
+	const handleHardDelete = async (path: string, folder: boolean) => {
+		setActionLoading("hardDelete");
+
+		try {
+			if (folder) {
+				const filePaths = files.filter((f) => f.path.startsWith(path)).map((f) => f.path);
+				await bedrockClient?.files.hardDeleteFiles(filePaths);
+				hardDeleteFolder(path);
+			} else {
+				const fileToDelete = files.find((file) => file.path === path);
+				if (!fileToDelete) {
+					console.error("File not found:", path);
+					return;
+				}
+				await bedrockClient?.files.hardDeleteFiles([fileToDelete.path]);
+				hardDeleteFile(fileToDelete.path);
+			}
+			toast.success(`The ${folder ? "folder" : "file"} has been permanently deleted.`);
+		} catch (error) {
+			toast.error(`Failed to permanently delete ${folder ? "folder" : "file"}: ${error?.toString()}`);
+		} finally {
+			setActionLoading(null);
+		}
+	};
+
+	const handleMove = async (path: string, newPath: string, folder: boolean) => {
 		newPath = newPath.startsWith("/") ? newPath : `/${newPath}`;
 
 		const sourceParent = getParentPath(path);
@@ -394,25 +440,41 @@ const FileList: React.FC<FileListProps> = ({
 			}
 		}
 
-		if (!folder) {
-			moveFile(path, newPath);
-			bedrockClient?.files.moveFiles([
-				{
-					oldPath: path,
-					newPath,
-				},
-			]);
-		} else {
-			const filesToMove = moveFolder(path, newPath);
-			const paths = filesToMove.map(([oldFile, newFile]) => ({
-				oldPath: oldFile.path,
-				newPath: newFile.path,
-			}));
+		setActionLoading("move");
+		try {
+			if (!folder) {
+				await bedrockClient?.files.moveFiles([
+					{
+						oldPath: path,
+						newPath,
+					},
+				]);
+				moveFile(path, newPath);
+			} else {
+				const filesToMoveData = files
+					.filter((f) => f.path.startsWith(path))
+					.map((f) => ({
+						oldPath: f.path,
+						newPath: newPath + f.path.slice(path.length),
+					}));
+				const foldersMoves = folders
+					.filter((f) => f.path.startsWith(path))
+					.map((f) => ({
+						oldPath: f.path,
+						newPath: newPath + f.path.slice(path.length),
+					}));
+				const allMoves = [...filesToMoveData, ...foldersMoves];
 
-			bedrockClient?.files.moveFiles(paths);
+				await bedrockClient?.files.moveFiles(allMoves);
+				moveFolder(path, newPath);
+			}
+			toast.success(`The ${folder ? "folder" : "file"} has been moved.`);
+		} catch (error) {
+			toast.error(`Failed to move ${folder ? "folder" : "file"}: ${error?.toString()}`);
+		} finally {
+			setFileToMove(null);
+			setActionLoading(null);
 		}
-		setFileToMove(null);
-		toast.success(`The ${folder ? "folder" : "file"} has been moved.`);
 	};
 
 	const handleShare = async (file: FileFullInfo, contact?: Contact) => {
@@ -432,11 +494,19 @@ const FileList: React.FC<FileListProps> = ({
 		setFileToShare(null);
 	};
 
-	const handleRestoreFile = (path: string) => {
-		const hash = restoreFile(path);
-		if (hash) {
-			const fileToRestore = files.find((f) => f.post_hash === hash);
-			if (fileToRestore) bedrockClient?.files.restoreFiles([fileToRestore.path]);
+	const handleRestoreFile = async (path: string) => {
+		setActionLoading("restore");
+		try {
+			const fileToRestore = files.find((f) => f.path === path);
+			if (fileToRestore) {
+				await bedrockClient?.files.restoreFiles([fileToRestore.path]);
+				restoreFile(path);
+				toast.success("File restored successfully");
+			}
+		} catch (error) {
+			toast.error(`Failed to restore file: ${error?.toString()}`);
+		} finally {
+			setActionLoading(null);
 		}
 	};
 
@@ -468,23 +538,30 @@ const FileList: React.FC<FileListProps> = ({
 			return;
 		}
 
-		const filename = originalFile.path.split("/").pop()!;
-		const hasExtension = filename.includes(".");
-		const ext = hasExtension ? "." + filename.split(".").pop()! : "";
-		const baseName = hasExtension ? filename.slice(0, -ext.length) : filename;
+		setActionLoading("copy");
+		try {
+			const filename = originalFile.path.split("/").pop()!;
+			const hasExtension = filename.includes(".");
+			const ext = hasExtension ? "." + filename.split(".").pop()! : "";
+			const baseName = hasExtension ? filename.slice(0, -ext.length) : filename;
 
-		let copyName = `${baseName}_copy${ext}`;
-		let counter = 2;
-		while (files.some((f) => f.path === joinPath(destinationPath, copyName))) {
-			copyName = `${baseName}_copy_${(counter += 1)}${ext}`;
+			let copyName = `${baseName}_copy${ext}`;
+			let counter = 2;
+			while (files.some((f) => f.path === joinPath(destinationPath, copyName))) {
+				copyName = `${baseName}_copy_${(counter += 1)}${ext}`;
+			}
+
+			const newPath = joinPath(destinationPath, copyName);
+			const newFile = await bedrockClient.files.duplicateFile(fileToCopy.path, newPath);
+
+			setFiles([...files, newFile]);
+			toast.success("File copied successfully");
+		} catch (error) {
+			toast.error(`Failed to copy file: ${error?.toString()}`);
+		} finally {
+			setFileToCopy(null);
+			setActionLoading(null);
 		}
-
-		const newPath = joinPath(destinationPath, copyName);
-		const newFile = await bedrockClient.files.duplicateFile(fileToCopy.path, newPath);
-
-		setFiles([...files, newFile]);
-		setFileToCopy(null);
-		toast.success("File copied successfully");
 	};
 
 	const selectAll = () => {
@@ -624,7 +701,7 @@ const FileList: React.FC<FileListProps> = ({
 		);
 	}
 
-	const handleDragEnd = (event: DragEndEvent) => {
+	const handleDragEnd = async (event: DragEndEvent) => {
 		const { active, over } = event;
 		if (!active || !over) return;
 
@@ -633,13 +710,21 @@ const FileList: React.FC<FileListProps> = ({
 
 		if (draggedPath !== targetFolderPath) {
 			const newPath = `${targetFolderPath}/${draggedPath.split("/").pop()}`;
-			moveFile(draggedPath, newPath);
-			bedrockClient?.files.moveFiles([
-				{
-					oldPath: draggedPath,
-					newPath,
-				},
-			]);
+			setActionLoading("dragMove");
+			try {
+				await bedrockClient?.files.moveFiles([
+					{
+						oldPath: draggedPath,
+						newPath,
+					},
+				]);
+				moveFile(draggedPath, newPath);
+				toast.success("File moved successfully");
+			} catch (error) {
+				toast.error(`Failed to move file: ${error?.toString()}`);
+			} finally {
+				setActionLoading(null);
+			}
 		}
 	};
 
@@ -731,7 +816,9 @@ const FileList: React.FC<FileListProps> = ({
 						<CurrentPath path={currentWorkingDirectory} setPath={handleChangeDirectory} />
 						<Separator orientation="horizontal" />
 					</div>
-					{sortedFiles.length === 0 && sortedFolders.length === 0 ? (
+					{isLoading ? (
+						<TableSkeleton columns={5} rows={6} headers={["", "Name", "Size", "Created At", "Actions"]} />
+					) : sortedFiles.length === 0 && sortedFolders.length === 0 ? (
 						<div className="flex flex-col items-center justify-center py-16 text-center">
 							<div className="size-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
 								<FolderIcon className="size-8 text-muted-foreground/50" />
@@ -878,7 +965,7 @@ const FileList: React.FC<FileListProps> = ({
 									<Button
 										variant="ghost"
 										className="text-sm gap-2"
-										disabled={hasSelectedFolders}
+										disabled={hasSelectedFolders || !!actionLoading}
 										onClick={() => {
 											selectedItems.forEach((pathFile) => {
 												const file = files.find((f) => f.path === pathFile);
@@ -891,22 +978,28 @@ const FileList: React.FC<FileListProps> = ({
 										<Download size={16} />
 										Download
 									</Button>
-									<Button variant="ghost" className="text-sm gap-2" onClick={() => setBulkMoveMode(true)}>
-										<Move size={16} />
+									<Button
+										variant="ghost"
+										className="text-sm gap-2"
+										disabled={!!actionLoading}
+										onClick={() => setBulkMoveMode(true)}
+									>
+										{actionLoading === "move" ? <Loader2 size={16} className="animate-spin" /> : <Move size={16} />}
 										Move
 									</Button>
 									<Button
 										variant="ghost"
 										className="text-sm gap-2"
-										disabled={hasSelectedFolders}
+										disabled={hasSelectedFolders || !!actionLoading}
 										onClick={() => setBulkCopyMode(true)}
 									>
-										<Copy size={16} />
+										{actionLoading === "copy" ? <Loader2 size={16} className="animate-spin" /> : <Copy size={16} />}
 										Copy
 									</Button>
 									<Button
 										variant="ghost"
 										className="text-sm gap-2 text-destructive hover:text-destructive"
+										disabled={!!actionLoading}
 										onClick={() => {
 											selectedItems.forEach((itemPath) => {
 												const isFolder = itemPath.endsWith("/");
@@ -916,7 +1009,7 @@ const FileList: React.FC<FileListProps> = ({
 											setSelectedItems(new Set());
 										}}
 									>
-										<Trash size={16} />
+										{actionLoading === "delete" ? <Loader2 size={16} className="animate-spin" /> : <Trash size={16} />}
 										Delete
 									</Button>
 								</div>

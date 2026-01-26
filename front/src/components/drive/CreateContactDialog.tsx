@@ -1,3 +1,4 @@
+import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { getAddressUsernameUsernameAddressGet } from "@/apis/usernames";
@@ -18,7 +19,7 @@ import { useDriveStore } from "@/stores/drive";
 interface CreateContactDialogProps {
 	isOpen: boolean;
 	onOpenChange: (open: boolean) => void;
-	createContact: (data: ContactFormData) => void;
+	createContact: (data: ContactFormData) => Promise<void> | void;
 }
 
 export default function CreateContactDialog({ isOpen, onOpenChange, createContact }: CreateContactDialogProps) {
@@ -30,6 +31,7 @@ export default function CreateContactDialog({ isOpen, onOpenChange, createContac
 	});
 	const [username, setUsername] = useState("");
 	const [isLoadingAddress, setIsLoadingAddress] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const isContactNameTaken = useMemo(() => {
 		return contacts.some((contact) => contact.name === username);
@@ -46,12 +48,23 @@ export default function CreateContactDialog({ isOpen, onOpenChange, createContac
 		contactFormData.publicKey.length > 0 &&
 		!isContactNameTaken &&
 		!isLoadingAddress &&
+		!isSubmitting &&
 		isValidAddress(contactFormData.address);
+
+	const handleSubmit = async () => {
+		if (!canSubmit) return;
+		setIsSubmitting(true);
+		try {
+			await createContact(contactFormData);
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
 
 	const handleKeyDown = (e: React.KeyboardEvent) => {
 		if (e.key === "Enter" && canSubmit) {
 			e.preventDefault();
-			createContact(contactFormData);
+			handleSubmit();
 		}
 	};
 
@@ -149,9 +162,12 @@ export default function CreateContactDialog({ isOpen, onOpenChange, createContac
 				/>
 				<DialogFooter>
 					<DialogClose asChild>
-						<Button variant="outline">Cancel</Button>
+						<Button variant="outline" disabled={isSubmitting}>
+							Cancel
+						</Button>
 					</DialogClose>
-					<Button disabled={!canSubmit} onClick={() => createContact(contactFormData)}>
+					<Button disabled={!canSubmit} onClick={handleSubmit} className="gap-2">
+						{isSubmitting ? <Loader2 size={16} className="animate-spin" /> : null}
 						Create
 					</Button>
 				</DialogFooter>
