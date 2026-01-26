@@ -16,6 +16,7 @@ import { FileRenameModal } from "@/components/FileRenameModal";
 import { FileShareModal } from "@/components/FileShareModal";
 import { FolderBrowserModal } from "@/components/FolderBrowserModal";
 import { FolderCreateModal } from "@/components/FolderCreateModal";
+import { FolderRenameModal } from "@/components/FolderRenameModal";
 import { PublicFileLinkModal } from "@/components/PublicFileLinkModal";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -79,6 +80,7 @@ const FileList: React.FC<FileListProps> = ({
 	});
 	const [fileToMove, setFileToMove] = useState<{ path: string; folder: boolean; name: string } | null>(null);
 	const [fileToRename, setFileToRename] = useState<FileFullInfo | null>(null);
+	const [folderToRename, setFolderToRename] = useState<DriveFolder | null>(null);
 	const [fileToShare, setFileToShare] = useState<FileFullInfo | null>(null);
 	const [fileToPreview, setFileToPreview] = useState<DriveFile | null>(null);
 	const [isCreatingFolder, setIsCreatingFolder] = useState(false);
@@ -809,6 +811,13 @@ const FileList: React.FC<FileListProps> = ({
 					onComplete={(newName) => handleRename(fileToRename.path, false, newName)}
 				/>
 			)}
+			{folderToRename && (
+				<FolderRenameModal
+					isOpen={true}
+					onClose={() => setFolderToRename(null)}
+					onComplete={(newName) => handleRename(folderToRename.path, true, newName)}
+				/>
+			)}
 			{fileToShare && (
 				<FileShareModal
 					isOpen={true}
@@ -932,6 +941,7 @@ const FileList: React.FC<FileListProps> = ({
 										setSelected={() => selectItem(folder.path + "/")}
 										onLeftClick={() => setClickedItem(folder.path)}
 										onDoubleClick={() => handleChangeDirectory(folder.path + "/")}
+										onRename={actions.includes("rename") ? () => setFolderToRename(folder) : undefined}
 										onDelete={actions.includes("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
 										onHardDelete={
 											actions.includes("hardDelete") ? () => handleHardDelete(folder.path, true) : undefined
