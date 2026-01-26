@@ -17,14 +17,12 @@ export default function useBedrockFileUploadDropzone(options: DropzoneOptions) {
 
 			// Convert files to FileInput format
 			const fileInputs = await Promise.all(
-				acceptedFiles.map(async (file) => (
-					{
-						name: file.name,
-						path: `${currentWorkingDirectory}${file.name}`,
-						content: Buffer.from(await file.arrayBuffer()),
-					})),
+				acceptedFiles.map(async (file) => ({
+					name: file.name,
+					path: `${currentWorkingDirectory}${file.name}`,
+					content: Buffer.from(await file.arrayBuffer()),
+				})),
 			);
-
 
 			const uploadPromise = bedrockClient.files.uploadFiles(fileInputs);
 			toast.promise(uploadPromise, {
