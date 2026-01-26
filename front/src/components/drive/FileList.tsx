@@ -2,7 +2,7 @@
 
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { Contact, FileFullInfo } from "bedrock-ts-sdk";
-import { Ban, ClipboardPaste, Download, FolderIcon, Move, Share2, Trash } from "lucide-react";
+import { Copy, Download, FolderIcon, FolderPlus, Move, Trash, Upload } from "lucide-react";
 import { useQueryState } from "nuqs";
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -11,9 +11,9 @@ import CurrentPath from "@/components/drive/CurrentPath";
 import FileCard from "@/components/drive/FileCard";
 import FilePreviewDialog from "@/components/drive/FilePreviewDialog";
 import SortOption from "@/components/drive/SortOption";
-import { FileMoveModal } from "@/components/FileMoveModal";
 import { FileRenameModal } from "@/components/FileRenameModal";
 import { FileShareModal } from "@/components/FileShareModal";
+import { FolderBrowserModal } from "@/components/FolderBrowserModal";
 import { FolderCreateModal } from "@/components/FolderCreateModal";
 import { PublicFileLinkModal } from "@/components/PublicFileLinkModal";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components
 import useBedrockFileUploadDropzone from "@/hooks/use-bedrock-file-upload-dropzone";
 import { useAccountStore } from "@/stores/account";
 import { DriveFile, DriveFolder, useDriveStore } from "@/stores/drive";
+import { getDestinationParent, getParentPath, joinPath, normalizePath } from "@/utils/path";
 import { notNullGuard } from "@/utils/types";
 
 import UploadButton from "./UploadButton";
@@ -75,7 +76,7 @@ const FileList: React.FC<FileListProps> = ({
 		defaultValue: defaultCwd,
 		history: "push",
 	});
-	const [fileToMove, setFileToMove] = useState<{ path: string; folder: boolean } | null>(null);
+	const [fileToMove, setFileToMove] = useState<{ path: string; folder: boolean; name: string } | null>(null);
 	const [fileToRename, setFileToRename] = useState<FileFullInfo | null>(null);
 	const [fileToShare, setFileToShare] = useState<FileFullInfo | null>(null);
 	const [fileToPreview, setFileToPreview] = useState<DriveFile | null>(null);
@@ -83,7 +84,9 @@ const FileList: React.FC<FileListProps> = ({
 	const [sortColumn, setSortColumn] = useQueryState("sort", { defaultValue: "path" as SortColumn });
 	const [sortOrder, setSortOrder] = useQueryState("order", { defaultValue: "asc" as SortOrder });
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set(selectedPaths));
-	const [copiedFilePath, setcopiedFilePath] = useState<string | null>(null);
+	const [fileToCopy, setFileToCopy] = useState<{ path: string; name: string } | null>(null);
+	const [bulkMoveMode, setBulkMoveMode] = useState(false);
+	const [bulkCopyMode, setBulkCopyMode] = useState(false);
 	const [clickedItem, setClickedItem] = useState<string>();
 	const [sharedHash, setSharedHash] = useState<string | null>(null);
 	const {
@@ -373,6 +376,23 @@ const FileList: React.FC<FileListProps> = ({
 	const handleMove = (path: string, newPath: string, folder: boolean) => {
 		newPath = newPath.startsWith("/") ? newPath : `/${newPath}`;
 
+		const sourceParent = getParentPath(path);
+		const destParent = getDestinationParent(newPath);
+		if (sourceParent === destParent) {
+			toast.error("Item is already in this location");
+			setFileToMove(null);
+			return;
+		}
+
+		if (folder) {
+			const normalizedSource = normalizePath(path);
+			if (destParent.startsWith(normalizedSource)) {
+				toast.error("Cannot move folder into itself");
+				setFileToMove(null);
+				return;
+			}
+		}
+
 		if (!folder) {
 			moveFile(path, newPath);
 			bedrockClient?.files.moveFiles([
@@ -394,21 +414,19 @@ const FileList: React.FC<FileListProps> = ({
 		toast.success(`The ${folder ? "folder" : "file"} has been moved.`);
 	};
 
-	const handleShare = (file: FileFullInfo, contact?: Contact) => {
-		toast.loading(`Sharing file...`);
-		if (contact) {
-			bedrockClient?.files.shareFile(file.path, contact.public_key);
-			toast.success(`The file has been shared with contact ${contact.name}.`);
-		} else {
-			bedrockClient?.files
-				.shareFilePublicly(file, username ?? "Unknown")
-				.then((hash) => {
-					toast.success(`The file has been shared publicly.`);
-					setSharedHash(hash);
-				})
-				.catch((_) => {
-					toast.error("Unable to share the file publicly");
-				});
+	const handleShare = async (file: FileFullInfo, contact?: Contact) => {
+		const toastId = toast.loading(`Sharing file...`);
+		try {
+			if (contact) {
+				await bedrockClient?.files.shareFile(file.path, contact.public_key);
+				toast.success(`The file has been shared with contact ${contact.name}.`, { id: toastId });
+			} else {
+				const hash = await bedrockClient?.files.shareFilePublicly(file, username ?? "Unknown");
+				toast.success(`The file has been shared publicly.`, { id: toastId });
+				if (hash) setSharedHash(hash);
+			}
+		} catch (_) {
+			toast.error("Unable to share the file", { id: toastId });
 		}
 		setFileToShare(null);
 	};
@@ -435,16 +453,17 @@ const FileList: React.FC<FileListProps> = ({
 	};
 
 	const handleCopy = (path: string) => {
-		setcopiedFilePath(path);
-		toast.success(`file copied`);
+		const name = path.split("/").pop() || path;
+		setFileToCopy({ path, name });
 	};
 
-	const handlePaste = async () => {
-		if (!copiedFilePath || !bedrockClient) return;
+	const handleCopyToDestination = async (destinationPath: string) => {
+		if (!fileToCopy || !bedrockClient) return;
 
-		const originalFile = files.find((f) => f.path === copiedFilePath);
+		const originalFile = files.find((f) => f.path === fileToCopy.path);
 		if (!originalFile) {
 			console.error("File not found");
+			setFileToCopy(null);
 			return;
 		}
 
@@ -455,15 +474,16 @@ const FileList: React.FC<FileListProps> = ({
 
 		let copyName = `${baseName}_copy${ext}`;
 		let counter = 2;
-		while (files.some((f) => f.path === `${currentWorkingDirectory}${copyName}`)) {
+		while (files.some((f) => f.path === joinPath(destinationPath, copyName))) {
 			copyName = `${baseName}_copy_${(counter += 1)}${ext}`;
 		}
 
-		const newPath = `${currentWorkingDirectory}${copyName}`;
-		const newFile = await bedrockClient.files.duplicateFile(copiedFilePath, newPath);
+		const newPath = joinPath(destinationPath, copyName);
+		const newFile = await bedrockClient.files.duplicateFile(fileToCopy.path, newPath);
 
 		setFiles([...files, newFile]);
-		setcopiedFilePath(null);
+		setFileToCopy(null);
+		toast.success("File copied successfully");
 	};
 
 	const selectAll = () => {
@@ -478,6 +498,118 @@ const FileList: React.FC<FileListProps> = ({
 			onSelectedItemPathsChange?.(updated);
 			return updated;
 		});
+	};
+
+	const hasSelectedFolders = useMemo(() => {
+		return Array.from(selectedItems).some((path) => path.endsWith("/"));
+	}, [selectedItems]);
+
+	const handleBulkMoveToDestination = (destinationPath: string) => {
+		const normalizedDest = normalizePath(destinationPath);
+		let movedCount = 0;
+		let skippedCount = 0;
+
+		selectedItems.forEach((itemPath) => {
+			const isFolder = itemPath.endsWith("/");
+			const cleanPath = isFolder ? itemPath.slice(0, -1) : itemPath;
+			const name = cleanPath.split("/").pop();
+
+			if (!name) {
+				skippedCount += 1;
+				return;
+			}
+
+			const normalizedSourceParent = normalizePath(getParentPath(cleanPath));
+			if (normalizedSourceParent === normalizedDest) {
+				skippedCount += 1;
+				return;
+			}
+
+			if (isFolder) {
+				const normalizedSource = normalizePath(cleanPath);
+				if (normalizedDest.startsWith(normalizedSource)) {
+					skippedCount += 1;
+					return;
+				}
+			}
+
+			const newPath = joinPath(normalizedDest, name);
+			handleMove(cleanPath, newPath, isFolder);
+			movedCount += 1;
+		});
+
+		setSelectedItems(new Set());
+		setBulkMoveMode(false);
+
+		if (skippedCount > 0) {
+			toast.success(`Moved ${movedCount} item(s), skipped ${skippedCount} (already in location or invalid)`);
+		} else {
+			toast.success(`${movedCount} item(s) moved successfully`);
+		}
+	};
+
+	const handleBulkCopyToDestination = async (destinationPath: string) => {
+		if (!bedrockClient) return;
+
+		const normalizedDest = normalizePath(destinationPath);
+		const filesToCopy = Array.from(selectedItems).filter((path) => !path.endsWith("/"));
+		const newFiles: DriveFile[] = [];
+		let skippedCount = 0;
+
+		for (const filePath of filesToCopy) {
+			const originalFile = files.find((f) => f.path === filePath);
+			if (!originalFile) {
+				skippedCount += 1;
+				continue;
+			}
+
+			const filename = originalFile.path.split("/").pop();
+			if (!filename) {
+				skippedCount += 1;
+				continue;
+			}
+
+			const normalizedSourceParent = normalizePath(getParentPath(filePath));
+			const hasExtension = filename.includes(".");
+			const ext = hasExtension ? "." + filename.split(".").pop()! : "";
+			const baseName = hasExtension ? filename.slice(0, -ext.length) : filename;
+
+			let copyName: string;
+			if (normalizedSourceParent === normalizedDest) {
+				copyName = `${baseName}_copy${ext}`;
+			} else {
+				copyName = filename;
+			}
+
+			let counter = 2;
+			while (
+				files.some((f) => f.path === joinPath(normalizedDest, copyName)) ||
+				newFiles.some((f) => f.path === joinPath(normalizedDest, copyName))
+			) {
+				counter += 1;
+				copyName = `${baseName}_copy_${counter}${ext}`;
+			}
+
+			const newPath = joinPath(normalizedDest, copyName);
+			try {
+				const newFile = await bedrockClient.files.duplicateFile(filePath, newPath);
+				if (newFile) newFiles.push(newFile);
+			} catch {
+				skippedCount += 1;
+			}
+		}
+
+		setFiles([...files, ...newFiles]);
+		setSelectedItems(new Set());
+		setBulkCopyMode(false);
+
+		if (skippedCount > 0) {
+			toast.success(`Copied ${newFiles.length} file(s), ${skippedCount} failed`);
+		} else if (newFiles.length === 0) {
+			toast.error("No files were copied");
+		} else {
+			toast.success(`${newFiles.length} file(s) copied successfully`);
+		}
 	};
 
 	if (!bedrockClient) {
@@ -514,10 +646,47 @@ const FileList: React.FC<FileListProps> = ({
 		<div className="flex flex-col h-full" onClick={() => setClickedItem(undefined)}>
 			<PublicFileLinkModal hash={sharedHash ?? ""} isOpen={!!sharedHash} onClose={() => setSharedHash(null)} />
 			{fileToMove && (
-				<FileMoveModal
+				<FolderBrowserModal
 					isOpen={true}
 					onClose={() => setFileToMove(null)}
-					onComplete={(newPath) => handleMove(fileToMove.path, newPath, fileToMove.folder)}
+					onComplete={(destinationPath) => {
+						handleMove(fileToMove.path, joinPath(destinationPath, fileToMove.name), fileToMove.folder);
+						setFileToMove(null);
+					}}
+					mode="move"
+					itemName={fileToMove.name}
+					initialPath={currentWorkingDirectory}
+					sourcePath={fileToMove.folder ? fileToMove.path : undefined}
+				/>
+			)}
+			{fileToCopy && (
+				<FolderBrowserModal
+					isOpen={true}
+					onClose={() => setFileToCopy(null)}
+					onComplete={handleCopyToDestination}
+					mode="copy"
+					itemName={fileToCopy.name}
+					initialPath={currentWorkingDirectory}
+				/>
+			)}
+			{bulkMoveMode && (
+				<FolderBrowserModal
+					isOpen={true}
+					onClose={() => setBulkMoveMode(false)}
+					onComplete={handleBulkMoveToDestination}
+					mode="move"
+					itemName={`${selectedItems.size} item${selectedItems.size > 1 ? "s" : ""}`}
+					initialPath={currentWorkingDirectory}
+				/>
+			)}
+			{bulkCopyMode && (
+				<FolderBrowserModal
+					isOpen={true}
+					onClose={() => setBulkCopyMode(false)}
+					onComplete={handleBulkCopyToDestination}
+					mode="copy"
+					itemName={`${selectedItems.size} file${selectedItems.size > 1 ? "s" : ""}`}
+					initialPath={currentWorkingDirectory}
 				/>
 			)}
 			{fileToRename && (
@@ -574,6 +743,19 @@ const FileList: React.FC<FileListProps> = ({
 										{currentWorkingDirectory === "/" ? emptyMessage : "This folder is empty"}
 									</p>
 									<p className="text-sm text-muted-foreground/70 mt-1">Upload files or create folders to get started</p>
+									{actions.includes("upload") && (
+										<div className="flex gap-3 mt-6">
+											<label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm cursor-pointer hover:bg-primary/90 transition-colors">
+												<Upload size={16} />
+												Upload File
+												<input {...getInputProps()} className="hidden" />
+											</label>
+											<Button variant="outline" className="gap-2" onClick={() => setIsCreatingFolder(true)}>
+												<FolderPlus size={16} />
+												Create Folder
+											</Button>
+										</div>
+									)}
 								</>
 							)}
 						</div>
@@ -645,6 +827,7 @@ const FileList: React.FC<FileListProps> = ({
 														setFileToMove({
 															path: folder.path,
 															folder: true,
+															name: folder.path.split("/").filter(Boolean).pop() || folder.path,
 														})
 												: undefined
 										}
@@ -670,6 +853,7 @@ const FileList: React.FC<FileListProps> = ({
 														setFileToMove({
 															path: file.path,
 															folder: false,
+															name: file.path.split("/").pop() || file.path,
 														})
 												: undefined
 										}
@@ -683,33 +867,17 @@ const FileList: React.FC<FileListProps> = ({
 							</TableBody>
 						</Table>
 					)}
-					{copiedFilePath != null && (
-						<div className="fixed bottom-24 left-1/5 -translate-x-1/5 z-50 bg-primary text-primary-foreground px-6 py-3 rounded-2xl shadow-glow flex items-center gap-4 animate-slide-up">
-							<p className="text-sm font-medium">1 item copied to clipboard</p>
-							<Button variant="secondary" size="sm" className="rounded-xl gap-2" onClick={() => handlePaste()}>
-								<ClipboardPaste size={14} />
-								Paste
-							</Button>
-							<Button
-								variant="ghost"
-								size="sm"
-								className="text-primary-foreground/80 hover:text-primary-foreground rounded-lg"
-								onClick={() => setcopiedFilePath(null)}
-							>
-								<Ban size={14} />
-							</Button>
-						</div>
-					)}
 					{actions.includes("bulk") && selectedItems.size > 0 && (
-						<div className="fixed bottom-6 left-3/5 -translate-x-3/5 z-50 bg-foreground text-background px-4 md:px-6 py-3 rounded-2xl shadow-soft-lg animate-slide-up max-w-[90vw] md:max-w-fit">
+						<div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-card border border-border px-4 md:px-6 py-3 rounded-2xl shadow-lg animate-slide-up max-w-[90vw] md:max-w-fit">
 							<div className="flex flex-wrap gap-3 md:gap-6 items-center justify-center">
-								<span className="text-sm font-medium whitespace-nowrap">
+								<span className="text-sm font-medium whitespace-nowrap text-foreground">
 									{selectedItems.size} item{selectedItems.size > 1 ? "s" : ""} selected
 								</span>
 								<div className="flex items-center gap-1 flex-wrap justify-center">
 									<Button
 										variant="ghost"
-										className="text-white text-sm gap-2"
+										className="text-sm gap-2"
+										disabled={hasSelectedFolders}
 										onClick={() => {
 											selectedItems.forEach((pathFile) => {
 												const file = files.find((f) => f.path === pathFile);
@@ -722,32 +890,27 @@ const FileList: React.FC<FileListProps> = ({
 										<Download size={16} />
 										Download
 									</Button>
-									<Button variant="ghost" className="text-white text-sm gap-2" disabled>
-										<Share2 size={16} />
-										Share
-									</Button>
-									<Button
-										variant="ghost"
-										className="text-white text-sm gap-2"
-										disabled
-										onClick={() => {
-											selectedItems.forEach((file) => {
-												setFileToMove({
-													path: file,
-													folder: false,
-												});
-											});
-										}}
-									>
+									<Button variant="ghost" className="text-sm gap-2" onClick={() => setBulkMoveMode(true)}>
 										<Move size={16} />
 										Move
 									</Button>
 									<Button
 										variant="ghost"
-										className="text-white text-sm gap-2"
+										className="text-sm gap-2"
+										disabled={hasSelectedFolders}
+										onClick={() => setBulkCopyMode(true)}
+									>
+										<Copy size={16} />
+										Copy
+									</Button>
+									<Button
+										variant="ghost"
+										className="text-sm gap-2 text-destructive hover:text-destructive"
 										onClick={() => {
-											selectedItems.forEach((file) => {
-												handleSoftDelete(file, false);
+											selectedItems.forEach((itemPath) => {
+												const isFolder = itemPath.endsWith("/");
+												const cleanPath = isFolder ? itemPath.slice(0, -1) : itemPath;
+												handleSoftDelete(cleanPath, isFolder);
 											});
 											setSelectedItems(new Set());
 										}}

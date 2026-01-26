@@ -40,6 +40,21 @@ export default function CreateContactDialog({ isOpen, onOpenChange, createContac
 		return address !== "0x0000000000000000000000000000000000000000";
 	};
 
+	const canSubmit =
+		username.length > 0 &&
+		contactFormData.address.length > 0 &&
+		contactFormData.publicKey.length > 0 &&
+		!isContactNameTaken &&
+		!isLoadingAddress &&
+		isValidAddress(contactFormData.address);
+
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === "Enter" && canSubmit) {
+			e.preventDefault();
+			createContact(contactFormData);
+		}
+	};
+
 	useEffect(() => {
 		const timer = setTimeout(() => {
 			if (username.trim()) {
@@ -107,6 +122,8 @@ export default function CreateContactDialog({ isOpen, onOpenChange, createContac
 					onChange={(e) => setUsername(e.target.value)}
 					placeholder="Username"
 					className="w-full"
+					onKeyDown={handleKeyDown}
+					autoFocus
 				/>
 				<Input
 					value={contactFormData.address}
@@ -128,22 +145,13 @@ export default function CreateContactDialog({ isOpen, onOpenChange, createContac
 					}
 					placeholder="Contact Public Key"
 					className="w-full"
+					onKeyDown={handleKeyDown}
 				/>
 				<DialogFooter>
 					<DialogClose asChild>
 						<Button variant="outline">Cancel</Button>
 					</DialogClose>
-					<Button
-						disabled={
-							!username.length ||
-							!contactFormData.address.length ||
-							!contactFormData.publicKey.length ||
-							isContactNameTaken ||
-							isLoadingAddress ||
-							!isValidAddress(contactFormData.address)
-						}
-						onClick={() => createContact(contactFormData)}
-					>
+					<Button disabled={!canSubmit} onClick={() => createContact(contactFormData)}>
 						Create
 					</Button>
 				</DialogFooter>
