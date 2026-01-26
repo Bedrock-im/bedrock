@@ -377,29 +377,19 @@ const FileList: React.FC<FileListProps> = ({
 
 		setActionLoading("delete");
 		const deletionDatetime = new Date();
-		const toastId = toast.loading(`Deleting ${folder ? "folder" : "file"}...`);
-
-		try {
-			if (folder) {
-				const folderPrefix = path.endsWith("/") ? path : path + "/";
-				const filePathsToDelete = files
-					.filter((f) => f.path === path || f.path.startsWith(folderPrefix))
-					.map((f) => f.path);
-				await bedrockClient.files.softDeleteFiles(filePathsToDelete, deletionDatetime);
-				softDeleteFolder(
-					path,
-					deletionDatetime,
-					currentWorkingDirectory + path.slice(0, path.length).split("/").pop()!,
-				);
-			} else {
-				await bedrockClient.files.softDeleteFiles([path], deletionDatetime);
-				softDeleteFile(path, deletionDatetime, `/${path.split("/").pop()!}`);
-			}
-			toast.success(`The ${folder ? "folder" : "file"} has been deleted.`, { id: toastId });
-		} catch {
-			toast.error(`Failed to delete the ${folder ? "folder" : "file"}`, { id: toastId });
-		} finally {
-			setActionLoading(null);
+		if (folder) {
+			const filesToDelete = softDeleteFolder(
+				path,
+				deletionDatetime,
+				currentWorkingDirectory + path.slice(0, path.length).split("/").pop()!,
+			);
+			bedrockClient?.files.softDeleteFiles(
+				filesToDelete.map((f) => f.path),
+				deletionDatetime,
+			);
+		} else {
+			const file = softDeleteFile(path, deletionDatetime, `/${path.split("/").pop()!}`);
+			if (file) bedrockClient?.files.softDeleteFiles([file.path], deletionDatetime);
 		}
 	};
 
