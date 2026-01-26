@@ -392,12 +392,8 @@ const FileList: React.FC<FileListProps> = ({
 		try {
 			if (folder) {
 				const normalizedFolderPath = normalizePath(path);
-				const folderPrefix = normalizedFolderPath.endsWith("/")
-					? normalizedFolderPath
-					: `${normalizedFolderPath}/`;
-				const filesToDelete = files.filter(
-					(f) => f.path === normalizedFolderPath || f.path.startsWith(folderPrefix),
-				);
+				const folderPrefix = normalizedFolderPath.endsWith("/") ? normalizedFolderPath : `${normalizedFolderPath}/`;
+				const filesToDelete = files.filter((f) => f.path === normalizedFolderPath || f.path.startsWith(folderPrefix));
 				await bedrockClient.files.hardDeleteFiles(filesToDelete.map((f) => f.path));
 				hardDeleteFolder(path);
 			} else {
@@ -549,7 +545,7 @@ const FileList: React.FC<FileListProps> = ({
 			if (!newFile) {
 				throw new Error("File duplication failed");
 			}
-			setFiles((prevFiles) => [...prevFiles, newFile]);
+			setFiles([...files, newFile]);
 			setFileToCopy(null);
 			toast.success("File copied successfully", { id: toastId });
 		} catch {
