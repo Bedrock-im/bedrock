@@ -378,19 +378,29 @@ const FileList: React.FC<FileListProps> = ({
 
 		setActionLoading("delete");
 		const deletionDatetime = new Date();
-		if (folder) {
-			const filesToDelete = softDeleteFolder(
-				path,
-				deletionDatetime,
-				currentWorkingDirectory + path.slice(0, path.length).split("/").pop()!,
-			);
-			bedrockClient?.files.softDeleteFiles(
-				filesToDelete.map((f) => f.path),
-				deletionDatetime,
-			);
-		} else {
-			const file = softDeleteFile(path, deletionDatetime, `/${path.split("/").pop()!}`);
-			if (file) bedrockClient?.files.softDeleteFiles([file.path], deletionDatetime);
+		const toastId = toast.loading(`Deleting ${folder ? "folder" : "file"}...`);
+
+		try {
+			if (folder) {
+				const folderPrefix = path.endsWith("/") ? path : path + "/";
+				const filePathsToDelete = files
+					.filter((f) => f.path === path || f.path.startsWith(folderPrefix))
+					.map((f) => f.path);
+				await bedrockClient.files.softDeleteFiles(filePathsToDelete, deletionDatetime);
+				softDeleteFolder(
+					path,
+					deletionDatetime,
+					currentWorkingDirectory + path.slice(0, path.length).split("/").pop()!,
+				);
+			} else {
+				await bedrockClient.files.softDeleteFiles([path], deletionDatetime);
+				softDeleteFile(path, deletionDatetime, `/${path.split("/").pop()!}`);
+			}
+			toast.success(`The ${folder ? "folder" : "file"} has been deleted.`, { id: toastId });
+		} catch {
+			toast.error(`Failed to delete the ${folder ? "folder" : "file"}`, { id: toastId });
+		} finally {
+			setActionLoading(null);
 		}
 	};
 
@@ -826,7 +836,7 @@ const FileList: React.FC<FileListProps> = ({
 				{actions.includes("upload") && (
 					<UploadButton onCreateFolder={() => setIsCreatingFolder(true)} getInputProps={getInputProps} />
 				)}
-				<input type="file" id="fileInput" className="hidden" onChange={() => {}} />
+				<input type="file" id="fileInput" className="hidden" onChange={() => { }} />
 				<input
 					type="text"
 					placeholder="Search files and folders..."
@@ -939,11 +949,11 @@ const FileList: React.FC<FileListProps> = ({
 										onMove={
 											actions.includes("move")
 												? () =>
-														setFileToMove({
-															path: folder.path,
-															folder: true,
-															name: folder.path.split("/").filter(Boolean).pop() || folder.path,
-														})
+													setFileToMove({
+														path: folder.path,
+														folder: true,
+														name: folder.path.split("/").filter(Boolean).pop() || folder.path,
+													})
 												: undefined
 										}
 										onRestore={actions.includes("restore") ? () => handleRestoreFile(folder.path) : undefined}
@@ -965,11 +975,11 @@ const FileList: React.FC<FileListProps> = ({
 										onMove={
 											actions.includes("move")
 												? () =>
-														setFileToMove({
-															path: file.path,
-															folder: false,
-															name: file.path.split("/").pop() || file.path,
-														})
+													setFileToMove({
+														path: file.path,
+														folder: false,
+														name: file.path.split("/").pop() || file.path,
+													})
 												: undefined
 										}
 										onDelete={actions.includes("delete") ? () => handleSoftDelete(file.path, false) : undefined}
