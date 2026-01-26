@@ -305,7 +305,8 @@ const FileList: React.FC<FileListProps> = ({
 				]);
 				moveFile(path, newPath);
 			} else {
-				const filesToMove = files.filter((f) => f.path.startsWith(path));
+				const folderPrefix = path.endsWith("/") ? path : path + "/";
+				const filesToMove = files.filter((f) => f.path === path || f.path.startsWith(folderPrefix));
 				const paths = filesToMove.map((f) => ({
 					oldPath: f.path,
 					newPath: newPath + f.path.slice(path.length),
@@ -466,7 +467,8 @@ const FileList: React.FC<FileListProps> = ({
 				]);
 				moveFile(path, newPath);
 			} else {
-				const filesToMove = files.filter((f) => f.path.startsWith(path));
+				const folderPrefix = path.endsWith("/") ? path : path + "/";
+				const filesToMove = files.filter((f) => f.path === path || f.path.startsWith(folderPrefix));
 				const paths = filesToMove.map((f) => ({
 					oldPath: f.path,
 					newPath: newPath + f.path.slice(path.length),
