@@ -20,13 +20,13 @@ export default function useBedrockFileUploadDropzone(options: DropzoneOptions) {
 				acceptedFiles.map(async (file) => (
 					{
 						name: file.name,
-						path: currentWorkingDirectory === "/" ? file.name : `${currentWorkingDirectory}${file.name}`,
+						path: `${currentWorkingDirectory}${file.name}`,
 						content: Buffer.from(await file.arrayBuffer()),
 					})),
 			);
 
 
-			const uploadPromise = bedrockClient.files.uploadFiles(fileInputs, currentWorkingDirectory === "/" ? "/" : "");
+			const uploadPromise = bedrockClient.files.uploadFiles(fileInputs);
 			toast.promise(uploadPromise, {
 				loading: `Uploading ${acceptedFiles.length} files...`,
 				success: (uploadedFiles) => `Successfully uploaded ${uploadedFiles.length} files`,
