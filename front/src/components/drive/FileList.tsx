@@ -766,7 +766,7 @@ const FileList: React.FC<FileListProps> = ({
 								<TableRow>
 									<TableHead className="w-12 pl-4">
 										<Checkbox
-											checked={selectedItems.size === files.length + folders.length}
+											checked={selectedItems.size === currentPathFiles.length + currentPathFolders.length}
 											onClick={(e) => {
 												e.stopPropagation();
 												selectAll();
