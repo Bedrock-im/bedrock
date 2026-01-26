@@ -17,14 +17,17 @@ export default function useBedrockFileUploadDropzone(options: DropzoneOptions) {
 
 			// Convert files to FileInput format
 			const fileInputs = await Promise.all(
-				acceptedFiles.map(async (file) => ({
-					name: file.name,
-					path: currentWorkingDirectory === "/" ? file.name : `${currentWorkingDirectory}/${file.name}`,
-					content: Buffer.from(await file.arrayBuffer()),
-				})),
+				acceptedFiles.map(async (file) => (
+					{
+						name: file.name,
+						path: currentWorkingDirectory === "/" ? file.name : `${currentWorkingDirectory}${file.name}`,
+						content: Buffer.from(await file.arrayBuffer()),
+					})),
 			);
 
-			const uploadPromise = bedrockClient.files.uploadFiles(fileInputs, currentWorkingDirectory);
+			console.log("File upload paths:", fileInputs.map(f => f.path));
+
+			const uploadPromise = bedrockClient.files.uploadFiles(fileInputs, currentWorkingDirectory === "/" ? "/" : "");
 			toast.promise(uploadPromise, {
 				loading: `Uploading ${acceptedFiles.length} files...`,
 				success: (uploadedFiles) => `Successfully uploaded ${uploadedFiles.length} files`,
@@ -33,6 +36,7 @@ export default function useBedrockFileUploadDropzone(options: DropzoneOptions) {
 
 			try {
 				const uploadedFiles = await uploadPromise;
+                console.log("Uploaded files:", uploadedFiles);
 				const fileContents = await Promise.all(
 					acceptedFiles.map(async (file) => ({
 						content: Buffer.from(await file.arrayBuffer()),
