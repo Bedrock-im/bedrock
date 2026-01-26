@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 interface SingleTextInputModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onComplete: (input: string) => Promise<void>;
+	onComplete: (input: string) => Promise<void> | void;
 	title: string;
 	description: string;
 	placeholder: string;
@@ -34,7 +34,7 @@ export function SingleTextInputModal({
 	placeholder,
 	submitLabel,
 	defaultValue = "",
-}: SingleTextInputModalProps) {
+}: Readonly<SingleTextInputModalProps>) {
 	const [input, setInput] = useState(defaultValue);
 	const [isLoading, setIsLoading] = useState(false);
 

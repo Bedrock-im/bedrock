@@ -8,7 +8,7 @@ interface FolderCreateModalProps {
 	onComplete: (folderName: string) => Promise<void> | void;
 }
 
-export function FolderCreateModal({ isOpen, onClose, onComplete }: FolderCreateModalProps) {
+export function FolderCreateModal({ isOpen, onClose, onComplete }: Readonly<FolderCreateModalProps>) {
 	return (
 		<SingleTextInputModal
 			isOpen={isOpen}

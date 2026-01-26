@@ -271,12 +271,6 @@ const FileList: React.FC<FileListProps> = ({
 	const handleCreateFolder = (folderName: string) => {
 		const newFolderPath = `${currentWorkingDirectory}${folderName}`;
 
-		// TODO: this check should be moved to the drive or bedrock service to check against all files, not just those passed to this component
-		// if (folders.some((folder) => folder.path === newFolderPath)) {
-		//      toast.error("This folder already exists!");
-		//      return;
-		// }
-
 		const newFolder: DriveFolder = {
 			path: newFolderPath,
 			created_at: new Date().toISOString(),
@@ -316,13 +310,12 @@ const FileList: React.FC<FileListProps> = ({
 				await bedrockClient.files.moveFiles(paths);
 				moveFolder(path, newPath);
 			}
-			setFileToRename(null);
-			setFolderToRename(null);
 			toast.success(`The ${folder ? "folder" : "file"} has been renamed.`, { id: toastId });
 		} catch {
 			toast.error(`Failed to rename the ${folder ? "folder" : "file"}`, { id: toastId });
 		} finally {
 			setFileToRename(null);
+			setFolderToRename(null);
 			setActionLoading(null);
 		}
 	};

@@ -1,13 +1,14 @@
 "use client";
 
 import { SingleTextInputModal } from "@/components/SingleTextInputModal";
+
 interface FileRenameModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	onComplete: (newName: string) => Promise<void> | void;
 }
 
-export function FileRenameModal({ isOpen, onClose, onComplete }: FileRenameModalProps) {
+export function FileRenameModal({ isOpen, onClose, onComplete }: Readonly<FileRenameModalProps>) {
 	return (
 		<SingleTextInputModal
 			isOpen={isOpen}
