@@ -69,7 +69,7 @@ export default function CodePreview({ fileUrl, filename, category, onSave }: Rea
 	if (isLoading && viewMode === "preview") {
 		return (
 			<div className="flex flex-col gap-4 w-full h-full max-w-4xl mx-auto">
-				<div className="flex items-center justify-between p-4 border rounded-lg bg-white shadow-sm">
+				<div className="flex items-center justify-between p-4 border rounded-lg bg-card shadow-sm">
 					<div className="flex items-center gap-3">
 						<div className="p-2 bg-blue-100 rounded-md">
 							<FileText className="h-5 w-5 text-blue-600" />
@@ -90,7 +90,7 @@ export default function CodePreview({ fileUrl, filename, category, onSave }: Rea
 	if (error && viewMode === "preview") {
 		return (
 			<div className="flex flex-col gap-4 w-full h-full max-w-4xl mx-auto">
-				<div className="flex items-center justify-between p-4 border rounded-lg bg-white shadow-sm">
+				<div className="flex items-center justify-between p-4 border rounded-lg bg-card shadow-sm">
 					<div className="flex items-center gap-3">
 						<div className="p-2 bg-blue-100 rounded-md">
 							<FileText className="h-5 w-5 text-blue-600" />
@@ -113,7 +113,7 @@ export default function CodePreview({ fileUrl, filename, category, onSave }: Rea
 
 	return (
 		<div className="flex flex-col gap-4 w-full h-full max-w-4xl mx-auto">
-			<div className="flex items-center justify-between p-4 border rounded-lg bg-white shadow-sm">
+			<div className="flex items-center justify-between p-4 border rounded-lg bg-card shadow-sm">
 				<div className="flex items-center gap-3">
 					<div className="p-2 bg-blue-100 rounded-md">
 						<FileText className="h-5 w-5 text-blue-600" />
@@ -146,7 +146,7 @@ export default function CodePreview({ fileUrl, filename, category, onSave }: Rea
 				</div>
 			</div>
 
-			<div className="flex-1 min-h-[500px] border rounded-lg shadow-sm bg-white overflow-hidden">
+			<div className="flex-1 min-h-[500px] border rounded-lg shadow-sm bg-card overflow-hidden">
 				{viewMode === "preview" ? (
 					<pre
 						className={`bg-slate-950 text-slate-50 p-4 rounded-lg text-sm font-mono whitespace-pre h-full overflow-auto ${

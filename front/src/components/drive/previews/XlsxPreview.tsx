@@ -67,7 +67,7 @@ export default function XlsxPreview({ fileUrl, filename }: Readonly<XlsxPreviewP
 	if (isLoading) {
 		return (
 			<div className="flex flex-col gap-4 w-full h-full max-w-4xl mx-auto">
-				<div className="flex items-center justify-between p-4 border rounded-lg bg-white shadow-sm">
+				<div className="flex items-center justify-between p-4 border rounded-lg bg-card shadow-sm">
 					<div className="flex items-center gap-3">
 						<div className="p-2 bg-blue-100 rounded-md">
 							<FileSpreadsheet className="h-5 w-5 text-blue-600" />
@@ -88,7 +88,7 @@ export default function XlsxPreview({ fileUrl, filename }: Readonly<XlsxPreviewP
 	if (error) {
 		return (
 			<div className="flex flex-col gap-4 w-full h-full max-w-4xl mx-auto">
-				<div className="flex items-center justify-between p-4 border rounded-lg bg-white shadow-sm">
+				<div className="flex items-center justify-between p-4 border rounded-lg bg-card shadow-sm">
 					<div className="flex items-center gap-3">
 						<div className="p-2 bg-blue-100 rounded-md">
 							<FileSpreadsheet className="h-5 w-5 text-blue-600" />
@@ -112,7 +112,7 @@ export default function XlsxPreview({ fileUrl, filename }: Readonly<XlsxPreviewP
 	if (sheets.length === 0) {
 		return (
 			<div className="flex flex-col gap-4 w-full h-full max-w-4xl mx-auto">
-				<div className="flex items-center justify-between p-4 border rounded-lg bg-white shadow-sm">
+				<div className="flex items-center justify-between p-4 border rounded-lg bg-card shadow-sm">
 					<div className="flex items-center gap-3">
 						<div className="p-2 bg-blue-100 rounded-md">
 							<FileSpreadsheet className="h-5 w-5 text-blue-600" />
@@ -134,7 +134,7 @@ export default function XlsxPreview({ fileUrl, filename }: Readonly<XlsxPreviewP
 
 	return (
 		<div className="flex flex-col gap-4 w-full h-full max-w-4xl mx-auto">
-			<div className="flex items-center justify-between p-4 border rounded-lg bg-white shadow-sm">
+			<div className="flex items-center justify-between p-4 border rounded-lg bg-card shadow-sm">
 				<div className="flex items-center gap-3">
 					<div className="p-2 bg-blue-100 rounded-md">
 						<FileSpreadsheet className="h-5 w-5 text-blue-600" />
@@ -146,7 +146,7 @@ export default function XlsxPreview({ fileUrl, filename }: Readonly<XlsxPreviewP
 				</div>
 			</div>
 
-			<div className="flex-1 min-h-[500px] border rounded-lg shadow-sm bg-white overflow-hidden p-4">
+			<div className="flex-1 min-h-[500px] border rounded-lg shadow-sm bg-card overflow-hidden p-4">
 				{sheets.length > 1 && (
 					<div className="mb-4 flex gap-2 flex-wrap">
 						{sheets.map((sheet) => (
@@ -166,10 +166,10 @@ export default function XlsxPreview({ fileUrl, filename }: Readonly<XlsxPreviewP
 				)}
 
 				<div className="border rounded-lg overflow-auto">
-					<table className="min-w-full border-collapse bg-white">
+					<table className="min-w-full border-collapse bg-card">
 						<tbody>
 							{currentSheet.data.map((row, rowIndex) => (
-								<tr key={rowIndex} className={rowIndex === 0 ? "bg-gray-100 font-semibold" : ""}>
+								<tr key={rowIndex} className={rowIndex === 0 ? "bg-muted font-semibold" : ""}>
 									{row.map((cell, cellIndex) => (
 										<td key={cellIndex} className={`border px-4 py-2 text-sm ${rowIndex === 0 ? "font-semibold" : ""}`}>
 											{cell || ""}

@@ -168,10 +168,10 @@ const FileCard = ({
 							{onShare && <ActionIcon Icon={Share2} onClick={onShare} tooltip="Share" />}
 							{onRename && <ActionIcon Icon={Edit} onClick={onRename} tooltip="Rename" />}
 							{onMove && <ActionIcon Icon={Move} onClick={onMove} tooltip="Move" />}
+							{onCopy && <ActionIcon Icon={Copy} onClick={onCopy} tooltip="Copy" />}
 							{onDelete && <ActionIcon Icon={Trash} onClick={onDelete} tooltip="Delete" />}
 							{onHardDelete && <ActionIcon Icon={Trash} onClick={onHardDelete} tooltip="Delete permanently" />}
 							{onRestore && <ActionIcon Icon={ArchiveRestore} onClick={onRestore} tooltip="Restore" />}
-							{onCopy && <ActionIcon Icon={Copy} onClick={onCopy} tooltip="Copy" />}
 						</div>
 					</TableCell>
 				</TableRow>

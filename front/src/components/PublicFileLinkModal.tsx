@@ -45,17 +45,19 @@ export function PublicFileLinkModal({ hash, isOpen, onClose }: Readonly<PublicFi
 					<DialogTitle>File shared!</DialogTitle>
 					<DialogDescription>Your file is now available to anyone through this link.</DialogDescription>
 				</DialogHeader>
-				<Input type="text" id="public-key" value={url} className="pr-10" disabled />
-				<Button
-					type="button"
-					variant="ghost"
-					size="icon"
-					className="absolute right-0 top-0 h-full px-2"
-					onClick={copyToClipboard}
-					aria-label="Copy sensitive data to clipboard"
-				>
-					<CopyIcon className="h-4 w-4" />
-				</Button>
+				<div className="relative">
+					<Input type="text" id="public-key" value={url} className="pr-10" disabled />
+					<Button
+						type="button"
+						variant="ghost"
+						size="icon"
+						className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
+						onClick={copyToClipboard}
+						aria-label="Copy link to clipboard"
+					>
+						<CopyIcon className="h-4 w-4" />
+					</Button>
+				</div>
 				<DialogFooter className="justify-end">
 					<Button onClick={onClose}>Close</Button>
 				</DialogFooter>

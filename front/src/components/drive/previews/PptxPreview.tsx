@@ -148,7 +148,7 @@ export default function PptxPreview({ fileUrl, filename, onSave }: PptxPreviewPr
 	if (error || slides.length === 0) {
 		return (
 			<div className="flex flex-col gap-4 w-full h-full max-w-4xl mx-auto">
-				<div className="flex items-center justify-between p-4 border rounded-lg bg-white shadow-sm">
+				<div className="flex items-center justify-between p-4 border rounded-lg bg-card shadow-sm">
 					<div className="flex items-center gap-3">
 						<div className="p-2 bg-blue-100 rounded-md">
 							<Presentation className="h-5 w-5 text-blue-600" />
@@ -176,7 +176,7 @@ export default function PptxPreview({ fileUrl, filename, onSave }: PptxPreviewPr
 
 	return (
 		<div className="flex flex-col gap-4 w-full h-full max-w-4xl mx-auto">
-			<div className="flex items-center justify-between p-4 border rounded-lg bg-white shadow-sm">
+			<div className="flex items-center justify-between p-4 border rounded-lg bg-card shadow-sm">
 				<div className="flex items-center gap-3">
 					<div className="p-2 bg-blue-100 rounded-md">
 						<Presentation className="h-5 w-5 text-blue-600" />
@@ -211,7 +211,7 @@ export default function PptxPreview({ fileUrl, filename, onSave }: PptxPreviewPr
 				</div>
 			</div>
 
-			<div className="flex-1 min-h-[500px] border rounded-lg shadow-sm bg-white overflow-hidden">
+			<div className="flex-1 min-h-[500px] border rounded-lg shadow-sm bg-card overflow-hidden">
 				{viewMode === "preview" ? (
 					<div className="p-4">
 						{slides.length > 1 && (
@@ -232,7 +232,7 @@ export default function PptxPreview({ fileUrl, filename, onSave }: PptxPreviewPr
 							</div>
 						)}
 
-						<div className="border rounded-lg bg-white p-8 min-h-[500px] flex flex-col items-center justify-center">
+						<div className="border rounded-lg bg-card p-8 min-h-[500px] flex flex-col items-center justify-center">
 							<div className="w-full max-w-4xl">
 								<h2 className="text-2xl font-bold mb-4">{slides[currentSlide].title}</h2>
 								<div className="prose prose-lg max-w-none">

@@ -99,7 +99,7 @@ export default function PDFPreview({ fileUrl, filename, onSave }: Readonly<PDFPr
 
 	return (
 		<div className="flex flex-col gap-4 w-full max-w-4xl mx-auto">
-			<div className="flex items-center justify-between p-4 border rounded-lg bg-white shadow-sm flex-shrink-0">
+			<div className="flex items-center justify-between p-4 border rounded-lg bg-card shadow-sm flex-shrink-0">
 				<div className="flex items-center gap-3">
 					<div className="p-2 bg-blue-100 rounded-md">
 						<FileText className="h-5 w-5 text-blue-600" />
@@ -134,7 +134,7 @@ export default function PDFPreview({ fileUrl, filename, onSave }: Readonly<PDFPr
 				</div>
 			</div>
 
-			<div className="h-[calc(90vh-200px)] border rounded-lg shadow-sm bg-white overflow-hidden">
+			<div className="h-[calc(90vh-200px)] border rounded-lg shadow-sm bg-card overflow-hidden">
 				{viewMode === "preview" ? (
 					<iframe src={fileUrl} className="w-full h-full rounded-lg border-0" title="PDF Preview" />
 				) : (
