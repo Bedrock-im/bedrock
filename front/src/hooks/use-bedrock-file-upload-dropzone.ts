@@ -19,7 +19,7 @@ export default function useBedrockFileUploadDropzone(options: DropzoneOptions) {
 			const fileInputs = await Promise.all(
 				acceptedFiles.map(async (file) => ({
 					name: file.name,
-					path: currentWorkingDirectory === "/" ? file.name : `${currentWorkingDirectory}/${file.name}`,
+					path: `${currentWorkingDirectory}${file.name}`,
 					content: Buffer.from(await file.arrayBuffer()),
 				})),
 			);
