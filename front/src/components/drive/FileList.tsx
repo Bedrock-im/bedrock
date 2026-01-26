@@ -956,11 +956,7 @@ const FileList: React.FC<FileListProps> = ({
 											for (const pathFile of Array.from(selectedItems)) {
 												const file = files.find((f) => f.path === pathFile);
 												if (file) {
-													try {
-														await handleDownloadFile(file);
-													} catch (error) {
-														console.error("Failed to download file:", error);
-													}
+													await handleDownloadFile(file);
 												}
 											}
 										}}
