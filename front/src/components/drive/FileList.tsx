@@ -16,6 +16,7 @@ import { FileRenameModal } from "@/components/FileRenameModal";
 import { FileShareModal } from "@/components/FileShareModal";
 import { FolderBrowserModal } from "@/components/FolderBrowserModal";
 import { FolderCreateModal } from "@/components/FolderCreateModal";
+import { FolderRenameModal } from "@/components/FolderRenameModal";
 import { PublicFileLinkModal } from "@/components/PublicFileLinkModal";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -79,6 +80,7 @@ const FileList: React.FC<FileListProps> = ({
 	});
 	const [fileToMove, setFileToMove] = useState<{ path: string; folder: boolean; name: string } | null>(null);
 	const [fileToRename, setFileToRename] = useState<FileFullInfo | null>(null);
+	const [folderToRename, setFolderToRename] = useState<DriveFolder | null>(null);
 	const [fileToShare, setFileToShare] = useState<FileFullInfo | null>(null);
 	const [fileToPreview, setFileToPreview] = useState<DriveFile | null>(null);
 	const [isCreatingFolder, setIsCreatingFolder] = useState(false);
@@ -269,12 +271,6 @@ const FileList: React.FC<FileListProps> = ({
 	const handleCreateFolder = (folderName: string) => {
 		const newFolderPath = `${currentWorkingDirectory}${folderName}`;
 
-		// TODO: this check should be moved to the drive or bedrock service to check against all files, not just those passed to this component
-		// if (folders.some((folder) => folder.path === newFolderPath)) {
-		//      toast.error("This folder already exists!");
-		//      return;
-		// }
-
 		const newFolder: DriveFolder = {
 			path: newFolderPath,
 			created_at: new Date().toISOString(),
@@ -314,12 +310,12 @@ const FileList: React.FC<FileListProps> = ({
 				await bedrockClient.files.moveFiles(paths);
 				moveFolder(path, newPath);
 			}
-			setFileToRename(null);
 			toast.success(`The ${folder ? "folder" : "file"} has been renamed.`, { id: toastId });
 		} catch {
 			toast.error(`Failed to rename the ${folder ? "folder" : "file"}`, { id: toastId });
 		} finally {
 			setFileToRename(null);
+			setFolderToRename(null);
 			setActionLoading(null);
 		}
 	};
@@ -754,7 +750,6 @@ const FileList: React.FC<FileListProps> = ({
 			}
 		}
 	};
-
 	return (
 		<div className="flex flex-col" onClick={() => setClickedItem(undefined)}>
 			<PublicFileLinkModal hash={sharedHash ?? ""} isOpen={!!sharedHash} onClose={() => setSharedHash(null)} />
@@ -807,6 +802,13 @@ const FileList: React.FC<FileListProps> = ({
 					isOpen={true}
 					onClose={() => setFileToRename(null)}
 					onComplete={(newName) => handleRename(fileToRename.path, false, newName)}
+				/>
+			)}
+			{folderToRename && (
+				<FolderRenameModal
+					isOpen={true}
+					onClose={() => setFolderToRename(null)}
+					onComplete={(newName) => handleRename(folderToRename.path, true, newName)}
 				/>
 			)}
 			{fileToShare && (
@@ -932,6 +934,7 @@ const FileList: React.FC<FileListProps> = ({
 										setSelected={() => selectItem(folder.path + "/")}
 										onLeftClick={() => setClickedItem(folder.path)}
 										onDoubleClick={() => handleChangeDirectory(folder.path + "/")}
+										onRename={actions.includes("rename") ? () => setFolderToRename(folder) : undefined}
 										onDelete={actions.includes("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
 										onHardDelete={
 											actions.includes("hardDelete") ? () => handleHardDelete(folder.path, true) : undefined
