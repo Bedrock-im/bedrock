@@ -237,6 +237,7 @@ const FileList: React.FC<FileListProps> = ({
 			setSelectedItems(newSelectedItems);
 			onSelectedItemPathsChange?.(newSelectedItems);
 		}
+		setSearchQuery(null);
 		setCurrentWorkingDirectory(newPath);
 	};
 
