@@ -391,7 +391,13 @@ const FileList: React.FC<FileListProps> = ({
 
 		try {
 			if (folder) {
-				const filesToDelete = files.filter((f) => f.path.startsWith(path));
+				const normalizedFolderPath = normalizePath(path);
+				const folderPrefix = normalizedFolderPath.endsWith("/")
+					? normalizedFolderPath
+					: `${normalizedFolderPath}/`;
+				const filesToDelete = files.filter(
+					(f) => f.path === normalizedFolderPath || f.path.startsWith(folderPrefix),
+				);
 				await bedrockClient.files.hardDeleteFiles(filesToDelete.map((f) => f.path));
 				hardDeleteFolder(path);
 			} else {
