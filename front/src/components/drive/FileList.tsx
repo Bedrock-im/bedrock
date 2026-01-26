@@ -999,7 +999,7 @@ const FileList: React.FC<FileListProps> = ({
 												try {
 													if (isFolder) {
 														const filePathsToDelete = files
-															.filter((f) => f.path.startsWith(cleanPath))
+															.filter((f) => f.path === cleanPath || f.path.startsWith(cleanPath + "/"))
 															.map((f) => f.path);
 														await bedrockClient.files.softDeleteFiles(filePathsToDelete, deletionDatetime);
 														softDeleteFolder(
