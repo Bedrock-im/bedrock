@@ -828,7 +828,7 @@ const FileList: React.FC<FileListProps> = ({
 				{actions.includes("upload") && (
 					<UploadButton onCreateFolder={() => setIsCreatingFolder(true)} getInputProps={getInputProps} />
 				)}
-				<input type="file" id="fileInput" className="hidden" onChange={() => { }} />
+				<input type="file" id="fileInput" className="hidden" onChange={() => {}} />
 				<input
 					type="text"
 					placeholder="Search files and folders..."
@@ -941,11 +941,11 @@ const FileList: React.FC<FileListProps> = ({
 										onMove={
 											actions.includes("move")
 												? () =>
-													setFileToMove({
-														path: folder.path,
-														folder: true,
-														name: folder.path.split("/").filter(Boolean).pop() || folder.path,
-													})
+														setFileToMove({
+															path: folder.path,
+															folder: true,
+															name: folder.path.split("/").filter(Boolean).pop() || folder.path,
+														})
 												: undefined
 										}
 										onRestore={actions.includes("restore") ? () => handleRestoreFile(folder.path) : undefined}
@@ -967,11 +967,11 @@ const FileList: React.FC<FileListProps> = ({
 										onMove={
 											actions.includes("move")
 												? () =>
-													setFileToMove({
-														path: file.path,
-														folder: false,
-														name: file.path.split("/").pop() || file.path,
-													})
+														setFileToMove({
+															path: file.path,
+															folder: false,
+															name: file.path.split("/").pop() || file.path,
+														})
 												: undefined
 										}
 										onDelete={actions.includes("delete") ? () => handleSoftDelete(file.path, false) : undefined}

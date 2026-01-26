@@ -10,7 +10,7 @@ import {
 	DialogDescription,
 	DialogFooter,
 	DialogHeader,
-	DialogTitle
+	DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
@@ -26,15 +26,15 @@ interface SingleTextInputModalProps {
 }
 
 export function SingleTextInputModal({
-																			 isOpen,
-																			 onClose,
-																			 onComplete,
-																			 title,
-																			 description,
-																			 placeholder,
-																			 submitLabel,
-																			 defaultValue = ""
-																		 }: SingleTextInputModalProps) {
+	isOpen,
+	onClose,
+	onComplete,
+	title,
+	description,
+	placeholder,
+	submitLabel,
+	defaultValue = "",
+}: SingleTextInputModalProps) {
 	const [input, setInput] = useState(defaultValue);
 	const [isLoading, setIsLoading] = useState(false);
 
