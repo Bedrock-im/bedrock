@@ -25,7 +25,6 @@ export default function useBedrockFileUploadDropzone(options: DropzoneOptions) {
 					})),
 			);
 
-			console.log("File upload paths:", fileInputs.map(f => f.path));
 
 			const uploadPromise = bedrockClient.files.uploadFiles(fileInputs, currentWorkingDirectory === "/" ? "/" : "");
 			toast.promise(uploadPromise, {
@@ -36,7 +35,6 @@ export default function useBedrockFileUploadDropzone(options: DropzoneOptions) {
 
 			try {
 				const uploadedFiles = await uploadPromise;
-                console.log("Uploaded files:", uploadedFiles);
 				const fileContents = await Promise.all(
 					acceptedFiles.map(async (file) => ({
 						content: Buffer.from(await file.arrayBuffer()),
