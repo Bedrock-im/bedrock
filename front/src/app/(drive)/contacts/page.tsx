@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import CreateContactDialog from "@/components/drive/CreateContactDialog";
+import { TableSkeleton } from "@/components/drive/TableSkeleton";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ export default function Contacts() {
 	const [contacts, setContacts] = useState<Contact[]>([]);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
+	const [isLoading, setIsLoading] = useState(true);
 
 	const [isCopied, setIsCopied] = useState(false);
 
@@ -66,6 +68,7 @@ export default function Contacts() {
 			return;
 		}
 
+		setIsLoading(true);
 		(async () => {
 			try {
 				const contacts = await bedrockClient.contacts.listContacts();
@@ -74,6 +77,8 @@ export default function Contacts() {
 				setPublicKey(bedrockClient.getPublicKey());
 			} catch (error) {
 				console.error("Failed to fetch contacts:", error);
+			} finally {
+				setIsLoading(false);
 			}
 		})();
 	}, [bedrockClient, setContacts, setPublicKey]);
@@ -121,7 +126,9 @@ export default function Contacts() {
 					</div>
 					<Separator orientation="horizontal" />
 				</div>
-				{filteredContacts.length === 0 ? (
+				{isLoading ? (
+					<TableSkeleton columns={2} rows={4} headers={["Name", "Public Key"]} />
+				) : filteredContacts.length === 0 ? (
 					<div className="flex flex-col items-center justify-center py-16 text-center">
 						<div className="size-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
 							<Users className="size-8 text-muted-foreground/50" />

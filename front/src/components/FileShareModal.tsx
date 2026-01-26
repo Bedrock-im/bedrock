@@ -1,6 +1,7 @@
 "use client";
 
 import { Contact } from "bedrock-ts-sdk";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
 import { PublicFileShareModal } from "@/components/PublicFileShareModal";
@@ -18,15 +19,26 @@ import { Input } from "@/components/ui/input";
 interface UsernameRegistrationModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onComplete: (contact?: Contact) => void;
+	onComplete: (contact?: Contact) => Promise<void> | void;
 	contacts: Contact[];
 }
 
 export function FileShareModal({ isOpen, onClose, onComplete, contacts }: Readonly<UsernameRegistrationModalProps>) {
 	const [input, setInput] = useState("");
 	const [isPublicModalOpen, setIsPublicModalOpen] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
 
 	const contact = contacts.find((contact) => contact.name === input);
+
+	const handleShare = async () => {
+		if (!contact || isLoading) return;
+		setIsLoading(true);
+		try {
+			await onComplete(contact);
+		} finally {
+			setIsLoading(false);
+		}
+	};
 
 	return (
 		<Dialog
@@ -53,8 +65,11 @@ export function FileShareModal({ isOpen, onClose, onComplete, contacts }: Readon
 					{input.length > 0 && !contact && <p className={`text-sm mt-1 text-red-500`}>Contact not found</p>}
 				</div>
 				<DialogFooter className="justify-end">
-					<Button onClick={() => setIsPublicModalOpen(true)}>Share publicly</Button>
-					<Button onClick={() => contact && onComplete(contact)} disabled={input.length === 0 || !contact}>
+					<Button onClick={() => setIsPublicModalOpen(true)} disabled={isLoading}>
+						Share publicly
+					</Button>
+					<Button onClick={handleShare} disabled={input.length === 0 || !contact || isLoading} className="gap-2">
+						{isLoading ? <Loader2 size={16} className="animate-spin" /> : null}
 						Share
 					</Button>
 				</DialogFooter>
