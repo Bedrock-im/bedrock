@@ -24,7 +24,7 @@ export default function useBedrockFileUploadDropzone(options: DropzoneOptions) {
 				})),
 			);
 
-			const uploadPromise = bedrockClient.files.uploadFiles(fileInputs, currentWorkingDirectory);
+			const uploadPromise = bedrockClient.files.uploadFiles(fileInputs);
 			toast.promise(uploadPromise, {
 				loading: `Uploading ${acceptedFiles.length} files...`,
 				success: (uploadedFiles) => `Successfully uploaded ${uploadedFiles.length} files`,
