@@ -1,5 +1,5 @@
 "use client";
-import { Edit, FilePlus2, Plus, Search, Trash2 } from "lucide-react";
+import { BookOpen, Edit, FilePlus2, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -9,6 +9,7 @@ import KnowledgeBaseAskDialog from "@/components/drive/KnowledgeBaseAskDialog";
 import KnowledgeBaseFileSelector from "@/components/drive/KnowledgeBaseFileSelector";
 import RenameDialog from "@/components/drive/RenameDialog";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
 	Dialog,
 	DialogContent,
@@ -18,6 +19,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAccountStore } from "@/stores/account";
 import { useDriveStore } from "@/stores/drive";
@@ -32,6 +34,7 @@ export default function KnowledgeBases() {
 	const [openedModifyFileListKBModal, setOpenedModifyFileListKBModal] = useState<KnowledgeBase | null>(null);
 	const [openNewKBModal, setOpenNewKBModal] = useState(false);
 	const [newKBName, setNewKBName] = useState("");
+	const [searchQuery, setSearchQuery] = useState("");
 	const { bedrockClient } = useAccountStore();
 	const { files, updateFileContent } = useDriveStore();
 	const {
@@ -130,6 +133,7 @@ export default function KnowledgeBases() {
 		try {
 			await bedrockClient?.knowledgeBases.renameKnowledgeBase(kb.name, newName);
 			renameKnowledgeBase(kb.name, newName);
+			toast.success(`Knowledge base renamed to "${newName}"`);
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Failed to rename knowledge base");
 		}
@@ -152,53 +156,90 @@ export default function KnowledgeBases() {
 			)
 		).forEach(({ newContent, path }) => updateFileContent(path, newContent));
 		setKnowledgeBaseFiles(kb.name, ...newFilePaths);
+		toast.success(`Files updated for "${kb.name}"`);
 	};
+
+	const filteredKnowledgeBases = knowledgeBases.filter((kb) =>
+		kb.name.toLowerCase().includes(searchQuery.toLowerCase()),
+	);
+
 	return (
-		<section className="p-10">
-			<div className="flex justify-between items-center mb-4">
-				<h2 className="text-2xl font-bold">Knowledge Bases</h2>
-				<Button onClick={() => setOpenNewKBModal(true)} className="flex items-center gap-1">
-					<Plus className="h-4 w-4" /> New Knowledge Base
+		<div className="p-2">
+			<div className="flex justify-between items-center m-2 gap-4">
+				<Button onClick={() => setOpenNewKBModal(true)} className="gap-2">
+					<Plus size={16} />
+					New Knowledge Base
 				</Button>
+				<Input
+					type="text"
+					placeholder="Search knowledge bases..."
+					value={searchQuery}
+					onChange={(e) => setSearchQuery(e.target.value)}
+					className="rounded-xl flex-1"
+				/>
 			</div>
-			<Table>
-				<TableHeader>
-					<TableRow>
-						<TableHead className="w-[40px]">Name</TableHead>
-						<TableHead className="w-[40px]">Files</TableHead>
-						<TableHead className="w-[40px]">Size</TableHead>
-						<TableHead className="w-[40px]">Created</TableHead>
-						<TableHead className="w-[40px]">Last edited</TableHead>
-						<TableHead className="w-[40px] text-right">Actions</TableHead>
-					</TableRow>
-				</TableHeader>
-				<TableBody>
-					{knowledgeBases.map((base) => (
-						<TableRow key={base.name}>
-							<TableCell>{base.name}</TableCell>
-							<TableCell>{base.filePaths.length}</TableCell>
-							<TableCell>
-								{base.filePaths.reduce(
-									(size, filePath) => size + (files.find(({ path }) => filePath == path)?.size ?? 0),
-									0,
-								)}
-							</TableCell>
-							<TableCell>{base.created_at.toLocaleDateString()}</TableCell>
-							<TableCell>{base.updated_at.toLocaleDateString()}</TableCell>
-							<TableCell className="flex justify-end items-center gap-2 mt-1">
-								<ActionIcon Icon={Search} tooltip="Search" onClick={() => handleSearchKBModalOpening(base)} />
-								<ActionIcon
-									Icon={FilePlus2}
-									tooltip="Modify file list"
-									onClick={() => handleModifyFileListToBaseModalOpening(base)}
-								/>
-								<ActionIcon Icon={Edit} tooltip="Rename" onClick={() => handleRenameBaseModalOpening(base)} />
-								<ActionIcon Icon={Trash2} tooltip="Delete" onClick={() => handleDeleteBaseModalOpening(base)} />
-							</TableCell>
-						</TableRow>
-					))}
-				</TableBody>
-			</Table>
+			<Card className="m-2 shadow-soft rounded-xl border-0 bg-card overflow-hidden">
+				<div className="m-4 mt-2">
+					<h2 className="text-lg font-semibold py-2">Knowledge Bases</h2>
+					<Separator orientation="horizontal" />
+				</div>
+				{filteredKnowledgeBases.length === 0 ? (
+					<div className="flex flex-col items-center justify-center py-16 text-center">
+						<div className="size-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
+							<BookOpen className="size-8 text-muted-foreground/50" />
+						</div>
+						{searchQuery ? (
+							<p className="text-muted-foreground">No knowledge bases match your search.</p>
+						) : (
+							<>
+								<p className="text-muted-foreground font-medium">No knowledge bases yet</p>
+								<p className="text-sm text-muted-foreground/70 mt-1">
+									Create a knowledge base to organize and query your files with AI
+								</p>
+							</>
+						)}
+					</div>
+				) : (
+					<Table>
+						<TableHeader>
+							<TableRow>
+								<TableHead>Name</TableHead>
+								<TableHead>Files</TableHead>
+								<TableHead>Size</TableHead>
+								<TableHead>Created</TableHead>
+								<TableHead>Last edited</TableHead>
+								<TableHead className="text-right">Actions</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{filteredKnowledgeBases.map((base) => (
+								<TableRow key={base.name}>
+									<TableCell className="font-medium">{base.name}</TableCell>
+									<TableCell>{base.filePaths.length}</TableCell>
+									<TableCell>
+										{base.filePaths.reduce(
+											(size, filePath) => size + (files.find(({ path }) => filePath == path)?.size ?? 0),
+											0,
+										)}
+									</TableCell>
+									<TableCell>{base.created_at.toLocaleDateString()}</TableCell>
+									<TableCell>{base.updated_at.toLocaleDateString()}</TableCell>
+									<TableCell className="flex justify-end items-center gap-2 mt-1">
+										<ActionIcon Icon={Search} tooltip="Search" onClick={() => handleSearchKBModalOpening(base)} />
+										<ActionIcon
+											Icon={FilePlus2}
+											tooltip="Modify file list"
+											onClick={() => handleModifyFileListToBaseModalOpening(base)}
+										/>
+										<ActionIcon Icon={Edit} tooltip="Rename" onClick={() => handleRenameBaseModalOpening(base)} />
+										<ActionIcon Icon={Trash2} tooltip="Delete" onClick={() => handleDeleteBaseModalOpening(base)} />
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+				)}
+			</Card>
 			{openedAskKBModal !== null && (
 				<KnowledgeBaseAskDialog
 					knowledgeBase={openedAskKBModal}
@@ -244,16 +285,19 @@ export default function KnowledgeBases() {
 							placeholder="Knowledge Base Name"
 							className="w-full"
 							onKeyDown={(e) => e.key === "Enter" && handleCreateKnowledgeBase()}
+							autoFocus
 						/>
 					</div>
 					<DialogFooter>
 						<Button variant="outline" onClick={() => setOpenNewKBModal(false)}>
 							Cancel
 						</Button>
-						<Button onClick={handleCreateKnowledgeBase}>Create</Button>
+						<Button onClick={handleCreateKnowledgeBase} disabled={!newKBName.trim()}>
+							Create
+						</Button>
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
-		</section>
+		</div>
 	);
 }

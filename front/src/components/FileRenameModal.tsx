@@ -22,6 +22,19 @@ interface UsernameRegistrationModalProps {
 export function FileRenameModal({ isOpen, onClose, onComplete }: UsernameRegistrationModalProps) {
 	const [input, setInput] = useState("");
 
+	const handleSubmit = () => {
+		if (input.length > 0) {
+			onComplete(input);
+		}
+	};
+
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === "Enter") {
+			e.preventDefault();
+			handleSubmit();
+		}
+	};
+
 	return (
 		<Dialog
 			open={isOpen}
@@ -35,10 +48,17 @@ export function FileRenameModal({ isOpen, onClose, onComplete }: UsernameRegistr
 					<DialogDescription>Enter the new name for the file.</DialogDescription>
 				</DialogHeader>
 				<div>
-					<Input id="filename" placeholder={`New file name`} value={input} onChange={(e) => setInput(e.target.value)} />
+					<Input
+						id="filename"
+						placeholder="New file name"
+						value={input}
+						onChange={(e) => setInput(e.target.value)}
+						onKeyDown={handleKeyDown}
+						autoFocus
+					/>
 				</div>
 				<DialogFooter className="justify-end">
-					<Button onClick={() => onComplete(input)} disabled={input.length === 0}>
+					<Button onClick={handleSubmit} disabled={input.length === 0}>
 						Rename
 					</Button>
 				</DialogFooter>
