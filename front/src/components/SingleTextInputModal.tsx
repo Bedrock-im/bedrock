@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -9,14 +10,14 @@ import {
 	DialogDescription,
 	DialogFooter,
 	DialogHeader,
-	DialogTitle,
+	DialogTitle
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
 interface SingleTextInputModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onComplete: (input: string) => void;
+	onComplete: (input: string) => Promise<void>;
 	title: string;
 	description: string;
 	placeholder: string;
@@ -25,21 +26,26 @@ interface SingleTextInputModalProps {
 }
 
 export function SingleTextInputModal({
-	isOpen,
-	onClose,
-	onComplete,
-	title,
-	description,
-	placeholder,
-	submitLabel,
-	defaultValue = "",
-}: SingleTextInputModalProps) {
+																			 isOpen,
+																			 onClose,
+																			 onComplete,
+																			 title,
+																			 description,
+																			 placeholder,
+																			 submitLabel,
+																			 defaultValue = ""
+																		 }: SingleTextInputModalProps) {
 	const [input, setInput] = useState(defaultValue);
+	const [isLoading, setIsLoading] = useState(false);
 
-	const handleSubmit = () => {
-		if (input.length > 0) {
-			onComplete(input);
-			setInput("");
+	const handleSubmit = async () => {
+		if (input.length > 0 && !isLoading) {
+			setIsLoading(true);
+			try {
+				await onComplete(input);
+			} finally {
+				setIsLoading(false);
+			}
 		}
 	};
 
@@ -50,15 +56,13 @@ export function SingleTextInputModal({
 		}
 	};
 
-	const handleOpenChange = (open: boolean) => {
-		if (!open) {
-			onClose();
-			setInput("");
-		}
-	};
-
 	return (
-		<Dialog open={isOpen} onOpenChange={handleOpenChange}>
+		<Dialog
+			open={isOpen}
+			onOpenChange={(b) => {
+				if (!b) onClose();
+			}}
+		>
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>{title}</DialogTitle>
@@ -75,7 +79,8 @@ export function SingleTextInputModal({
 					/>
 				</div>
 				<DialogFooter className="justify-end">
-					<Button onClick={handleSubmit} disabled={input.length === 0}>
+					<Button onClick={handleSubmit} disabled={input.length === 0 || isLoading} className="gap-2">
+						{isLoading ? <Loader2 size={16} className="animate-spin" /> : null}
 						{submitLabel}
 					</Button>
 				</DialogFooter>
