@@ -114,7 +114,7 @@ export default function OdtDocumentManager({ fileUrl, filename, onSave }: Readon
 
 	return (
 		<div className="flex flex-col gap-4 w-full h-full max-w-4xl mx-auto">
-			<div className="flex items-center justify-between p-4 border rounded-lg bg-white shadow-sm">
+			<div className="flex items-center justify-between p-4 border rounded-lg bg-card shadow-sm">
 				<div className="flex items-center gap-3">
 					<div className="p-2 bg-blue-100 rounded-md">
 						<FileText className="h-5 w-5 text-blue-600" />
@@ -147,7 +147,7 @@ export default function OdtDocumentManager({ fileUrl, filename, onSave }: Readon
 				</div>
 			</div>
 
-			<div className="flex-1 min-h-[500px] border rounded-lg shadow-sm bg-white overflow-hidden">
+			<div className="flex-1 min-h-[500px] border rounded-lg shadow-sm bg-card overflow-hidden">
 				{viewMode === "preview" ? (
 					<div className="p-8 h-full overflow-auto prose max-w-none">
 						<div dangerouslySetInnerHTML={{ __html: htmlContent }} />
