@@ -1,17 +1,15 @@
 "use client";
 
-import CreditTopUp from "@/components/CreditTopUp";
 import EraseData from "@/components/EraseData";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useCredits } from "@/hooks/use-credits";
 import { useAccountStore } from "@/stores/account";
 
 export const dynamic = "force-dynamic";
 
 export default function Settings() {
 	const { bedrockClient } = useAccountStore();
-	const { creditBalance, refreshCredits } = useCredits();
+	const isLocalhost = typeof window !== "undefined" && window.location.hostname === "localhost";
 
 	if (bedrockClient === null) {
 		return <></>;
@@ -30,8 +28,7 @@ export default function Settings() {
 					<ThemeToggle />
 				</CardContent>
 			</Card>
-			<CreditTopUp creditBalance={creditBalance} onTopUpComplete={refreshCredits} />
-			<EraseData />
+			{isLocalhost && <EraseData />}
 		</div>
 	);
 }
