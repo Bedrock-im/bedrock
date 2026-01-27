@@ -88,6 +88,7 @@ const FileList: React.FC<FileListProps> = ({
 	const [sortOrder, setSortOrder] = useQueryState("order", { defaultValue: "asc" as SortOrder });
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set(selectedPaths));
 	const [fileToCopy, setFileToCopy] = useState<{ path: string; name: string } | null>(null);
+	const [folderToCopy, setFolderToCopy] = useState<{ path: string; name: string } | null>(null);
 	const [bulkMoveMode, setBulkMoveMode] = useState(false);
 	const [bulkCopyMode, setBulkCopyMode] = useState(false);
 	const [clickedItem, setClickedItem] = useState<string>();
@@ -556,9 +557,13 @@ const FileList: React.FC<FileListProps> = ({
 		});
 	};
 
-	const handleCopy = (path: string) => {
+	const handleCopy = (path: string, folder: boolean) => {
 		const name = path.split("/").pop() || path;
-		setFileToCopy({ path, name });
+		if (folder) {
+			setFolderToCopy({ path, name });
+		} else {
+			setFileToCopy({ path, name });
+		}
 	};
 
 	const handleCopyToDestination = async (destinationPath: string) => {
@@ -597,6 +602,67 @@ const FileList: React.FC<FileListProps> = ({
 			toast.error("Failed to copy file", { id: toastId });
 		} finally {
 			setFileToCopy(null);
+			setActionLoading(null);
+		}
+	};
+
+	const handleCopyFolderToDestination = async (destinationPath: string) => {
+		if (!folderToCopy || !bedrockClient) return;
+
+		setActionLoading("copy");
+		const toastId = toast.loading("Copying folder...");
+
+		try {
+			const folderPrefix = folderToCopy.path.endsWith("/") ? folderToCopy.path : folderToCopy.path + "/";
+			const filesToCopy = files.filter((f) => f.path === folderToCopy.path || f.path.startsWith(folderPrefix));
+
+			if (filesToCopy.length === 0) {
+				toast.error("No files found in folder");
+				setFolderToCopy(null);
+				return;
+			}
+
+			// Generate new folder name with _copy suffix
+			const baseName = folderToCopy.name;
+			let copyName = `${baseName}_copy`;
+			let counter = 1;
+			while (folders.some((f) => f.path === joinPath(destinationPath, copyName))) {
+				copyName = `${baseName}_copy_${(counter += 1)}`;
+			}
+
+			const newFolderPath = joinPath(destinationPath, copyName);
+
+			// Map all files to their new paths
+			const filePaths = filesToCopy.map((f) => ({
+				oldPath: f.path,
+				newPath: newFolderPath + f.path.slice(folderToCopy.path.length),
+			}));
+
+			// Duplicate all files
+			const newFiles = await bedrockClient.files.duplicateFiles(filePaths);
+			if (!newFiles || newFiles.length === 0) {
+				throw new Error("Folder copy failed");
+			}
+
+			setFiles([...files, ...newFiles]);
+
+			// Add the new folder to the folders list
+			const newFolder: DriveFolder = {
+				path: newFolderPath,
+				created_at: new Date().toISOString(),
+				deleted_at: null,
+				shared_with: [],
+				shared_keys: {},
+			};
+			addFolder(newFolder);
+
+			setFolderToCopy(null);
+			toast.success("Folder copied successfully", { id: toastId });
+		} catch (error) {
+			console.error("Failed to copy folder:", error);
+			toast.error("Failed to copy folder", { id: toastId });
+		} finally {
+			setFolderToCopy(null);
 			setActionLoading(null);
 		}
 	};
@@ -847,6 +913,17 @@ const FileList: React.FC<FileListProps> = ({
 					initialPath={currentWorkingDirectory}
 				/>
 			)}
+			{folderToCopy && (
+				<FolderBrowserModal
+					isOpen={true}
+					onClose={() => setFolderToCopy(null)}
+					onComplete={handleCopyFolderToDestination}
+					mode="copy"
+					itemName={folderToCopy.name}
+					initialPath={currentWorkingDirectory}
+					sourcePath={folderToCopy.path}
+				/>
+			)}
 			{bulkMoveMode && (
 				<FolderBrowserModal
 					isOpen={true}
@@ -1022,6 +1099,11 @@ const FileList: React.FC<FileListProps> = ({
 													})
 												: undefined
 										}
+										onCopy={
+											actions.includes("copy")
+												? () => handleCopy(folder.path, true)
+												: undefined
+										}
 										onRestore={actions.includes("restore") ? () => handleRestoreFile(folder.path) : undefined}
 									/>
 								))}
@@ -1052,7 +1134,7 @@ const FileList: React.FC<FileListProps> = ({
 										onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
 										onRestore={actions.includes("restore") ? () => handleRestoreFile(file.path) : undefined}
 										onDuplicate={actions.includes("duplicate") ? () => handleDuplicate(file.path, false) : undefined}
-										onCopy={actions.includes("copy") ? () => handleCopy(file.path) : undefined}
+										onCopy={actions.includes("copy") ? () => handleCopy(file.path, false) : undefined}
 									/>
 								))}
 							</TableBody>
