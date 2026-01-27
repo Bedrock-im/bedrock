@@ -9617,9 +9617,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bedrock-ts-sdk@npm:^0.0.11":
-  version: 0.0.11
-  resolution: "bedrock-ts-sdk@npm:0.0.11"
+"bedrock-ts-sdk@npm:^0.0.12":
+  version: 0.0.12
+  resolution: "bedrock-ts-sdk@npm:0.0.12"
   dependencies:
     "@aleph-sdk/account": "npm:^1.2.0"
     "@aleph-sdk/client": "npm:1.0.6"
@@ -9636,7 +9636,7 @@ __metadata:
   peerDependenciesMeta:
     ethers:
       optional: true
-  checksum: 10c0/fe77febe492a8b00b3c771299fcd56abdf2f7189443525407abd5c8d87052ca31e85beba7a782831885cac19dbc154c16cb3793ef7b83f11a04d293e77772da6
+  checksum: 10c0/cde5d9591a5193c35c6716d7d28828f4739a600263ec86b99aad56dbd071a68f696285e46313ab17cbd2819dddfd2b993dea7f3cba0865f9ceedc7607c6ad7d8
   languageName: node
   linkType: hard
 
@@ -12706,7 +12706,7 @@ __metadata:
     "@types/node": "npm:^20.16.11"
     "@types/react": "npm:^18.3.11"
     "@types/react-dom": "npm:^18.3.0"
-    bedrock-ts-sdk: "npm:^0.0.11"
+    bedrock-ts-sdk: "npm:^0.0.12"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
     cmdk: "npm:1.0.0"
