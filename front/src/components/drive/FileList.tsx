@@ -1,7 +1,7 @@
 "use client";
 
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
-import { Contact, FileFullInfo } from "bedrock-ts-sdk";
+import { FileFullInfo } from "bedrock-ts-sdk";
 import { Copy, Download, FolderIcon, FolderPlus, Loader2, Move, Trash, Upload } from "lucide-react";
 import { useQueryState } from "nuqs";
 import React, { useEffect, useMemo, useState } from "react";
@@ -81,7 +81,7 @@ const FileList: React.FC<FileListProps> = ({
 	const [fileToMove, setFileToMove] = useState<{ path: string; folder: boolean; name: string } | null>(null);
 	const [fileToRename, setFileToRename] = useState<FileFullInfo | null>(null);
 	const [folderToRename, setFolderToRename] = useState<DriveFolder | null>(null);
-	const [fileToShare, setFileToShare] = useState<FileFullInfo | null>(null);
+	const [filePathToShare, setFilePathToShare] = useState<string | null>(null);
 	const [fileToPreview, setFileToPreview] = useState<DriveFile | null>(null);
 	const [isCreatingFolder, setIsCreatingFolder] = useState(false);
 	const [sortColumn, setSortColumn] = useQueryState("sort", { defaultValue: "path" as SortColumn });
@@ -105,6 +105,7 @@ const FileList: React.FC<FileListProps> = ({
 		moveFile,
 		moveFolder,
 		restoreFile,
+		updateFile,
 		files,
 		folders,
 		setSharedFiles,
@@ -482,21 +483,41 @@ const FileList: React.FC<FileListProps> = ({
 		}
 	};
 
-	const handleShare = async (file: FileFullInfo, contact?: Contact) => {
-		const toastId = toast.loading(`Sharing file...`);
+	// Get current file to share from store (always fresh)
+	const fileToShare = filePathToShare ? files.find((f) => f.path === filePathToShare) : null;
+
+	const handleShareSave = async (addedPubKeys: string[], removedPubKeys: string[]) => {
+		if (!bedrockClient || !fileToShare) return;
+
+		const toastId = toast.loading(removedPubKeys.length > 0 ? "Updating file access..." : "Sharing file...");
 		try {
-			if (contact) {
-				await bedrockClient?.files.shareFile(file.path, contact.public_key);
-				toast.success(`The file has been shared with contact ${contact.name}.`, { id: toastId });
-			} else {
-				const hash = await bedrockClient?.files.shareFilePublicly(file, username ?? "Unknown");
-				toast.success(`The file has been shared publicly.`, { id: toastId });
-				if (hash) setSharedHash(hash);
-			}
+			const newSharedWith = [
+				...(fileToShare.shared_with || []).filter((pk) => !removedPubKeys.includes(pk)),
+				...addedPubKeys,
+			];
+			const updatedFile = await bedrockClient.files.updateFileSharing(fileToShare.path, newSharedWith);
+
+			// Update file in store with returned file (includes new store_hash if rotated)
+			updateFile(fileToShare.path, updatedFile);
+
+			toast.success("File sharing updated successfully.", { id: toastId });
 		} catch (_) {
-			toast.error("Unable to share the file", { id: toastId });
+			toast.error("Unable to update file sharing", { id: toastId });
 		}
-		setFileToShare(null);
+	};
+
+	const handleSharePublicly = async () => {
+		if (!bedrockClient || !fileToShare) return;
+
+		const toastId = toast.loading("Sharing file publicly...");
+		try {
+			const hash = await bedrockClient.files.shareFilePublicly(fileToShare, username ?? "Unknown");
+			toast.success("The file has been shared publicly.", { id: toastId });
+			if (hash) setSharedHash(hash);
+		} catch (_) {
+			toast.error("Unable to share the file publicly", { id: toastId });
+		}
+		setFilePathToShare(null);
 	};
 
 	const handleRestoreFile = async (path: string) => {
@@ -813,10 +834,13 @@ const FileList: React.FC<FileListProps> = ({
 			)}
 			{fileToShare && (
 				<FileShareModal
+					key={`${fileToShare.path}-${fileToShare.post_hash}`}
 					isOpen={true}
-					onClose={() => setFileToShare(null)}
-					onComplete={(contact) => handleShare(fileToShare, contact)}
+					onClose={() => setFilePathToShare(null)}
+					onSave={handleShareSave}
+					onSharePublicly={handleSharePublicly}
 					contacts={contacts}
+					file={fileToShare}
 				/>
 			)}
 			{fileToPreview && <FilePreviewDialog file={fileToPreview} isOpen={true} onClose={() => setFileToPreview(null)} />}
@@ -963,7 +987,7 @@ const FileList: React.FC<FileListProps> = ({
 										onDoubleClick={() => setFileToPreview(file)}
 										onPreview={() => setFileToPreview(file)}
 										onDownload={actions.includes("download") ? () => handleDownloadFile(file) : undefined}
-										onShare={actions.includes("share") ? () => setFileToShare(file) : undefined}
+										onShare={actions.includes("share") ? () => setFilePathToShare(file.path) : undefined}
 										onRename={actions.includes("rename") ? () => setFileToRename(file) : undefined}
 										onMove={
 											actions.includes("move")
