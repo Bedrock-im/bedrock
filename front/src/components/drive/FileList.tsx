@@ -1057,6 +1057,7 @@ const FileList: React.FC<FileListProps> = ({
 										onClick={async () => {
 											if (!bedrockClient) return;
 
+											const isHardDelete = actions.includes("hardDelete");
 											const deletionDatetime = new Date();
 											const toastId = toast.loading(`Deleting ${selectedItems.size} item(s)...`);
 											let successCount = 0;
@@ -1067,19 +1068,35 @@ const FileList: React.FC<FileListProps> = ({
 												const cleanPath = isFolder ? itemPath.slice(0, -1) : itemPath;
 
 												try {
-													if (isFolder) {
-														const filePathsToDelete = files
-															.filter((f) => f.path === cleanPath || f.path.startsWith(cleanPath + "/"))
-															.map((f) => f.path);
-														await bedrockClient.files.softDeleteFiles(filePathsToDelete, deletionDatetime);
-														softDeleteFolder(
-															cleanPath,
-															deletionDatetime,
-															currentWorkingDirectory + cleanPath.slice(0, cleanPath.length).split("/").pop()!,
-														);
+													if (isHardDelete) {
+														if (isFolder) {
+															const filesToDelete = files.filter(
+																(f) => f.path === cleanPath || f.path.startsWith(cleanPath + "/"),
+															);
+															await bedrockClient.files.hardDeleteFiles(filesToDelete.map((f) => f.path));
+															hardDeleteFolder(cleanPath);
+														} else {
+															const fileToDelete = files.find((f) => f.path === cleanPath);
+															if (fileToDelete) {
+																await bedrockClient.files.hardDeleteFiles([fileToDelete.path]);
+																hardDeleteFile(fileToDelete.path);
+															}
+														}
 													} else {
-														await bedrockClient.files.softDeleteFiles([cleanPath], deletionDatetime);
-														softDeleteFile(cleanPath, deletionDatetime, `/${cleanPath.split("/").pop()!}`);
+														if (isFolder) {
+															const filePathsToDelete = files
+																.filter((f) => f.path === cleanPath || f.path.startsWith(cleanPath + "/"))
+																.map((f) => f.path);
+															await bedrockClient.files.softDeleteFiles(filePathsToDelete, deletionDatetime);
+															softDeleteFolder(
+																cleanPath,
+																deletionDatetime,
+																currentWorkingDirectory + cleanPath.slice(0, cleanPath.length).split("/").pop()!,
+															);
+														} else {
+															await bedrockClient.files.softDeleteFiles([cleanPath], deletionDatetime);
+															softDeleteFile(cleanPath, deletionDatetime, `/${cleanPath.split("/").pop()!}`);
+														}
 													}
 													successCount += 1;
 												} catch (error) {
