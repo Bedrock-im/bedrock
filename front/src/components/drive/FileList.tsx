@@ -688,7 +688,9 @@ const FileList: React.FC<FileListProps> = ({
 			}
 
 			if (skippedCount > 0) {
-				toast.success(`Moved ${allMoves.length} file(s), skipped ${skippedCount} (already in location or invalid)`, { id: toastId });
+				toast.success(`Moved ${allMoves.length} item(s), skipped ${skippedCount} (already in location or invalid)`, {
+					id: toastId,
+				});
 			} else {
 				toast.success(`${allMoves.length} file(s) moved successfully`, { id: toastId });
 			}

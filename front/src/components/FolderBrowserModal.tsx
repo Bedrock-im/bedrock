@@ -126,7 +126,7 @@ export function FolderBrowserModal({
 				<div className="flex items-center gap-1 text-sm text-muted-foreground py-2 flex-wrap">
 					<Button variant="ghost" size="sm" className="h-7 px-2 gap-1" onClick={() => handleBreadcrumbClick(-1)}>
 						<Home size={14} />
-						Root
+						Home
 					</Button>
 					{pathParts.map((part, index) => (
 						<div key={index} className="flex items-center gap-1">
