@@ -347,7 +347,7 @@ const FileList: React.FC<FileListProps> = ({
 			const baseName = hasExtension ? filename.slice(0, -ext.length) : filename;
 
 			let copyName = `${baseName}_copy${ext}`;
-			let counter = 2;
+			let counter = 1;
 			while (files.some((f) => f.path === `${dir}/${copyName}`)) {
 				copyName = `${baseName}_copy_${(counter += 1)}${ext}`;
 			}
@@ -561,7 +561,8 @@ const FileList: React.FC<FileListProps> = ({
 			let copyName = `${baseName}_copy${ext}`;
 			let counter = 2;
 			while (files.some((f) => f.path === joinPath(destinationPath, copyName))) {
-				copyName = `${baseName}_copy_${(counter += 1)}${ext}`;
+				copyName = `${baseName}_copy_${counter}${ext}`;
+				counter++;
 			}
 
 			const newPath = joinPath(destinationPath, copyName);
@@ -685,8 +686,8 @@ const FileList: React.FC<FileListProps> = ({
 				files.some((f) => f.path === joinPath(normalizedDest, copyName)) ||
 				newFiles.some((f) => f.path === joinPath(normalizedDest, copyName))
 			) {
-				counter += 1;
 				copyName = `${baseName}_copy_${counter}${ext}`;
+				counter++;
 			}
 
 			const newPath = joinPath(normalizedDest, copyName);
@@ -829,7 +830,7 @@ const FileList: React.FC<FileListProps> = ({
 				{actions.includes("upload") && (
 					<UploadButton onCreateFolder={() => setIsCreatingFolder(true)} getInputProps={getInputProps} />
 				)}
-				<input type="file" id="fileInput" className="hidden" onChange={() => {}} />
+				<input type="file" id="fileInput" className="hidden" onChange={() => { }} />
 				<input
 					type="text"
 					placeholder="Search files and folders..."
@@ -942,11 +943,11 @@ const FileList: React.FC<FileListProps> = ({
 										onMove={
 											actions.includes("move")
 												? () =>
-														setFileToMove({
-															path: folder.path,
-															folder: true,
-															name: folder.path.split("/").filter(Boolean).pop() || folder.path,
-														})
+													setFileToMove({
+														path: folder.path,
+														folder: true,
+														name: folder.path.split("/").filter(Boolean).pop() || folder.path,
+													})
 												: undefined
 										}
 										onRestore={actions.includes("restore") ? () => handleRestoreFile(folder.path) : undefined}
@@ -968,11 +969,11 @@ const FileList: React.FC<FileListProps> = ({
 										onMove={
 											actions.includes("move")
 												? () =>
-														setFileToMove({
-															path: file.path,
-															folder: false,
-															name: file.path.split("/").pop() || file.path,
-														})
+													setFileToMove({
+														path: file.path,
+														folder: false,
+														name: file.path.split("/").pop() || file.path,
+													})
 												: undefined
 										}
 										onDelete={actions.includes("delete") ? () => handleSoftDelete(file.path, false) : undefined}
