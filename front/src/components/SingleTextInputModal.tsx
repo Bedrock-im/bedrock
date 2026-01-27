@@ -44,6 +44,7 @@ export function SingleTextInputModal({
 			try {
 				await onComplete(input);
 			} finally {
+				setInput("");
 				setIsLoading(false);
 			}
 		}
@@ -60,7 +61,10 @@ export function SingleTextInputModal({
 		<Dialog
 			open={isOpen}
 			onOpenChange={(b) => {
-				if (!b) onClose();
+				if (!b) {
+					setInput("");
+					onClose();
+				}
 			}}
 		>
 			<DialogContent>
