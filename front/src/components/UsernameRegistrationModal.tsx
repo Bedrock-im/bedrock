@@ -23,13 +23,14 @@ interface UsernameRegistrationModalProps {
 	onComplete: () => void;
 }
 
-export function UsernameRegistrationModal({ isOpen, onComplete }: UsernameRegistrationModalProps) {
+export function UsernameRegistrationModal({ isOpen, onComplete }: Readonly<UsernameRegistrationModalProps>) {
 	const [username, setUsername] = useState("");
 	const [isAvailable, setIsAvailable] = useState(false);
 	const [isChecking, setIsChecking] = useState(false);
 	const [isRegistering, setIsRegistering] = useState(false);
 	const account = useActiveAccount();
 	const setStoreUsername = useAccountStore((state) => state.setUsername);
+	const bedrockClient = useAccountStore((state) => state.bedrockClient);
 
 	useEffect(() => {
 		if (!username) {
@@ -59,7 +60,7 @@ export function UsernameRegistrationModal({ isOpen, onComplete }: UsernameRegist
 	}, [username]);
 
 	const handleRegister = async () => {
-		if (!account?.address || !username || !isAvailable) return;
+		if (!account?.address || !username || !isAvailable || !bedrockClient) return;
 
 		setIsRegistering(true);
 		try {
@@ -69,6 +70,9 @@ export function UsernameRegistrationModal({ isOpen, onComplete }: UsernameRegist
 					address: account.address,
 				},
 			});
+
+			// Setup user profile at sub-account address (for file sharing)
+			await bedrockClient.setupUserProfile(username);
 
 			// Update the global store with the new username
 			setStoreUsername(username);

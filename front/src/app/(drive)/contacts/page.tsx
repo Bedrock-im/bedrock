@@ -16,15 +16,14 @@ import { useAccountStore } from "@/stores/account";
 export const dynamic = "force-dynamic";
 
 export interface ContactFormData {
-	name: string;
+	username: string;
 	address: string;
-	publicKey: string;
 }
 
 export default function Contacts() {
 	const { bedrockClient } = useAccountStore();
 
-	const [publicKey, setPublicKey] = useState<string>("");
+	const [subAddress, setSubAddress] = useState<string>("");
 	const [contacts, setContacts] = useState<Contact[]>([]);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
@@ -33,11 +32,11 @@ export default function Contacts() {
 	const [isCopied, setIsCopied] = useState(false);
 
 	const copyToClipboard = async () => {
-		if (publicKey) {
+		if (subAddress) {
 			try {
-				await navigator.clipboard.writeText(publicKey);
+				await navigator.clipboard.writeText(subAddress);
 				setIsCopied(true);
-				toast.success("Public key copied to clipboard");
+				toast.success("Address copied to clipboard");
 				setTimeout(() => setIsCopied(false), 2000);
 			} catch (_err) {
 				toast.error("Copy failed");
@@ -45,21 +44,17 @@ export default function Contacts() {
 		}
 	};
 
-	const createContact = async ({ name, address, publicKey }: ContactFormData) => {
+	const createContact = async ({ username, address }: ContactFormData) => {
 		try {
-			await bedrockClient?.contacts.addContact(name, address, publicKey);
-			setContacts([
-				...contacts,
-				{
-					name,
-					address: address,
-					public_key: publicKey,
-				},
-			]);
+			const contact = await bedrockClient?.contacts.addContact(username, address);
+			if (contact) {
+				setContacts([...contacts, contact]);
+			}
 			setIsDialogOpen(false);
-			toast.success(`Contact "${name}" added successfully`);
-		} catch (_error) {
-			toast.error("Failed to add contact");
+			toast.success(`Contact "${username}" added successfully`);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : "Failed to add contact";
+			toast.error(message);
 		}
 	};
 
@@ -74,19 +69,19 @@ export default function Contacts() {
 				const contacts = await bedrockClient.contacts.listContacts();
 
 				setContacts(contacts);
-				setPublicKey(bedrockClient.getPublicKey());
+				setSubAddress(bedrockClient.getSubAddress());
 			} catch (error) {
 				console.error("Failed to fetch contacts:", error);
 			} finally {
 				setIsLoading(false);
 			}
 		})();
-	}, [bedrockClient, setContacts, setPublicKey]);
+	}, [bedrockClient, setContacts, setSubAddress]);
 
 	const filteredContacts = contacts.filter(
 		(contact) =>
 			contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			contact.public_key.toLowerCase().includes(searchQuery.toLowerCase()),
+			contact.address.toLowerCase().includes(searchQuery.toLowerCase()),
 	);
 
 	return (
@@ -108,17 +103,17 @@ export default function Contacts() {
 			<Card className="m-2 shadow-soft rounded-xl border-0 bg-card overflow-hidden">
 				<div className="m-4 mt-2">
 					<div className="flex items-center gap-2 py-2">
-						<span className="text-sm font-medium text-muted-foreground">Your Public Key:</span>
+						<span className="text-sm font-medium text-muted-foreground">Your Address:</span>
 						<div className="flex-1 relative">
-							<Input type="text" value={publicKey} className="pr-10 text-xs font-mono" disabled />
+							<Input type="text" value={subAddress} className="pr-10 text-xs font-mono" disabled />
 							<Button
 								type="button"
 								variant="ghost"
 								size="icon"
 								className="absolute right-0 top-0 h-full px-2 text-muted-foreground"
 								onClick={copyToClipboard}
-								disabled={!publicKey}
-								aria-label="Copy public key to clipboard"
+								disabled={!subAddress}
+								aria-label="Copy address to clipboard"
 							>
 								{isCopied ? <CheckIcon className="h-4 w-4 text-green-500" /> : <CopyIcon className="h-4 w-4" />}
 							</Button>
@@ -127,7 +122,7 @@ export default function Contacts() {
 					<Separator orientation="horizontal" />
 				</div>
 				{isLoading ? (
-					<TableSkeleton columns={2} rows={4} headers={["Name", "Public Key"]} />
+					<TableSkeleton columns={2} rows={4} headers={["Name", "Address"]} />
 				) : filteredContacts.length === 0 ? (
 					<div className="flex flex-col items-center justify-center py-16 text-center">
 						<div className="size-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
@@ -151,16 +146,14 @@ export default function Contacts() {
 						<TableHeader>
 							<TableRow>
 								<TableHead>Name</TableHead>
-								<TableHead>Public Key</TableHead>
+								<TableHead>Address</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
 							{filteredContacts.map((contact) => (
-								<TableRow key={contact.public_key}>
+								<TableRow key={contact.address}>
 									<TableCell className="font-medium">{contact.name}</TableCell>
-									<TableCell className="font-mono text-xs text-muted-foreground">
-										{contact.public_key.slice(0, 20)}...{contact.public_key.slice(-8)}
-									</TableCell>
+									<TableCell className="font-mono text-xs text-muted-foreground">{contact.address}</TableCell>
 								</TableRow>
 							))}
 						</TableBody>

@@ -1,7 +1,6 @@
 import { Loader2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
-import { getAddressUsernameUsernameAddressGet } from "@/apis/usernames";
 import { ContactFormData } from "@/app/(drive)/contacts/page";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,38 +23,23 @@ interface CreateContactDialogProps {
 
 export default function CreateContactDialog({ isOpen, onOpenChange, createContact }: CreateContactDialogProps) {
 	const { contacts } = useDriveStore();
-	const [contactFormData, setContactFormData] = useState<ContactFormData>({
-		name: "",
-		address: "",
-		publicKey: "",
-	});
 	const [username, setUsername] = useState("");
-	const [isLoadingAddress, setIsLoadingAddress] = useState(false);
+	const [address, setAddress] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const isContactNameTaken = useMemo(() => {
 		return contacts.some((contact) => contact.name === username);
 	}, [contacts, username]);
 
-	const isValidAddress = (address: string) => {
-		if (!address || address.trim() === "") return false;
-		return address !== "0x0000000000000000000000000000000000000000";
-	};
+	const isValidAddress = address.match(/^0x[a-fA-F0-9]{40}$/);
 
-	const canSubmit =
-		username.length > 0 &&
-		contactFormData.address.length > 0 &&
-		contactFormData.publicKey.length > 0 &&
-		!isContactNameTaken &&
-		!isLoadingAddress &&
-		!isSubmitting &&
-		isValidAddress(contactFormData.address);
+	const canSubmit = username.length > 0 && isValidAddress && !isContactNameTaken && !isSubmitting;
 
 	const handleSubmit = async () => {
 		if (!canSubmit) return;
 		setIsSubmitting(true);
 		try {
-			await createContact(contactFormData);
+			await createContact({ username, address });
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -68,61 +52,16 @@ export default function CreateContactDialog({ isOpen, onOpenChange, createContac
 		}
 	};
 
-	useEffect(() => {
-		const timer = setTimeout(() => {
-			if (username.trim()) {
-				setIsLoadingAddress(true);
-
-				const currentUsername = username;
-
-				getAddressUsernameUsernameAddressGet({
-					path: { username },
-				})
-					.then((response) => {
-						// Only update if this is still the current username
-						if (currentUsername === username) {
-							const address = response.data?.address ?? "";
-							if (!isValidAddress(address)) {
-								setContactFormData((prev) => ({
-									...prev,
-									name: username,
-									address: "",
-								}));
-							} else {
-								setContactFormData((prev) => ({
-									...prev,
-									name: username,
-									address: address,
-								}));
-							}
-							setIsLoadingAddress(false);
-						}
-					})
-					.catch(() => {
-						// Only update if this is still the current username
-						if (currentUsername === username) {
-							setContactFormData((prev) => ({
-								...prev,
-								name: username,
-								address: "",
-							}));
-							setIsLoadingAddress(false);
-						}
-					});
-			} else {
-				setContactFormData((prev) => ({
-					...prev,
-					name: "",
-					address: "",
-				}));
-			}
-		}, 500);
-
-		return () => clearTimeout(timer);
-	}, [username]);
+	const handleOpenChange = (open: boolean) => {
+		if (!open) {
+			setUsername("");
+			setAddress("");
+		}
+		onOpenChange(open);
+	};
 
 	return (
-		<Dialog open={isOpen} onOpenChange={onOpenChange}>
+		<Dialog open={isOpen} onOpenChange={handleOpenChange}>
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>Create a contact</DialogTitle>
@@ -139,27 +78,15 @@ export default function CreateContactDialog({ isOpen, onOpenChange, createContac
 					autoFocus
 				/>
 				<Input
-					value={contactFormData.address}
-					placeholder={isLoadingAddress ? "Loading address..." : "Address (auto-filled)"}
-					className={`w-full ${contactFormData.address && !isValidAddress(contactFormData.address) ? "border-destructive" : ""}`}
-					readOnly
-					disabled={isLoadingAddress}
-				/>
-				{contactFormData.address && !isValidAddress(contactFormData.address) && (
-					<DialogDescription className="text-destructive">Address is not valid</DialogDescription>
-				)}
-				<Input
-					value={contactFormData.publicKey}
-					onChange={(e) =>
-						setContactFormData({
-							...contactFormData,
-							publicKey: e.target.value,
-						})
-					}
-					placeholder="Contact Public Key"
-					className="w-full"
+					value={address}
+					onChange={(e) => setAddress(e.target.value)}
+					placeholder="Contact Address (0x...)"
+					className={`w-full ${address && !isValidAddress ? "border-destructive" : ""}`}
 					onKeyDown={handleKeyDown}
 				/>
+				{address && !isValidAddress && (
+					<DialogDescription className="text-destructive">Invalid address format</DialogDescription>
+				)}
 				<DialogFooter>
 					<DialogClose asChild>
 						<Button variant="outline" disabled={isSubmitting}>

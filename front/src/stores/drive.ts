@@ -19,6 +19,7 @@ type DriveStoreActions = {
 	addFile: (file: DriveFile) => void;
 	addFiles: (files: DriveFile[]) => void;
 	addFolder: (folder: DriveFolder) => void;
+	updateFile: (path: string, updatedFile: DriveFile) => void;
 	hardDeleteFile: (path: string) => string | undefined;
 	softDeleteFile: (path: string, deletionDate: Date, newPath?: string) => DriveFile | undefined;
 	hardDeleteFolder: (path: string) => DriveFile[];
@@ -41,6 +42,10 @@ export const useDriveStore = create<DriveStoreState & DriveStoreActions>((set, g
 	addFile: (file) => set((state) => ({ files: [...state.files, file] })),
 	addFiles: (files) => set((state) => ({ files: [...state.files, ...files] })),
 	addFolder: (folder) => set((state) => ({ folders: [...state.folders, folder] })),
+	updateFile: (path, updatedFile) =>
+		set((state) => ({
+			files: state.files.map((f) => (f.path === path ? updatedFile : f)),
+		})),
 	hardDeleteFile: (path) => {
 		const storeHash = getState().files.find((file) => file.path === path)?.store_hash;
 		set((state) => ({ files: state.files.filter((file) => file.path !== path) }));
