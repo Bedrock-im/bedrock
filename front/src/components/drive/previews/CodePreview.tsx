@@ -147,22 +147,13 @@ export default function CodePreview({ fileUrl, filename, category, onSave }: Rea
 			</div>
 
 			<div className="flex-1 min-h-[500px] border rounded-lg shadow-sm bg-card overflow-hidden">
-				{viewMode === "preview" ? (
-					<pre
-						className={`bg-slate-950 text-slate-50 p-4 rounded-lg text-sm font-mono whitespace-pre h-full overflow-auto ${
-							isCodeFile ? "language-" + extension : ""
-						}`}
-					>
-						<code className="block">{content}</code>
-					</pre>
-				) : (
-					<Textarea
-						value={content}
-						onChange={(e) => setContent(e.target.value)}
-						className="w-full h-full min-h-[600px] p-6 font-mono text-sm resize-none border-0 focus-visible:ring-0"
-						placeholder="Edit file content..."
-					/>
-				)}
+				<Textarea
+					disabled={viewMode === "preview"}
+					value={content}
+					onChange={(e) => setContent(e.target.value)}
+					className={`w-full h-full min-h-[600px] p-6 font-mono text-sm resize-none border-0 focus-visible:ring-0 ${viewMode === "preview" ? "!cursor-default" : "cursor-auto"}`}
+					placeholder="Edit file content..."
+				/>
 			</div>
 		</div>
 	);
