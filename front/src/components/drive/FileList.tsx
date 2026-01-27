@@ -354,7 +354,7 @@ const FileList: React.FC<FileListProps> = ({
 			}
 
 			const newPath = `${dir}/${copyName}`;
-			const newFile = await bedrockClient.files.duplicateFile(path, newPath);
+			const [newFile] = await bedrockClient.files.duplicateFiles([{ oldPath: path, newPath }]);
 			if (!newFile) {
 				throw new Error("File duplication failed");
 			}
@@ -586,7 +586,7 @@ const FileList: React.FC<FileListProps> = ({
 			}
 
 			const newPath = joinPath(destinationPath, copyName);
-			const newFile = await bedrockClient.files.duplicateFile(fileToCopy.path, newPath);
+			const [newFile] = await bedrockClient.files.duplicateFiles([{ oldPath: fileToCopy.path, newPath }]);
 			if (!newFile) {
 				throw new Error("File duplication failed");
 			}
@@ -709,7 +709,8 @@ const FileList: React.FC<FileListProps> = ({
 
 		const normalizedDest = normalizePath(destinationPath);
 		const filesToCopy = Array.from(selectedItems).filter((path) => !path.endsWith("/"));
-		const newFiles: DriveFile[] = [];
+		const duplicates: Array<{ oldPath: string; newPath: string }> = [];
+		const plannedPaths: string[] = [];
 		let skippedCount = 0;
 
 		for (const filePath of filesToCopy) {
@@ -740,31 +741,43 @@ const FileList: React.FC<FileListProps> = ({
 			let counter = 1;
 			while (
 				files.some((f) => f.path === joinPath(normalizedDest, copyName)) ||
-				newFiles.some((f) => f.path === joinPath(normalizedDest, copyName))
+				plannedPaths.includes(joinPath(normalizedDest, copyName))
 			) {
 				counter += 1;
 				copyName = `${baseName}_copy_${counter}${ext}`;
 			}
 
 			const newPath = joinPath(normalizedDest, copyName);
-			try {
-				const newFile = await bedrockClient.files.duplicateFile(filePath, newPath);
-				if (newFile) newFiles.push(newFile);
-			} catch {
-				skippedCount += 1;
-			}
+			duplicates.push({ oldPath: filePath, newPath });
+			plannedPaths.push(newPath);
 		}
 
-		setFiles([...files, ...newFiles]);
-		setSelectedItems(new Set());
-		setBulkCopyMode(false);
-
-		if (skippedCount > 0) {
-			toast.success(`Copied ${newFiles.length} file(s), ${skippedCount} failed`);
-		} else if (newFiles.length === 0) {
+		if (duplicates.length === 0) {
+			setSelectedItems(new Set());
+			setBulkCopyMode(false);
 			toast.error("No files were copied");
-		} else {
-			toast.success(`${newFiles.length} file(s) copied successfully`);
+			return;
+		}
+
+		setActionLoading("copy");
+		const toastId = toast.loading(`Copying ${duplicates.length} file(s)...`);
+
+		try {
+			const newFiles = await bedrockClient.files.duplicateFiles(duplicates);
+			setFiles([...files, ...newFiles]);
+
+			if (skippedCount > 0) {
+				toast.success(`Copied ${newFiles.length} file(s), ${skippedCount} skipped`, { id: toastId });
+			} else {
+				toast.success(`${newFiles.length} file(s) copied successfully`, { id: toastId });
+			}
+		} catch (error) {
+			console.error("Failed to copy files:", error);
+			toast.error("Failed to copy files", { id: toastId });
+		} finally {
+			setSelectedItems(new Set());
+			setBulkCopyMode(false);
+			setActionLoading(null);
 		}
 	};
 
