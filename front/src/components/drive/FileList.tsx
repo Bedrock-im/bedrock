@@ -620,8 +620,12 @@ const FileList: React.FC<FileListProps> = ({
 	}, [selectedItems]);
 
 	const handleBulkMoveToDestination = async (destinationPath: string) => {
+		if (!bedrockClient) return;
+
 		const normalizedDest = normalizePath(destinationPath);
-		let movedCount = 0;
+		const allMoves: Array<{ oldPath: string; newPath: string }> = [];
+		const movedFolders: Array<{ oldPath: string; newPath: string }> = [];
+		const movedFiles: Array<{ oldPath: string; newPath: string }> = [];
 		let skippedCount = 0;
 
 		for (const itemPath of Array.from(selectedItems)) {
@@ -649,22 +653,52 @@ const FileList: React.FC<FileListProps> = ({
 			}
 
 			const newPath = joinPath(normalizedDest, name);
-			try {
-				await handleMove(cleanPath, newPath, isFolder);
-				movedCount += 1;
-			} catch (error) {
-				console.error("Failed to move item:", error);
-				skippedCount += 1;
+
+			if (isFolder) {
+				const folderPrefix = cleanPath.endsWith("/") ? cleanPath : cleanPath + "/";
+				const filesToMove = files.filter((f) => f.path === cleanPath || f.path.startsWith(folderPrefix));
+				for (const f of filesToMove) {
+					allMoves.push({ oldPath: f.path, newPath: newPath + f.path.slice(cleanPath.length) });
+				}
+				movedFolders.push({ oldPath: cleanPath, newPath });
+			} else {
+				allMoves.push({ oldPath: cleanPath, newPath });
+				movedFiles.push({ oldPath: cleanPath, newPath });
 			}
 		}
 
-		setSelectedItems(new Set());
-		setBulkMoveMode(false);
+		if (allMoves.length === 0) {
+			setSelectedItems(new Set());
+			setBulkMoveMode(false);
+			toast.success(`Skipped ${skippedCount} item(s) (already in location or invalid)`);
+			return;
+		}
 
-		if (skippedCount > 0) {
-			toast.success(`Moved ${movedCount} item(s), skipped ${skippedCount} (already in location or invalid)`);
-		} else {
-			toast.success(`${movedCount} item(s) moved successfully`);
+		setActionLoading("move");
+		const toastId = toast.loading(`Moving ${allMoves.length} file(s)...`);
+
+		try {
+			await bedrockClient.files.moveFiles(allMoves);
+
+			for (const { oldPath, newPath } of movedFiles) {
+				moveFile(oldPath, newPath);
+			}
+			for (const { oldPath, newPath } of movedFolders) {
+				moveFolder(oldPath, newPath);
+			}
+
+			if (skippedCount > 0) {
+				toast.success(`Moved ${allMoves.length} file(s), skipped ${skippedCount} (already in location or invalid)`, { id: toastId });
+			} else {
+				toast.success(`${allMoves.length} file(s) moved successfully`, { id: toastId });
+			}
+		} catch (error) {
+			console.error("Failed to move items:", error);
+			toast.error("Failed to move items", { id: toastId });
+		} finally {
+			setSelectedItems(new Set());
+			setBulkMoveMode(false);
+			setActionLoading(null);
 		}
 	};
 
