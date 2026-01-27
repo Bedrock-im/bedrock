@@ -36,7 +36,7 @@ export function FileShareModal({
 	file,
 }: Readonly<FileShareModalProps>) {
 	// Serialize shared_with to detect content changes
-	const sharedWithKey = (file.shared_with || []).sort().join(",");
+	const sharedWithKey = [...(file.shared_with || [])].sort().join(",");
 
 	const [selectedPubKeys, setSelectedPubKeys] = useState<Set<string>>(() => new Set(file.shared_with || []));
 	const [isPublicModalOpen, setIsPublicModalOpen] = useState(false);
