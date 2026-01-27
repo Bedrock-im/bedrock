@@ -1082,7 +1082,10 @@ const FileList: React.FC<FileListProps> = ({
 										clicked={clickedItem === folder.path}
 										selected={selectedItems.has(folder.path + "/")}
 										setSelected={() => selectItem(folder.path + "/")}
-										onLeftClick={() => setClickedItem(folder.path)}
+										onLeftClick={() => {
+											selectItem(folder.path + "/");
+											setClickedItem(folder.path);
+										}}
 										onDoubleClick={() => handleChangeDirectory(folder.path + "/")}
 										onRename={actions.includes("rename") ? () => setFolderToRename(folder) : undefined}
 										onDelete={actions.includes("delete") ? () => handleSoftDelete(folder.path, true) : undefined}
@@ -1110,7 +1113,10 @@ const FileList: React.FC<FileListProps> = ({
 										clicked={clickedItem === file.path}
 										selected={selectedItems.has(file.path)}
 										setSelected={() => selectItem(file.path)}
-										onLeftClick={() => setClickedItem(file.path)}
+										onLeftClick={() => {
+											selectItem(file.path);
+											setClickedItem(file.path);
+										}}
 										onDoubleClick={() => setFileToPreview(file)}
 										onPreview={() => setFileToPreview(file)}
 										onDownload={actions.includes("download") ? () => handleDownloadFile(file) : undefined}
