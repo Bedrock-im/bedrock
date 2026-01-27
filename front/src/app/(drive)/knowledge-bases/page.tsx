@@ -111,16 +111,18 @@ export default function KnowledgeBases() {
 			}
 
 			await bedrockClient?.knowledgeBases.createKnowledgeBase(trimmedName);
-			addKnowledgeBase({
+			const newKnowledgeBase: KnowledgeBase = {
 				name: trimmedName,
 				filePaths: [],
 				created_at: new Date(),
 				updated_at: new Date(),
-			});
+			};
+			addKnowledgeBase(newKnowledgeBase);
 
 			toast.success(`Knowledge base "${newKBName}" created successfully`);
 			setNewKBName("");
 			setOpenNewKBModal(false);
+			setOpenedModifyFileListKBModal(newKnowledgeBase);
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Failed to create knowledge base");
 		}
