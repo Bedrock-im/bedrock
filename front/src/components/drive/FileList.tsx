@@ -559,7 +559,7 @@ const FileList: React.FC<FileListProps> = ({
 			const baseName = hasExtension ? filename.slice(0, -ext.length) : filename;
 
 			let copyName = `${baseName}_copy${ext}`;
-			let counter = 2;
+			let counter = 1;
 			while (files.some((f) => f.path === joinPath(destinationPath, copyName))) {
 				copyName = `${baseName}_copy_${(counter += 1)}${ext}`;
 			}
@@ -680,7 +680,7 @@ const FileList: React.FC<FileListProps> = ({
 				copyName = filename;
 			}
 
-			let counter = 2;
+			let counter = 1;
 			while (
 				files.some((f) => f.path === joinPath(normalizedDest, copyName)) ||
 				newFiles.some((f) => f.path === joinPath(normalizedDest, copyName))
