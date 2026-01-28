@@ -278,9 +278,7 @@ const FileList: React.FC<FileListProps> = ({
 		const newFolderPath = `${currentWorkingDirectory}${folderName}`;
 
 		// Check if folder with same name already exists at this path
-		const folderExists = folders.some(
-			(folder) => folder.path === newFolderPath && folder.deleted_at === null,
-		);
+		const folderExists = folders.some((folder) => folder.path === newFolderPath && folder.deleted_at === null);
 
 		if (folderExists) {
 			return `A folder named "${folderName}" already exists at this location.`;
