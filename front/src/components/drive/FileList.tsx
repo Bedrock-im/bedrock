@@ -270,6 +270,25 @@ const FileList: React.FC<FileListProps> = ({
 		}
 	};
 
+	const validateFolderName = (folderName: string): string | null => {
+		if (!folderName.trim()) {
+			return "Folder name cannot be empty.";
+		}
+
+		const newFolderPath = `${currentWorkingDirectory}${folderName}`;
+
+		// Check if folder with same name already exists at this path
+		const folderExists = folders.some(
+			(folder) => folder.path === newFolderPath && folder.deleted_at === null,
+		);
+
+		if (folderExists) {
+			return `A folder named "${folderName}" already exists at this location.`;
+		}
+
+		return null;
+	};
+
 	const handleCreateFolder = (folderName: string) => {
 		const newFolderPath = `${currentWorkingDirectory}${folderName}`;
 
@@ -1038,6 +1057,7 @@ const FileList: React.FC<FileListProps> = ({
 				isOpen={isCreatingFolder}
 				onClose={() => setIsCreatingFolder(false)}
 				onComplete={handleCreateFolder}
+				validate={validateFolderName}
 			/>
 			<div className="flex justify-between items-center m-2 gap-4">
 				{actions.includes("upload") && (

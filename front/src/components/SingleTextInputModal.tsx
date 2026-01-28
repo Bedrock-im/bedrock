@@ -23,6 +23,7 @@ interface SingleTextInputModalProps {
 	placeholder: string;
 	submitLabel: string;
 	defaultValue?: string;
+	validate?: (input: string) => string | null;
 }
 
 export function SingleTextInputModal({
@@ -34,19 +35,30 @@ export function SingleTextInputModal({
 	placeholder,
 	submitLabel,
 	defaultValue = "",
+	validate,
 }: Readonly<SingleTextInputModalProps>) {
 	const [input, setInput] = useState(defaultValue);
 	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
 	const handleSubmit = async () => {
-		if (input.length > 0 && !isLoading) {
+		if (input.length > 0 && !isLoading && !error) {
 			setIsLoading(true);
 			try {
 				await onComplete(input);
 			} finally {
 				setInput("");
+				setError(null);
 				setIsLoading(false);
 			}
+		}
+	};
+
+	const handleInputChange = (value: string) => {
+		setInput(value);
+		if (validate) {
+			const validationError = validate(value);
+			setError(validationError);
 		}
 	};
 
@@ -63,6 +75,7 @@ export function SingleTextInputModal({
 			onOpenChange={(b) => {
 				if (!b) {
 					setInput("");
+					setError(null);
 					onClose();
 				}
 			}}
@@ -72,18 +85,20 @@ export function SingleTextInputModal({
 					<DialogTitle>{title}</DialogTitle>
 					<DialogDescription>{description}</DialogDescription>
 				</DialogHeader>
-				<div>
+				<div className="space-y-2">
 					<Input
 						id="text-input"
 						placeholder={placeholder}
 						value={input}
-						onChange={(e) => setInput(e.target.value)}
+						onChange={(e) => handleInputChange(e.target.value)}
 						onKeyDown={handleKeyDown}
 						autoFocus
+						className={error ? "border-destructive focus-visible:ring-destructive" : ""}
 					/>
+					{error && <p className="text-sm text-destructive">{error}</p>}
 				</div>
 				<DialogFooter className="justify-end">
-					<Button onClick={handleSubmit} disabled={input.length === 0 || isLoading} className="gap-2">
+					<Button onClick={handleSubmit} disabled={input.length === 0 || isLoading || !!error} className="gap-2">
 						{isLoading ? <Loader2 size={16} className="animate-spin" /> : null}
 						{submitLabel}
 					</Button>
