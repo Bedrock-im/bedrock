@@ -646,15 +646,18 @@ const FileList: React.FC<FileListProps> = ({
 
 			setFiles([...files, ...newFiles]);
 
-			// Add the new folder to the folders list
-			const newFolder: DriveFolder = {
-				path: newFolderPath,
+			// Find all subfolders within the folder being copied and create new folder entries
+			const subfoldersToCopy = folders.filter((f) => f.path.startsWith(folderPrefix) || f.path === folderToCopy.path);
+			const newFolders: DriveFolder[] = subfoldersToCopy.map((folder) => ({
+				path: newFolderPath + folder.path.slice(folderToCopy.path.length),
 				created_at: new Date().toISOString(),
 				deleted_at: null,
 				shared_with: [],
 				shared_keys: {},
-			};
-			addFolder(newFolder);
+			}));
+
+			// Add all new folders (root and subfolders) to the folders list
+			newFolders.forEach((folder) => addFolder(folder));
 
 			setFolderToCopy(null);
 			toast.success("Folder copied successfully", { id: toastId });
