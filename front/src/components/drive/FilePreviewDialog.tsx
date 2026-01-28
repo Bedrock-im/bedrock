@@ -6,10 +6,9 @@ import { toast } from "sonner";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { canConvertWithPandoc } from "@/services/pandoc";
 import { useAccountStore } from "@/stores/account";
 import { DriveFile, useDriveStore } from "@/stores/drive";
-import { getFileTypeInfo } from "@/utils/file-types";
+import { getFileTypeInfo, isFileEditable } from "@/utils/file-types";
 
 import AudioPreview from "./previews/AudioPreview";
 import CodePreview from "./previews/CodePreview";
@@ -151,7 +150,7 @@ export default function FilePreviewDialog({ file, isOpen, onClose }: Readonly<Fi
 	};
 
 	const canEdit = useMemo(() => {
-		return file && fileContent && canConvertWithPandoc(file.path);
+		return file && fileContent && isFileEditable(file.path);
 	}, [file, fileContent]);
 
 	if (!file || !fileTypeInfo) {
