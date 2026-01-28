@@ -1,10 +1,22 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { filesize } from "filesize";
-import { Download, Edit, Share2, FileText, FolderIcon, Move, Trash, ArchiveRestore, Copy, Eye } from "lucide-react";
+import {
+	ArchiveRestore,
+	Copy,
+	Download,
+	Edit,
+	Eye,
+	FileText,
+	FolderIcon,
+	MoreHorizontal,
+	Move,
+	Share2,
+	Trash,
+} from "lucide-react";
 import React from "react";
 
-import ActionIcon from "@/components/drive/ActionIcon";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
 	ContextMenu,
@@ -13,6 +25,13 @@ import {
 	ContextMenuSeparator,
 	ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { DriveFile, DriveFolder } from "@/stores/drive";
 import { getFileTypeInfo } from "@/utils/file-types";
@@ -162,16 +181,78 @@ const FileCard = ({
 					</TableCell>
 
 					<TableCell className="pr-4">
-						<div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-							{onPreview && fileTypeInfo?.canPreview && <ActionIcon Icon={Eye} onClick={onPreview} tooltip="Preview" />}
-							{onDownload && <ActionIcon Icon={Download} onClick={onDownload} tooltip="Download" />}
-							{onShare && <ActionIcon Icon={Share2} onClick={onShare} tooltip="Share" />}
-							{onRename && <ActionIcon Icon={Edit} onClick={onRename} tooltip="Rename" />}
-							{onMove && <ActionIcon Icon={Move} onClick={onMove} tooltip="Move" />}
-							{onCopy && <ActionIcon Icon={Copy} onClick={onCopy} tooltip="Copy" />}
-							{onDelete && <ActionIcon Icon={Trash} onClick={onDelete} tooltip="Delete" />}
-							{onHardDelete && <ActionIcon Icon={Trash} onClick={onHardDelete} tooltip="Delete permanently" />}
-							{onRestore && <ActionIcon Icon={ArchiveRestore} onClick={onRestore} tooltip="Restore" />}
+						<div className="flex justify-end">
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<Button variant="ghost" size="icon" className="size-8" onClick={(e) => e.stopPropagation()}>
+										<MoreHorizontal className="size-4" />
+									</Button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end" className="w-48">
+									{onPreview && fileTypeInfo?.canPreview && (
+										<DropdownMenuItem onClick={onPreview}>
+											<Eye className="size-4 mr-2" />
+											Preview
+										</DropdownMenuItem>
+									)}
+									{onDownload && (
+										<DropdownMenuItem onClick={onDownload}>
+											<Download className="size-4 mr-2" />
+											Download
+										</DropdownMenuItem>
+									)}
+									{(onPreview || onDownload) && (onShare || onRename || onMove) && <DropdownMenuSeparator />}
+									{onShare && (
+										<DropdownMenuItem onClick={onShare}>
+											<Share2 className="size-4 mr-2" />
+											Share
+										</DropdownMenuItem>
+									)}
+									{onRename && (
+										<DropdownMenuItem onClick={onRename}>
+											<Edit className="size-4 mr-2" />
+											Rename
+										</DropdownMenuItem>
+									)}
+									{onMove && (
+										<DropdownMenuItem onClick={onMove}>
+											<Move className="size-4 mr-2" />
+											Move to...
+										</DropdownMenuItem>
+									)}
+									{onDuplicate && (
+										<DropdownMenuItem onClick={onDuplicate}>
+											<Copy className="size-4 mr-2" />
+											Duplicate
+										</DropdownMenuItem>
+									)}
+									{onCopy && (
+										<DropdownMenuItem onClick={onCopy}>
+											<Copy className="size-4 mr-2" />
+											Copy
+										</DropdownMenuItem>
+									)}
+									{(onDelete || onHardDelete || onRestore) && <DropdownMenuSeparator />}
+									{onDelete && (
+										<DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+											<Trash className="size-4 mr-2" />
+											Move to Trash
+										</DropdownMenuItem>
+									)}
+									{onHardDelete && (
+										<DropdownMenuItem onClick={onHardDelete} className="text-destructive focus:text-destructive">
+											<Trash className="size-4 mr-2" />
+											Delete permanently
+										</DropdownMenuItem>
+									)}
+									{onRestore && (
+										<DropdownMenuItem onClick={onRestore} className="text-success focus:text-success">
+											<ArchiveRestore className="size-4 mr-2" />
+											Restore
+										</DropdownMenuItem>
+									)}
+								</DropdownMenuContent>
+							</DropdownMenu>
 						</div>
 					</TableCell>
 				</TableRow>
