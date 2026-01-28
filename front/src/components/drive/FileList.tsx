@@ -996,7 +996,7 @@ const FileList: React.FC<FileListProps> = ({
 						<Separator orientation="horizontal" />
 					</div>
 					{isLoading ? (
-						<TableSkeleton columns={5} rows={6} headers={["", "Name", "Size", "Created At", "Actions"]} />
+						<TableSkeleton columns={5} rows={6} headers={["", "Name", "Size", "Created At", ""]} />
 					) : sortedFiles.length === 0 && sortedFolders.length === 0 ? (
 						<div className="flex flex-col items-center justify-center py-16 text-center">
 							<div className="size-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
@@ -1069,7 +1069,7 @@ const FileList: React.FC<FileListProps> = ({
 											setSortOrder={setSortOrder}
 										/>
 									</TableHead>
-									<TableHead className="text-right">Actions</TableHead>
+									<TableHead className="w-12" />
 								</TableRow>
 							</TableHeader>
 							<TableBody>
@@ -1083,7 +1083,6 @@ const FileList: React.FC<FileListProps> = ({
 										selected={selectedItems.has(folder.path + "/")}
 										setSelected={() => selectItem(folder.path + "/")}
 										onLeftClick={() => {
-											selectItem(folder.path + "/");
 											setClickedItem(folder.path);
 										}}
 										onDoubleClick={() => handleChangeDirectory(folder.path + "/")}
@@ -1114,7 +1113,6 @@ const FileList: React.FC<FileListProps> = ({
 										selected={selectedItems.has(file.path)}
 										setSelected={() => selectItem(file.path)}
 										onLeftClick={() => {
-											selectItem(file.path);
 											setClickedItem(file.path);
 										}}
 										onDoubleClick={() => setFileToPreview(file)}
@@ -1149,40 +1147,44 @@ const FileList: React.FC<FileListProps> = ({
 									{selectedItems.size} item{selectedItems.size > 1 ? "s" : ""} selected
 								</span>
 								<div className="flex items-center gap-1 flex-wrap justify-center">
-									<Button
-										variant="ghost"
-										className="text-sm gap-2"
-										disabled={hasSelectedFolders || !!actionLoading}
-										onClick={async () => {
-											for (const pathFile of Array.from(selectedItems)) {
-												const file = files.find((f) => f.path === pathFile);
-												if (file) {
-													await handleDownloadFile(file);
-												}
-											}
-										}}
-									>
-										<Download size={16} />
-										Download
-									</Button>
-									<Button
-										variant="ghost"
-										className="text-sm gap-2"
-										disabled={!!actionLoading}
-										onClick={() => setBulkMoveMode(true)}
-									>
-										{actionLoading === "move" ? <Loader2 size={16} className="animate-spin" /> : <Move size={16} />}
-										Move
-									</Button>
-									<Button
-										variant="ghost"
-										className="text-sm gap-2"
-										disabled={hasSelectedFolders || !!actionLoading}
-										onClick={() => setBulkCopyMode(true)}
-									>
-										{actionLoading === "copy" ? <Loader2 size={16} className="animate-spin" /> : <Copy size={16} />}
-										Copy
-									</Button>
+									{!actions.includes("hardDelete") && (
+										<>
+											<Button
+												variant="ghost"
+												className="text-sm gap-2"
+												disabled={hasSelectedFolders || !!actionLoading}
+												onClick={async () => {
+													for (const pathFile of Array.from(selectedItems)) {
+														const file = files.find((f) => f.path === pathFile);
+														if (file) {
+															await handleDownloadFile(file);
+														}
+													}
+												}}
+											>
+												<Download size={16} />
+												Download
+											</Button>
+											<Button
+												variant="ghost"
+												className="text-sm gap-2"
+												disabled={!!actionLoading}
+												onClick={() => setBulkMoveMode(true)}
+											>
+												{actionLoading === "move" ? <Loader2 size={16} className="animate-spin" /> : <Move size={16} />}
+												Move
+											</Button>
+											<Button
+												variant="ghost"
+												className="text-sm gap-2"
+												disabled={hasSelectedFolders || !!actionLoading}
+												onClick={() => setBulkCopyMode(true)}
+											>
+												{actionLoading === "copy" ? <Loader2 size={16} className="animate-spin" /> : <Copy size={16} />}
+												Copy
+											</Button>
+										</>
+									)}
 									<Button
 										variant="ghost"
 										className="text-sm gap-2 text-destructive hover:text-destructive"

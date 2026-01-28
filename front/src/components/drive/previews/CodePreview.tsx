@@ -14,7 +14,7 @@ interface CodePreviewProps {
 	onSave?: (newFile: File) => Promise<void>;
 }
 
-export default function CodePreview({ fileUrl, filename, category, onSave }: Readonly<CodePreviewProps>) {
+export default function CodePreview({ fileUrl, filename, onSave }: Readonly<CodePreviewProps>) {
 	const [content, setContent] = useState<string>("");
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -107,9 +107,6 @@ export default function CodePreview({ fileUrl, filename, category, onSave }: Rea
 			</div>
 		);
 	}
-
-	const isCodeFile = category === "code";
-	const extension = filename.split(".").pop()?.toLowerCase() || "";
 
 	return (
 		<div className="flex flex-col gap-4 w-full h-full max-w-4xl mx-auto">
