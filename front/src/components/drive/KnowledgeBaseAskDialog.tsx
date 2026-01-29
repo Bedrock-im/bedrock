@@ -1,5 +1,7 @@
 import { Copy, CornerDownLeft } from "lucide-react";
 import { useState } from "react";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -89,7 +91,15 @@ export default function KnowledgeBaseAskDialog({ knowledgeBase, onOpenChange }: 
 								variant={type}
 								className="flex-col items-start"
 							>
-								<ChatBubbleMessage>{message}</ChatBubbleMessage>
+								<ChatBubbleMessage>
+									{type === "received" ? (
+										<div className="prose prose-sm dark:prose-invert max-w-none">
+											<Markdown remarkPlugins={[remarkGfm]}>{message}</Markdown>
+										</div>
+									) : (
+										message
+									)}
+								</ChatBubbleMessage>
 								{type === "received" && (
 									<div className="flex gap-3">
 										<ChatBubbleAction

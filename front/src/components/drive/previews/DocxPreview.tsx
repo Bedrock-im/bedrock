@@ -153,7 +153,7 @@ export default function DocxPreview({ fileUrl, filename, onSave }: Readonly<Docx
 
 			<div className="flex-1 min-h-[500px] border rounded-lg shadow-sm bg-card overflow-hidden">
 				{viewMode === "preview" ? (
-					<div className="p-8 h-full overflow-auto prose max-w-none">
+					<div className="p-8 h-full overflow-auto prose prose-slate dark:prose-invert max-w-none">
 						<div dangerouslySetInnerHTML={{ __html: htmlContent }} />
 					</div>
 				) : (
