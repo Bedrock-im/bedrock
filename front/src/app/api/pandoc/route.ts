@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
 		if (outputFormat === "html") {
 			// Embed images for HTML preview so they don't break
-			command += ` --standalone --embed-resources --metadata title="Preview"`;
+			command += ` --standalone --embed-resources`;
 			if (isInputMarkdown) {
 				command += ` -f markdown`;
 			}
