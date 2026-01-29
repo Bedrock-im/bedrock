@@ -33,22 +33,29 @@ export const supportedTextFiles = [
 ];
 
 const extractTextFromPdfBuffer = async (buffer: Buffer): Promise<string> => {
-	const pdfjs = await import("pdfjs-dist");
-	pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+	try {
+		const pdfjs = await import("pdfjs-dist");
+		pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-	const uint8Array = new Uint8Array(buffer);
-	const pdf = await pdfjs.getDocument({ data: uint8Array }).promise;
-	const maxPages = pdf.numPages;
-	const textContent: string[] = [];
+		const uint8Array = new Uint8Array(buffer);
+		const pdf = await pdfjs.getDocument({ data: uint8Array }).promise;
+		const maxPages = pdf.numPages;
+		const textContent: string[] = [];
 
-	for (let i = 1; i <= maxPages; i++) {
-		const page = await pdf.getPage(i);
-		const content = await page.getTextContent();
-		const pageTextContent = content.items.map((item) => (item as TextItem).str).join(" ");
-		textContent.push(pageTextContent);
+		for (let i = 1; i <= maxPages; i++) {
+			const page = await pdf.getPage(i);
+			const content = await page.getTextContent();
+			const pageTextContent = content.items.map((item) => (item as TextItem).str).join(" ");
+			textContent.push(pageTextContent);
+		}
+
+		return textContent.join("\n\n");
+	} catch (error) {
+		console.error("Failed to extract text from PDF buffer:", error);
+		throw new Error(
+			"Failed to extract text from PDF file. The file may be corrupted, unsupported, or too large to process.",
+		);
 	}
-
-	return textContent.join("\n\n");
 };
 
 export const extractFileContent = async (filePath: string, content: Buffer): Promise<string> => {
