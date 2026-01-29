@@ -63,7 +63,7 @@ The error was a missing comma after user(id).
 // Will be transferred in the backend soon™️
 export class LibertaiService {
 	constructor(
-		private openaiClient: OpenAI = new OpenAI({
+		private readonly openaiClient: OpenAI = new OpenAI({
 			baseURL: env.LIBERTAI_API_URL,
 			apiKey: env.LIBERTAI_API_SECRET_KEY,
 			dangerouslyAllowBrowser: true,
@@ -72,14 +72,11 @@ export class LibertaiService {
 
 	async askKnowledgeBase(
 		message: string,
-		files: { filePath: string; content: Buffer }[],
+		files: { filePath: string; content: string }[],
 		lastMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [],
 	) {
 		const aggregatedFiles = files
-			.map(
-				({ filePath, content }) =>
-					`<file><filepath>${filePath}</filepath><content>${Buffer.from(content).toString("utf-8")}</content></file>`,
-			)
+			.map(({ filePath, content }) => `<file><filepath>${filePath}</filepath><content>${content}</content></file>`)
 			.join("\n\n");
 
 		const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
