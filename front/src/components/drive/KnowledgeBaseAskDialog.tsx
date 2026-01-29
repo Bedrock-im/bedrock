@@ -64,7 +64,12 @@ export default function KnowledgeBaseAskDialog({ knowledgeBase, onOpenChange }: 
 					content: message,
 				})),
 			);
-			setMessages((prev) => [...prev, { type: "received", message: response.at(-1)!.content as string }]);
+			const lastMessage = response.at(-1);
+			const lastContent =
+				lastMessage && typeof lastMessage.content === "string"
+					? lastMessage.content
+					: "No response received";
+			setMessages((prev) => [...prev, { type: "received", message: lastContent }]);
 		} catch (error) {
 			toast.error(`Error asking knowledge base: ${(error as Error).message}`);
 			setMessages((prev) => [
