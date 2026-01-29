@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAccountStore } from "@/stores/account";
 import { useDriveStore } from "@/stores/drive";
 import { KnowledgeBase } from "@/stores/knowledge-bases";
+import { extractFileContent } from "@/utils/file-content-extractor";
 
 export type KnowledgeBaseAskDialogProps = {
 	knowledgeBase: KnowledgeBase | null;
@@ -29,7 +30,7 @@ export default function KnowledgeBaseAskDialog({ knowledgeBase, onOpenChange }: 
 	const { libertaiService } = useAccountStore();
 	const { files } = useDriveStore();
 
-	const handleSendMessage = () => {
+	const handleSendMessage = async () => {
 		if (messageToSend.trim() === "") {
 			return;
 		}
@@ -38,31 +39,39 @@ export default function KnowledgeBaseAskDialog({ knowledgeBase, onOpenChange }: 
 			toast.error("Knowledge base or LibertAI service not available");
 			return;
 		}
-		libertaiService
-			.askKnowledgeBase(
-				messageToSend,
+
+		try {
+			// Extract content from files (handles PDF parsing)
+			const filesWithContent = await Promise.all(
 				knowledgeBase.filePaths
 					.map((path) => ({
 						file: files.find((file) => file.path === path),
 						filePath: path,
 					}))
 					.filter(({ file }) => !!file)
-					.map(({ filePath, file }) => ({ filePath, content: file!.content ?? Buffer.from("</unknown>") })),
+					.map(async ({ filePath, file }) => {
+						const rawContent = file!.content ?? Buffer.from("");
+						const extractedContent = await extractFileContent(filePath, rawContent);
+						return { filePath, content: extractedContent };
+					}),
+			);
+
+			const response = await libertaiService.askKnowledgeBase(
+				messageToSend,
+				filesWithContent,
 				messages.map(({ type, message }) => ({
 					role: type === "sent" ? "user" : "assistant",
 					content: message,
 				})),
-			)
-			.then((response) => {
-				setMessages((prev) => [...prev, { type: "received", message: response.at(-1)!.content as string }]);
-			})
-			.catch((error) => {
-				toast.error(`Error asking knowledge base: ${error.message}`);
-				setMessages((prev) => [
-					...prev,
-					{ type: "received", message: "An error occurred while processing your request." },
-				]);
-			});
+			);
+			setMessages((prev) => [...prev, { type: "received", message: response.at(-1)!.content as string }]);
+		} catch (error) {
+			toast.error(`Error asking knowledge base: ${(error as Error).message}`);
+			setMessages((prev) => [
+				...prev,
+				{ type: "received", message: "An error occurred while processing your request." },
+			]);
+		}
 		setMessageToSend("");
 	};
 
