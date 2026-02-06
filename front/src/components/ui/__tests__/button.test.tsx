@@ -1,31 +1,32 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { Button } from '../button';
+import { render, screen, fireEvent } from "@testing-library/react";
 
-describe('Button Component', () => {
-    it('renders correctly', () => {
-        render(<Button>Click me</Button>);
-        const button = screen.getByRole('button', { name: /click me/i });
-        expect(button).toBeInTheDocument();
-    });
+import { Button } from "../button";
 
-    it('passes standard HTML attributes', () => {
-        render(<Button disabled>Disabled</Button>);
-        const button = screen.getByRole('button', { name: /disabled/i });
-        expect(button).toBeDisabled();
-    });
+describe("Button Component", () => {
+	it("renders correctly", () => {
+		render(<Button>Click me</Button>);
+		const button = screen.getByRole("button", { name: /click me/i });
+		expect(button).toBeInTheDocument();
+	});
 
-    it('handles onClick events', () => {
-        const handleClick = jest.fn();
-        render(<Button onClick={handleClick}>Click me</Button>);
-        const button = screen.getByRole('button', { name: /click me/i });
+	it("passes standard HTML attributes", () => {
+		render(<Button disabled>Disabled</Button>);
+		const button = screen.getByRole("button", { name: /disabled/i });
+		expect(button).toBeDisabled();
+	});
 
-        fireEvent.click(button);
-        expect(handleClick).toHaveBeenCalledTimes(1);
-    });
+	it("handles onClick events", () => {
+		const handleClick = jest.fn();
+		render(<Button onClick={handleClick}>Click me</Button>);
+		const button = screen.getByRole("button", { name: /click me/i });
 
-    it('applies variant classes', () => {
-        const { container } = render(<Button variant="destructive">Delete</Button>);
-        const button = screen.getByRole('button', { name: /delete/i });
-        expect(button).toHaveClass('bg-destructive');
-    });
+		fireEvent.click(button);
+		expect(handleClick).toHaveBeenCalledTimes(1);
+	});
+
+	it("applies variant classes", () => {
+		const { container } = render(<Button variant="destructive">Delete</Button>);
+		const button = screen.getByRole("button", { name: /delete/i });
+		expect(button).toHaveClass("bg-destructive");
+	});
 });

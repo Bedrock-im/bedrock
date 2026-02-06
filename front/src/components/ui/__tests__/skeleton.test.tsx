@@ -1,23 +1,24 @@
-import { render, screen } from '@testing-library/react';
-import { Skeleton } from '../skeleton';
+import { render, screen } from "@testing-library/react";
 
-describe('Skeleton Component', () => {
-    it('renders correctly', () => {
-        render(<Skeleton data-testid="skeleton" />);
-        const skeleton = screen.getByTestId('skeleton');
-        expect(skeleton).toBeInTheDocument();
-    });
+import { Skeleton } from "../skeleton";
 
-    it('has animate-pulse class for animation', () => {
-        render(<Skeleton data-testid="skeleton" />);
-        const skeleton = screen.getByTestId('skeleton');
-        expect(skeleton).toHaveClass('animate-pulse');
-    });
+describe("Skeleton Component", () => {
+	it("renders correctly", () => {
+		render(<Skeleton data-testid="skeleton" />);
+		const skeleton = screen.getByTestId("skeleton");
+		expect(skeleton).toBeInTheDocument();
+	});
 
-    it('applies custom className', () => {
-        render(<Skeleton data-testid="skeleton" className="w-32 h-8" />);
-        const skeleton = screen.getByTestId('skeleton');
-        expect(skeleton).toHaveClass('w-32');
-        expect(skeleton).toHaveClass('h-8');
-    });
+	it("has animate-pulse class for animation", () => {
+		render(<Skeleton data-testid="skeleton" />);
+		const skeleton = screen.getByTestId("skeleton");
+		expect(skeleton).toHaveClass("animate-pulse");
+	});
+
+	it("applies custom className", () => {
+		render(<Skeleton data-testid="skeleton" className="w-32 h-8" />);
+		const skeleton = screen.getByTestId("skeleton");
+		expect(skeleton).toHaveClass("w-32");
+		expect(skeleton).toHaveClass("h-8");
+	});
 });

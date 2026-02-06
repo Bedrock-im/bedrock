@@ -1,39 +1,40 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { Switch } from '../switch';
+import { render, screen, fireEvent } from "@testing-library/react";
 
-describe('Switch Component', () => {
-    it('renders correctly', () => {
-        render(<Switch aria-label="Enable notifications" />);
-        const switchEl = screen.getByRole('switch', { name: /enable notifications/i });
-        expect(switchEl).toBeInTheDocument();
-    });
+import { Switch } from "../switch";
 
-    it('starts unchecked by default', () => {
-        render(<Switch aria-label="Enable notifications" />);
-        const switchEl = screen.getByRole('switch', { name: /enable notifications/i });
-        expect(switchEl).toHaveAttribute('data-state', 'unchecked');
-    });
+describe("Switch Component", () => {
+	it("renders correctly", () => {
+		render(<Switch aria-label="Enable notifications" />);
+		const switchEl = screen.getByRole("switch", { name: /enable notifications/i });
+		expect(switchEl).toBeInTheDocument();
+	});
 
-    it('can be toggled', () => {
-        render(<Switch aria-label="Enable notifications" />);
-        const switchEl = screen.getByRole('switch', { name: /enable notifications/i });
+	it("starts unchecked by default", () => {
+		render(<Switch aria-label="Enable notifications" />);
+		const switchEl = screen.getByRole("switch", { name: /enable notifications/i });
+		expect(switchEl).toHaveAttribute("data-state", "unchecked");
+	});
 
-        fireEvent.click(switchEl);
-        expect(switchEl).toHaveAttribute('data-state', 'checked');
+	it("can be toggled", () => {
+		render(<Switch aria-label="Enable notifications" />);
+		const switchEl = screen.getByRole("switch", { name: /enable notifications/i });
 
-        fireEvent.click(switchEl);
-        expect(switchEl).toHaveAttribute('data-state', 'unchecked');
-    });
+		fireEvent.click(switchEl);
+		expect(switchEl).toHaveAttribute("data-state", "checked");
 
-    it('can be disabled', () => {
-        render(<Switch aria-label="Enable notifications" disabled />);
-        const switchEl = screen.getByRole('switch', { name: /enable notifications/i });
-        expect(switchEl).toBeDisabled();
-    });
+		fireEvent.click(switchEl);
+		expect(switchEl).toHaveAttribute("data-state", "unchecked");
+	});
 
-    it('respects defaultChecked', () => {
-        render(<Switch aria-label="Enable notifications" defaultChecked />);
-        const switchEl = screen.getByRole('switch', { name: /enable notifications/i });
-        expect(switchEl).toHaveAttribute('data-state', 'checked');
-    });
+	it("can be disabled", () => {
+		render(<Switch aria-label="Enable notifications" disabled />);
+		const switchEl = screen.getByRole("switch", { name: /enable notifications/i });
+		expect(switchEl).toBeDisabled();
+	});
+
+	it("respects defaultChecked", () => {
+		render(<Switch aria-label="Enable notifications" defaultChecked />);
+		const switchEl = screen.getByRole("switch", { name: /enable notifications/i });
+		expect(switchEl).toHaveAttribute("data-state", "checked");
+	});
 });
