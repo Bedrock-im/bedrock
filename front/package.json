@@ -70,6 +70,7 @@
   "devDependencies": {
     "@chromatic-com/storybook": "^4.0.0",
     "@hey-api/openapi-ts": "^0.66.7",
+    "@storybook/addon-a11y": "^10.2.7",
     "@storybook/addon-docs": "^9.0.1",
     "@storybook/addon-links": "^9.0.1",
     "@storybook/addon-onboarding": "^9.0.1",
