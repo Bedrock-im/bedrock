@@ -7033,18 +7033,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/addon-a11y@npm:^10.2.7":
-  version: 10.2.7
-  resolution: "@storybook/addon-a11y@npm:10.2.7"
-  dependencies:
-    "@storybook/global": "npm:^5.0.0"
-    axe-core: "npm:^4.2.0"
-  peerDependencies:
-    storybook: ^10.2.7
-  checksum: 10c0/ab32b3c011ef36773398aec8f6994556ac54e82735bb6772273e41e740d260c12b591d240350ce9efb096b179c03a4864ea700864e9fbfa83907c723110664cd
-  languageName: node
-  linkType: hard
-
 "@storybook/addon-docs@npm:^9.0.1":
   version: 9.1.17
   resolution: "@storybook/addon-docs@npm:9.1.17"
@@ -9633,7 +9621,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axe-core@npm:^4.10.0, axe-core@npm:^4.2.0":
+"axe-core@npm:^4.10.0":
   version: 4.11.1
   resolution: "axe-core@npm:4.11.1"
   checksum: 10c0/1e6997454b61c7c9a4d740f395952835dcf87f2c04fd81577217d68634d197d602c224f9e8f17b22815db4c117a2519980cfc8911fc0027c54a6d8ebca47c6a7
@@ -12906,7 +12894,6 @@ __metadata:
     "@radix-ui/react-switch": "npm:^1.2.4"
     "@radix-ui/react-tabs": "npm:^1.1.11"
     "@radix-ui/react-tooltip": "npm:^1.2.6"
-    "@storybook/addon-a11y": "npm:^10.2.7"
     "@storybook/addon-docs": "npm:^9.0.1"
     "@storybook/addon-links": "npm:^9.0.1"
     "@storybook/addon-onboarding": "npm:^9.0.1"
