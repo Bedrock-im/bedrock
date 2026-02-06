@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ChatBubble, ChatBubbleAction, ChatBubbleMessage } from "@/components/ui/chat/chat-bubble";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { LiveRegion } from "@/components/ui/live-region";
 import { Textarea } from "@/components/ui/textarea";
 import { useAccountStore } from "@/stores/account";
 import { useDriveStore } from "@/stores/drive";
@@ -96,6 +97,16 @@ export default function KnowledgeBaseAskDialog({ knowledgeBase, onOpenChange }: 
 						</DialogDescription>
 					</DialogHeader>
 					<ChatMessageList>
+						{messages.length > 0 && (
+							<LiveRegion
+								message={
+									messages[messages.length - 1].type === "received"
+										? `Assistant: ${messages[messages.length - 1].message.slice(0, 100)}${messages[messages.length - 1].message.length > 100 ? "..." : ""}`
+										: `You: ${messages[messages.length - 1].message.slice(0, 100)}${messages[messages.length - 1].message.length > 100 ? "..." : ""}`
+								}
+								politeness="polite"
+							/>
+						)}
 						{messages.map(({ message, type }, idx) => (
 							<ChatBubble
 								key={idx}

@@ -16,6 +16,7 @@ const config: StorybookConfig = {
 		getAbsolutePath("@storybook/addon-links"),
 		getAbsolutePath("@chromatic-com/storybook"),
 		getAbsolutePath("@storybook/addon-docs"),
+		getAbsolutePath("@storybook/addon-a11y"),
 	],
 	framework: {
 		name: getAbsolutePath("@storybook/nextjs"),
