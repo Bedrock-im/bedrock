@@ -112,6 +112,7 @@ const FileCard = ({
 				<TableRow
 					ref={folder ? setDroppableRef : undefined}
 					style={style}
+					aria-selected={selected}
 					onClick={(e) => {
 						e.stopPropagation();
 						if (onLeftClick) onLeftClick();
@@ -126,6 +127,7 @@ const FileCard = ({
 				>
 					<TableCell className="w-12 pl-4">
 						<Checkbox
+							aria-label={`Select ${folder ? "folder" : "file"} ${fileName}`}
 							disabled={!setSelected}
 							checked={selected}
 							onClick={(e) => {
@@ -153,7 +155,7 @@ const FileCard = ({
                                                                 ${metadata.deleted_at ? "opacity-50" : ""}
                                                         `}
 							>
-								<FileIcon className="size-5" />
+								<FileIcon className="size-5" aria-hidden="true" />
 							</div>
 							<div className="flex flex-col min-w-0">
 								<span
@@ -184,11 +186,21 @@ const FileCard = ({
 						<div className="flex justify-end">
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
-									<Button variant="ghost" size="icon" className="size-8" onClick={(e) => e.stopPropagation()}>
-										<MoreHorizontal className="size-4" />
+									<Button
+										variant="ghost"
+										size="icon"
+										className="size-8"
+										aria-label={`More actions for ${fileName}`}
+										onClick={(e) => e.stopPropagation()}
+									>
+										<MoreHorizontal className="size-4" aria-hidden="true" />
 									</Button>
 								</DropdownMenuTrigger>
-								<DropdownMenuContent align="end" className="w-48">
+								<DropdownMenuContent
+									align="end"
+									className="w-48"
+									aria-label={`Actions menu for ${fileName}. Use arrow keys to navigate, Enter to select, Escape to close.`}
+								>
 									{onPreview && fileTypeInfo?.canPreview && (
 										<DropdownMenuItem onClick={onPreview}>
 											<Eye className="size-4 mr-2" />

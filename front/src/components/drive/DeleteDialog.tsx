@@ -52,6 +52,7 @@ export default function DeleteDialog({
 					<AlertDialogDescription>{description}</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>
+					{/* eslint-disable-next-line jsx-a11y/no-autofocus -- Focuses cancel button to prevent accidental deletion */}
 					<AlertDialogCancel onClick={() => onOpenChange(false)} autoFocus disabled={isLoading}>
 						{cancelText}
 					</AlertDialogCancel>

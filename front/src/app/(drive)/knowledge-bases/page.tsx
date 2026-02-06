@@ -258,9 +258,10 @@ export default function KnowledgeBases() {
 																variant="ghost"
 																size="icon"
 																className="size-8"
+																aria-label={`More actions for ${base.name}`}
 																onClick={(e) => e.stopPropagation()}
 															>
-																<MoreHorizontal className="size-4" />
+																<MoreHorizontal className="size-4" aria-hidden="true" />
 															</Button>
 														</DropdownMenuTrigger>
 														<DropdownMenuContent align="end" className="w-48">
@@ -365,6 +366,7 @@ export default function KnowledgeBases() {
 							placeholder="Knowledge Base Name"
 							className="w-full"
 							onKeyDown={(e) => e.key === "Enter" && handleCreateKnowledgeBase()}
+							// eslint-disable-next-line jsx-a11y/no-autofocus -- Improves UX in modal dialogs by focusing first input
 							autoFocus
 						/>
 					</div>

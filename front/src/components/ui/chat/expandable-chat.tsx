@@ -63,8 +63,14 @@ const ExpandableChat: React.FC<ExpandableChatProps> = ({
 				)}
 			>
 				{children}
-				<Button variant="ghost" size="icon" className="absolute top-2 right-2 sm:hidden" onClick={toggleChat}>
-					<X className="h-4 w-4" />
+				<Button
+					variant="ghost"
+					size="icon"
+					className="absolute top-2 right-2 sm:hidden"
+					aria-label="Close chat"
+					onClick={toggleChat}
+				>
+					<X className="h-4 w-4" aria-hidden="true" />
 				</Button>
 			</div>
 			<ExpandableChatToggle icon={icon} isOpen={isOpen} toggleChat={toggleChat} />
@@ -108,13 +114,18 @@ const ExpandableChatToggle: React.FC<ExpandableChatToggleProps> = ({
 	<Button
 		variant="default"
 		onClick={toggleChat}
+		aria-label={isOpen ? "Close chat" : "Open chat"}
 		className={cn(
 			"w-14 h-14 rounded-full shadow-md flex items-center justify-center hover:shadow-lg hover:shadow-black/30 transition-all duration-300",
 			className,
 		)}
 		{...props}
 	>
-		{isOpen ? <X className="h-6 w-6" /> : icon || <MessageCircle className="h-6 w-6" />}
+		{isOpen ? (
+			<X className="h-6 w-6" aria-hidden="true" />
+		) : (
+			<span aria-hidden="true">{icon || <MessageCircle className="h-6 w-6" />}</span>
+		)}
 	</Button>
 );
 

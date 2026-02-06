@@ -21,6 +21,7 @@ import { PublicFileLinkModal } from "@/components/PublicFileLinkModal";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { LiveRegion } from "@/components/ui/live-region";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import useBedrockFileUploadDropzone from "@/hooks/use-bedrock-file-upload-dropzone";
@@ -968,6 +969,7 @@ const FileList: React.FC<FileListProps> = ({
 		}
 	};
 	return (
+		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 		<div className="flex flex-col" onClick={() => setClickedItem(undefined)}>
 			<PublicFileLinkModal hash={sharedHash ?? ""} isOpen={!!sharedHash} onClose={() => setSharedHash(null)} />
 			{fileToMove && (
@@ -1078,7 +1080,10 @@ const FileList: React.FC<FileListProps> = ({
 						<Separator orientation="horizontal" />
 					</div>
 					{isLoading ? (
-						<TableSkeleton columns={5} rows={6} headers={["", "Name", "Size", "Created At", ""]} />
+						<>
+							<LiveRegion message="Loading files and folders" politeness="polite" />
+							<TableSkeleton columns={5} rows={6} headers={["", "Name", "Size", "Created At", ""]} />
+						</>
 					) : sortedFiles.length === 0 && sortedFolders.length === 0 ? (
 						<div className="flex flex-col items-center justify-center py-16 text-center">
 							<div className="size-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
@@ -1110,10 +1115,14 @@ const FileList: React.FC<FileListProps> = ({
 						</div>
 					) : (
 						<Table>
+							<caption className="sr-only">
+								{trash ? "Deleted files and folders" : "Files and folders in current directory"}
+							</caption>
 							<TableHeader>
 								<TableRow>
-									<TableHead className="w-12 pl-4">
+									<TableHead scope="col" className="w-12 pl-4">
 										<Checkbox
+											aria-label="Select all files and folders"
 											checked={selectedItems.size === currentPathFiles.length + currentPathFolders.length}
 											onClick={(e) => {
 												e.stopPropagation();
@@ -1121,7 +1130,10 @@ const FileList: React.FC<FileListProps> = ({
 											}}
 										/>
 									</TableHead>
-									<TableHead>
+									<TableHead
+										scope="col"
+										aria-sort={sortColumn === "path" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+									>
 										<SortOption
 											option="path"
 											name="Name"
@@ -1131,7 +1143,10 @@ const FileList: React.FC<FileListProps> = ({
 											setSortOrder={setSortOrder}
 										/>
 									</TableHead>
-									<TableHead>
+									<TableHead
+										scope="col"
+										aria-sort={sortColumn === "size" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+									>
 										<SortOption
 											option="size"
 											name="Size"
@@ -1141,7 +1156,12 @@ const FileList: React.FC<FileListProps> = ({
 											setSortOrder={setSortOrder}
 										/>
 									</TableHead>
-									<TableHead>
+									<TableHead
+										scope="col"
+										aria-sort={
+											sortColumn === "created_at" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"
+										}
+									>
 										<SortOption
 											option="created_at"
 											name="Created At"
@@ -1151,7 +1171,7 @@ const FileList: React.FC<FileListProps> = ({
 											setSortOrder={setSortOrder}
 										/>
 									</TableHead>
-									<TableHead className="w-12" />
+									<TableHead scope="col" className="w-12" />
 								</TableRow>
 							</TableHeader>
 							<TableBody>

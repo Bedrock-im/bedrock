@@ -94,8 +94,15 @@ export const BedrockSidebar = ({ children }: BedrockSidebarProps) => {
 											${active ? "bg-primary text-primary-foreground shadow-soft hover:bg-primary/90" : "hover:bg-accent"}
 										`}
 									>
-										<Link href={item.url} className="flex items-center gap-3 px-3">
-											<item.icon className={`size-5 ${active ? "text-primary-foreground" : "text-muted-foreground"}`} />
+										<Link
+											href={item.url}
+											className="flex items-center gap-3 px-3"
+											aria-current={active ? "page" : undefined}
+										>
+											<item.icon
+												className={`size-5 ${active ? "text-primary-foreground" : "text-muted-foreground"}`}
+												aria-hidden="true"
+											/>
 											<span className={`font-medium ${active ? "" : "text-foreground"}`}>{item.name}</span>
 										</Link>
 									</SidebarMenuButton>
