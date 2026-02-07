@@ -67,6 +67,7 @@ export default function RenameDialog({
 						onChange={(e) => setNewName(e.target.value)}
 						placeholder="Enter new name"
 						onKeyDown={(e) => e.key === "Enter" && handleSave()}
+						// eslint-disable-next-line jsx-a11y/no-autofocus -- Improves UX in modal dialogs by focusing first input
 						autoFocus
 						className={error ? "border-red-500" : ""}
 					/>
