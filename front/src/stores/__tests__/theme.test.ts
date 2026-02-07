@@ -5,7 +5,7 @@
 // Mock matchMedia BEFORE any imports that might use it
 // We use jest.mock for the store to avoid the initialization code running
 jest.mock("zustand/middleware", () => ({
-	persist: (fn: any) => fn,
+	persist: (fn: unknown) => fn,
 }));
 
 // Mock matchMedia globally
