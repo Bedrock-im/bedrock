@@ -1,4 +1,4 @@
-import { renderHook, act } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 
 import { useIsMobile } from "../use-is-mobile";
 
@@ -20,14 +20,16 @@ describe("useIsMobile Hook", () => {
 	});
 
 	beforeEach(() => {
-		matchMediaMock.mockImplementation((query) => ({
-			matches: false,
-			media: query,
-			onchange: null,
-			addEventListener: jest.fn(),
-			removeEventListener: jest.fn(),
-			dispatchEvent: jest.fn(),
-		}));
+		matchMediaMock.mockImplementation(
+			(query: string): MediaQueryList => ({
+				matches: false,
+				media: query,
+				onchange: null,
+				addEventListener: jest.fn(),
+				removeEventListener: jest.fn(),
+				dispatchEvent: jest.fn(),
+			}),
+		);
 	});
 
 	it("should return false for desktop width", () => {
