@@ -20,7 +20,7 @@ describe("useIsMobile Hook", () => {
 	});
 
 	beforeEach(() => {
-		matchMediaMock.mockImplementation((query) => ({
+		matchMediaMock.mockImplementation((query: string): MediaQueryList => ({
 			matches: false,
 			media: query,
 			onchange: null,
