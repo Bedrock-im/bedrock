@@ -20,14 +20,16 @@ describe("useIsMobile Hook", () => {
 	});
 
 	beforeEach(() => {
-		matchMediaMock.mockImplementation((query: string): MediaQueryList => ({
-			matches: false,
-			media: query,
-			onchange: null,
-			addEventListener: jest.fn(),
-			removeEventListener: jest.fn(),
-			dispatchEvent: jest.fn(),
-		}));
+		matchMediaMock.mockImplementation(
+			(query: string): MediaQueryList => ({
+				matches: false,
+				media: query,
+				onchange: null,
+				addEventListener: jest.fn(),
+				removeEventListener: jest.fn(),
+				dispatchEvent: jest.fn(),
+			}),
+		);
 	});
 
 	it("should return false for desktop width", () => {
