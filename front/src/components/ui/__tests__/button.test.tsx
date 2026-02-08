@@ -25,7 +25,7 @@ describe("Button Component", () => {
 	});
 
 	it("applies variant classes", () => {
-		const { container } = render(<Button variant="destructive">Delete</Button>);
+		render(<Button variant="destructive">Delete</Button>);
 		const button = screen.getByRole("button", { name: /delete/i });
 		expect(button).toHaveClass("bg-destructive");
 	});
