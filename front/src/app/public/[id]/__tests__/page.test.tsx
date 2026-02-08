@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import { FileService, PublicFileMeta } from "bedrock-ts-sdk";
 import React from "react";
 
-import { PublicFileMeta, FileService } from "bedrock-ts-sdk";
 import Public from "@/app/public/[id]/page";
 
 // Mock dependencies
