@@ -92,6 +92,7 @@ export function SingleTextInputModal({
 						value={input}
 						onChange={(e) => handleInputChange(e.target.value)}
 						onKeyDown={handleKeyDown}
+						// eslint-disable-next-line jsx-a11y/no-autofocus -- Improves UX in modal dialogs by focusing first input
 						autoFocus
 						className={error ? "border-destructive focus-visible:ring-destructive" : ""}
 					/>

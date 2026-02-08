@@ -84,6 +84,7 @@ export const BedrockAccountMenu = () => {
 					side="bottom"
 					align="end"
 					sideOffset={4}
+					aria-label="Account menu. Use arrow keys to navigate, Enter to select, Escape to close."
 				>
 					<DropdownMenuLabel className="p-0 font-normal">
 						<div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">

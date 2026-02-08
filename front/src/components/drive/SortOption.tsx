@@ -27,10 +27,22 @@ export default function SortOption({
 		}
 	};
 
+	const isActive = sortColumn === option;
+	const ariaLabel = isActive
+		? `${name}, sorted ${sortOrder === "asc" ? "ascending" : "descending"}. Click to sort ${sortOrder === "asc" ? "descending" : "ascending"}`
+		: `${name}, not sorted. Click to sort ascending`;
+
 	return (
-		<div className="flex gap-2 hover:cursor-pointer w-fit" onClick={changeSort}>
+		<button
+			type="button"
+			className="flex gap-2 hover:cursor-pointer hover:underline w-fit text-left font-medium"
+			onClick={changeSort}
+			aria-label={ariaLabel}
+		>
 			{name}
-			{sortColumn === option && <>{sortOrder === "desc" ? <ArrowDown size={20} /> : <ArrowUp size={20} />}</>}
-		</div>
+			{isActive && (
+				<span aria-hidden="true">{sortOrder === "desc" ? <ArrowDown size={20} /> : <ArrowUp size={20} />}</span>
+			)}
+		</button>
 	);
 }
