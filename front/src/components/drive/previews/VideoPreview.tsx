@@ -8,8 +8,9 @@ interface VideoPreviewProps {
 export default function VideoPreview({ fileUrl, mimeType }: VideoPreviewProps) {
 	return (
 		<div className="flex items-center justify-center w-full">
-			<video controls className="max-w-full max-h-[70vh] rounded-lg shadow-lg" src={fileUrl}>
+			<video controls className="max-w-full max-h-[70vh] rounded-lg shadow-lg" src={fileUrl} aria-label="Video preview">
 				<source src={fileUrl} type={mimeType} />
+				<track kind="captions" label="English" srcLang="en" />
 				Your browser does not support the video tag.
 			</video>
 		</div>

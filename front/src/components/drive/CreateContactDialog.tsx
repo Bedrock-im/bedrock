@@ -75,6 +75,7 @@ export default function CreateContactDialog({ isOpen, onOpenChange, createContac
 					placeholder="Username"
 					className="w-full"
 					onKeyDown={handleKeyDown}
+					// eslint-disable-next-line jsx-a11y/no-autofocus -- Improves UX in modal dialogs by focusing first input
 					autoFocus
 				/>
 				<Input

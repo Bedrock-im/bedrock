@@ -275,6 +275,23 @@ export function getFileTypeInfo(filename: string): FileTypeInfo {
 	};
 }
 
+export function isFileEditable(filename: string): boolean {
+	const extension = getFileExtension(filename);
+
+	// Editable document formats
+	if (extension === "docx" || extension === "odt") {
+		return true;
+	}
+
+	// Text and code files are editable
+	if (textExtensions.has(extension)) {
+		return true;
+	}
+
+	// Everything else is not editable (images, videos, audio, PDFs, XLSX, PPTX, etc.)
+	return false;
+}
+
 export function getMimeType(extension: string): string {
 	const mimeTypes: Record<string, string> = {
 		// Images

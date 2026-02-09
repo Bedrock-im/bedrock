@@ -1,15 +1,19 @@
 import { Copy, CornerDownLeft } from "lucide-react";
 import { useState } from "react";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { ChatBubble, ChatBubbleAction, ChatBubbleMessage } from "@/components/ui/chat/chat-bubble";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { LiveRegion } from "@/components/ui/live-region";
 import { Textarea } from "@/components/ui/textarea";
 import { useAccountStore } from "@/stores/account";
 import { useDriveStore } from "@/stores/drive";
 import { KnowledgeBase } from "@/stores/knowledge-bases";
+import { extractFileContent } from "@/utils/file-content-extractor";
 
 export type KnowledgeBaseAskDialogProps = {
 	knowledgeBase: KnowledgeBase | null;
@@ -27,7 +31,7 @@ export default function KnowledgeBaseAskDialog({ knowledgeBase, onOpenChange }: 
 	const { libertaiService } = useAccountStore();
 	const { files } = useDriveStore();
 
-	const handleSendMessage = () => {
+	const handleSendMessage = async () => {
 		if (messageToSend.trim() === "") {
 			return;
 		}
@@ -36,31 +40,42 @@ export default function KnowledgeBaseAskDialog({ knowledgeBase, onOpenChange }: 
 			toast.error("Knowledge base or LibertAI service not available");
 			return;
 		}
-		libertaiService
-			.askKnowledgeBase(
-				messageToSend,
+
+		try {
+			// Extract content from files (handles PDF parsing)
+			const filesWithContent = await Promise.all(
 				knowledgeBase.filePaths
 					.map((path) => ({
 						file: files.find((file) => file.path === path),
 						filePath: path,
 					}))
 					.filter(({ file }) => !!file)
-					.map(({ filePath, file }) => ({ filePath, content: file!.content ?? Buffer.from("</unknown>") })),
+					.map(async ({ filePath, file }) => {
+						const rawContent = file!.content ?? Buffer.from("");
+						const extractedContent = await extractFileContent(filePath, rawContent);
+						return { filePath, content: extractedContent };
+					}),
+			);
+
+			const response = await libertaiService.askKnowledgeBase(
+				messageToSend,
+				filesWithContent,
 				messages.map(({ type, message }) => ({
 					role: type === "sent" ? "user" : "assistant",
 					content: message,
 				})),
-			)
-			.then((response) => {
-				setMessages((prev) => [...prev, { type: "received", message: response.at(-1)!.content as string }]);
-			})
-			.catch((error) => {
-				toast.error(`Error asking knowledge base: ${error.message}`);
-				setMessages((prev) => [
-					...prev,
-					{ type: "received", message: "An error occurred while processing your request." },
-				]);
-			});
+			);
+			const lastMessage = response.at(-1);
+			const lastContent =
+				lastMessage && typeof lastMessage.content === "string" ? lastMessage.content : "No response received";
+			setMessages((prev) => [...prev, { type: "received", message: lastContent }]);
+		} catch (error) {
+			toast.error(`Error asking knowledge base: ${(error as Error).message}`);
+			setMessages((prev) => [
+				...prev,
+				{ type: "received", message: "An error occurred while processing your request." },
+			]);
+		}
 		setMessageToSend("");
 	};
 
@@ -82,6 +97,16 @@ export default function KnowledgeBaseAskDialog({ knowledgeBase, onOpenChange }: 
 						</DialogDescription>
 					</DialogHeader>
 					<ChatMessageList>
+						{messages.length > 0 && (
+							<LiveRegion
+								message={
+									messages[messages.length - 1].type === "received"
+										? `Assistant: ${messages[messages.length - 1].message.slice(0, 100)}${messages[messages.length - 1].message.length > 100 ? "..." : ""}`
+										: `You: ${messages[messages.length - 1].message.slice(0, 100)}${messages[messages.length - 1].message.length > 100 ? "..." : ""}`
+								}
+								politeness="polite"
+							/>
+						)}
 						{messages.map(({ message, type }, idx) => (
 							<ChatBubble
 								key={idx}
@@ -89,7 +114,15 @@ export default function KnowledgeBaseAskDialog({ knowledgeBase, onOpenChange }: 
 								variant={type}
 								className="flex-col items-start"
 							>
-								<ChatBubbleMessage>{message}</ChatBubbleMessage>
+								<ChatBubbleMessage>
+									{type === "received" ? (
+										<div className="prose prose-sm dark:prose-invert max-w-none">
+											<Markdown remarkPlugins={[remarkGfm]}>{message}</Markdown>
+										</div>
+									) : (
+										message
+									)}
+								</ChatBubbleMessage>
 								{type === "received" && (
 									<div className="flex gap-3">
 										<ChatBubbleAction

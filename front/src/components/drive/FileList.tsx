@@ -21,6 +21,7 @@ import { PublicFileLinkModal } from "@/components/PublicFileLinkModal";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { LiveRegion } from "@/components/ui/live-region";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import useBedrockFileUploadDropzone from "@/hooks/use-bedrock-file-upload-dropzone";
@@ -88,6 +89,7 @@ const FileList: React.FC<FileListProps> = ({
 	const [sortOrder, setSortOrder] = useQueryState("order", { defaultValue: "asc" as SortOrder });
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set(selectedPaths));
 	const [fileToCopy, setFileToCopy] = useState<{ path: string; name: string } | null>(null);
+	const [folderToCopy, setFolderToCopy] = useState<{ path: string; name: string } | null>(null);
 	const [bulkMoveMode, setBulkMoveMode] = useState(false);
 	const [bulkCopyMode, setBulkCopyMode] = useState(false);
 	const [clickedItem, setClickedItem] = useState<string>();
@@ -269,6 +271,23 @@ const FileList: React.FC<FileListProps> = ({
 		}
 	};
 
+	const validateFolderName = (folderName: string): string | null => {
+		if (!folderName.trim()) {
+			return "Folder name cannot be empty.";
+		}
+
+		const newFolderPath = `${currentWorkingDirectory}${folderName}`;
+
+		// Check if folder with same name already exists at this path
+		const folderExists = folders.some((folder) => folder.path === newFolderPath && folder.deleted_at === null);
+
+		if (folderExists) {
+			return `A folder named "${folderName}" already exists at this location.`;
+		}
+
+		return null;
+	};
+
 	const handleCreateFolder = (folderName: string) => {
 		const newFolderPath = `${currentWorkingDirectory}${folderName}`;
 
@@ -354,7 +373,7 @@ const FileList: React.FC<FileListProps> = ({
 			}
 
 			const newPath = `${dir}/${copyName}`;
-			const newFile = await bedrockClient.files.duplicateFile(path, newPath);
+			const [newFile] = await bedrockClient.files.duplicateFiles([{ oldPath: path, newPath }]);
 			if (!newFile) {
 				throw new Error("File duplication failed");
 			}
@@ -556,9 +575,13 @@ const FileList: React.FC<FileListProps> = ({
 		});
 	};
 
-	const handleCopy = (path: string) => {
+	const handleCopy = (path: string, folder: boolean) => {
 		const name = path.split("/").pop() || path;
-		setFileToCopy({ path, name });
+		if (folder) {
+			setFolderToCopy({ path, name });
+		} else {
+			setFileToCopy({ path, name });
+		}
 	};
 
 	const handleCopyToDestination = async (destinationPath: string) => {
@@ -586,7 +609,7 @@ const FileList: React.FC<FileListProps> = ({
 			}
 
 			const newPath = joinPath(destinationPath, copyName);
-			const newFile = await bedrockClient.files.duplicateFile(fileToCopy.path, newPath);
+			const [newFile] = await bedrockClient.files.duplicateFiles([{ oldPath: fileToCopy.path, newPath }]);
 			if (!newFile) {
 				throw new Error("File duplication failed");
 			}
@@ -597,6 +620,70 @@ const FileList: React.FC<FileListProps> = ({
 			toast.error("Failed to copy file", { id: toastId });
 		} finally {
 			setFileToCopy(null);
+			setActionLoading(null);
+		}
+	};
+
+	const handleCopyFolderToDestination = async (destinationPath: string) => {
+		if (!folderToCopy || !bedrockClient) return;
+
+		setActionLoading("copy");
+		const toastId = toast.loading("Copying folder...");
+
+		try {
+			const folderPrefix = folderToCopy.path.endsWith("/") ? folderToCopy.path : folderToCopy.path + "/";
+			const filesToCopy = files.filter((f) => f.path === folderToCopy.path || f.path.startsWith(folderPrefix));
+
+			if (filesToCopy.length === 0) {
+				toast.error("No files found in folder");
+				setFolderToCopy(null);
+				return;
+			}
+
+			// Generate new folder name with _copy suffix
+			const baseName = folderToCopy.name;
+			let copyName = `${baseName}_copy`;
+			let counter = 1;
+			while (folders.some((f) => f.path === joinPath(destinationPath, copyName))) {
+				copyName = `${baseName}_copy_${(counter += 1)}`;
+			}
+
+			const newFolderPath = joinPath(destinationPath, copyName);
+
+			// Map all files to their new paths
+			const filePaths = filesToCopy.map((f) => ({
+				oldPath: f.path,
+				newPath: newFolderPath + f.path.slice(folderToCopy.path.length),
+			}));
+
+			// Duplicate all files
+			const newFiles = await bedrockClient.files.duplicateFiles(filePaths);
+			if (!newFiles || newFiles.length === 0) {
+				throw new Error("Folder copy failed");
+			}
+
+			setFiles([...files, ...newFiles]);
+
+			// Find all subfolders within the folder being copied and create new folder entries
+			const subfoldersToCopy = folders.filter((f) => f.path.startsWith(folderPrefix) || f.path === folderToCopy.path);
+			const newFolders: DriveFolder[] = subfoldersToCopy.map((folder) => ({
+				path: newFolderPath + folder.path.slice(folderToCopy.path.length),
+				created_at: new Date().toISOString(),
+				deleted_at: null,
+				shared_with: [],
+				shared_keys: {},
+			}));
+
+			// Add all new folders (root and subfolders) to the folders list
+			newFolders.forEach((folder) => addFolder(folder));
+
+			setFolderToCopy(null);
+			toast.success("Folder copied successfully", { id: toastId });
+		} catch (error) {
+			console.error("Failed to copy folder:", error);
+			toast.error("Failed to copy folder", { id: toastId });
+		} finally {
+			setFolderToCopy(null);
 			setActionLoading(null);
 		}
 	};
@@ -708,63 +795,137 @@ const FileList: React.FC<FileListProps> = ({
 		if (!bedrockClient) return;
 
 		const normalizedDest = normalizePath(destinationPath);
-		const filesToCopy = Array.from(selectedItems).filter((path) => !path.endsWith("/"));
-		const newFiles: DriveFile[] = [];
+		const duplicates: Array<{ oldPath: string; newPath: string }> = [];
+		const plannedPaths: string[] = [];
+		const plannedFolderPaths: string[] = [];
+		const newFolders: DriveFolder[] = [];
 		let skippedCount = 0;
 
-		for (const filePath of filesToCopy) {
-			const originalFile = files.find((f) => f.path === filePath);
-			if (!originalFile) {
+		for (const itemPath of Array.from(selectedItems)) {
+			const isFolder = itemPath.endsWith("/");
+			const cleanPath = isFolder ? itemPath.slice(0, -1) : itemPath;
+			const name = cleanPath.split("/").pop();
+
+			if (!name) {
 				skippedCount += 1;
 				continue;
 			}
 
-			const filename = originalFile.path.split("/").pop();
-			if (!filename) {
-				skippedCount += 1;
-				continue;
-			}
+			const normalizedSourceParent = normalizePath(getParentPath(cleanPath));
 
-			const normalizedSourceParent = normalizePath(getParentPath(filePath));
-			const hasExtension = filename.includes(".");
-			const ext = hasExtension ? "." + filename.split(".").pop()! : "";
-			const baseName = hasExtension ? filename.slice(0, -ext.length) : filename;
+			if (isFolder) {
+				// Handle folder copying
+				const folderPrefix = cleanPath.endsWith("/") ? cleanPath : cleanPath + "/";
+				const filesToCopy = files.filter((f) => f.path === cleanPath || f.path.startsWith(folderPrefix));
 
-			let copyName: string;
-			if (normalizedSourceParent === normalizedDest) {
-				copyName = `${baseName}_copy${ext}`;
+				if (filesToCopy.length === 0) {
+					skippedCount += 1;
+					continue;
+				}
+
+				// Generate new folder name with _copy suffix
+				const baseName = name;
+				let copyName: string;
+				if (normalizedSourceParent === normalizedDest) {
+					copyName = `${baseName}_copy`;
+				} else {
+					copyName = baseName;
+				}
+
+				let counter = 1;
+				while (
+					folders.some((f) => f.path === joinPath(normalizedDest, copyName)) ||
+					plannedFolderPaths.includes(joinPath(normalizedDest, copyName))
+				) {
+					counter += 1;
+					copyName = `${baseName}_copy_${counter}`;
+				}
+
+				const newFolderPath = joinPath(normalizedDest, copyName);
+				plannedFolderPaths.push(newFolderPath);
+
+				// Map all files to their new paths
+				for (const f of filesToCopy) {
+					duplicates.push({
+						oldPath: f.path,
+						newPath: newFolderPath + f.path.slice(cleanPath.length),
+					});
+				}
+
+				// Track the new folder
+				newFolders.push({
+					path: newFolderPath,
+					created_at: new Date().toISOString(),
+					deleted_at: null,
+					shared_with: [],
+					shared_keys: {},
+				});
 			} else {
-				copyName = filename;
-			}
+				// Handle file copying
+				const originalFile = files.find((f) => f.path === cleanPath);
+				if (!originalFile) {
+					skippedCount += 1;
+					continue;
+				}
 
-			let counter = 1;
-			while (
-				files.some((f) => f.path === joinPath(normalizedDest, copyName)) ||
-				newFiles.some((f) => f.path === joinPath(normalizedDest, copyName))
-			) {
-				counter += 1;
-				copyName = `${baseName}_copy_${counter}${ext}`;
-			}
+				const filename = name;
+				const hasExtension = filename.includes(".");
+				const ext = hasExtension ? "." + filename.split(".").pop()! : "";
+				const baseName = hasExtension ? filename.slice(0, -ext.length) : filename;
 
-			const newPath = joinPath(normalizedDest, copyName);
-			try {
-				const newFile = await bedrockClient.files.duplicateFile(filePath, newPath);
-				if (newFile) newFiles.push(newFile);
-			} catch {
-				skippedCount += 1;
+				let copyName: string;
+				if (normalizedSourceParent === normalizedDest) {
+					copyName = `${baseName}_copy${ext}`;
+				} else {
+					copyName = filename;
+				}
+
+				let counter = 1;
+				while (
+					files.some((f) => f.path === joinPath(normalizedDest, copyName)) ||
+					plannedPaths.includes(joinPath(normalizedDest, copyName))
+				) {
+					counter += 1;
+					copyName = `${baseName}_copy_${counter}${ext}`;
+				}
+
+				const newPath = joinPath(normalizedDest, copyName);
+				duplicates.push({ oldPath: cleanPath, newPath });
+				plannedPaths.push(newPath);
 			}
 		}
 
-		setFiles([...files, ...newFiles]);
-		setSelectedItems(new Set());
-		setBulkCopyMode(false);
+		if (duplicates.length === 0) {
+			setSelectedItems(new Set());
+			setBulkCopyMode(false);
+			toast.error("No items were copied");
+			return;
+		}
 
-		if (skippedCount > 0) {
-			toast.success(`Copied ${newFiles.length} file(s), ${skippedCount} failed`);
-		} else if (newFiles.length === 0) {
-			toast.error("No files were copied");
-		} else {
-			toast.success(`${newFiles.length} file(s) copied successfully`);
+		setActionLoading("copy");
+		const toastId = toast.loading(`Copying ${selectedItems.size} item(s)...`);
+
+		try {
+			const newFiles = await bedrockClient.files.duplicateFiles(duplicates);
+			setFiles([...files, ...newFiles]);
+
+			// Add new folders to the store
+			for (const newFolder of newFolders) {
+				addFolder(newFolder);
+			}
+
+			if (skippedCount > 0) {
+				toast.success(`Copied ${newFiles.length} file(s), ${skippedCount} skipped`, { id: toastId });
+			} else {
+				toast.success(`${selectedItems.size} item(s) copied successfully`, { id: toastId });
+			}
+		} catch (error) {
+			console.error("Failed to copy items:", error);
+			toast.error("Failed to copy items", { id: toastId });
+		} finally {
+			setSelectedItems(new Set());
+			setBulkCopyMode(false);
+			setActionLoading(null);
 		}
 	};
 
@@ -808,6 +969,7 @@ const FileList: React.FC<FileListProps> = ({
 		}
 	};
 	return (
+		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 		<div className="flex flex-col" onClick={() => setClickedItem(undefined)}>
 			<PublicFileLinkModal hash={sharedHash ?? ""} isOpen={!!sharedHash} onClose={() => setSharedHash(null)} />
 			{fileToMove && (
@@ -834,6 +996,17 @@ const FileList: React.FC<FileListProps> = ({
 					initialPath={currentWorkingDirectory}
 				/>
 			)}
+			{folderToCopy && (
+				<FolderBrowserModal
+					isOpen={true}
+					onClose={() => setFolderToCopy(null)}
+					onComplete={handleCopyFolderToDestination}
+					mode="copy"
+					itemName={folderToCopy.name}
+					initialPath={currentWorkingDirectory}
+					sourcePath={folderToCopy.path}
+				/>
+			)}
 			{bulkMoveMode && (
 				<FolderBrowserModal
 					isOpen={true}
@@ -850,7 +1023,7 @@ const FileList: React.FC<FileListProps> = ({
 					onClose={() => setBulkCopyMode(false)}
 					onComplete={handleBulkCopyToDestination}
 					mode="copy"
-					itemName={`${selectedItems.size} file${selectedItems.size > 1 ? "s" : ""}`}
+					itemName={`${selectedItems.size} item${selectedItems.size > 1 ? "s" : ""}`}
 					initialPath={currentWorkingDirectory}
 				/>
 			)}
@@ -884,6 +1057,7 @@ const FileList: React.FC<FileListProps> = ({
 				isOpen={isCreatingFolder}
 				onClose={() => setIsCreatingFolder(false)}
 				onComplete={handleCreateFolder}
+				validate={validateFolderName}
 			/>
 			<div className="flex justify-between items-center m-2 gap-4">
 				{actions.includes("upload") && (
@@ -906,7 +1080,10 @@ const FileList: React.FC<FileListProps> = ({
 						<Separator orientation="horizontal" />
 					</div>
 					{isLoading ? (
-						<TableSkeleton columns={5} rows={6} headers={["", "Name", "Size", "Created At", "Actions"]} />
+						<>
+							<LiveRegion message="Loading files and folders" politeness="polite" />
+							<TableSkeleton columns={5} rows={6} headers={["", "Name", "Size", "Created At", ""]} />
+						</>
 					) : sortedFiles.length === 0 && sortedFolders.length === 0 ? (
 						<div className="flex flex-col items-center justify-center py-16 text-center">
 							<div className="size-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
@@ -938,10 +1115,14 @@ const FileList: React.FC<FileListProps> = ({
 						</div>
 					) : (
 						<Table>
+							<caption className="sr-only">
+								{trash ? "Deleted files and folders" : "Files and folders in current directory"}
+							</caption>
 							<TableHeader>
 								<TableRow>
-									<TableHead className="w-12 pl-4">
+									<TableHead scope="col" className="w-12 pl-4">
 										<Checkbox
+											aria-label="Select all files and folders"
 											checked={selectedItems.size === currentPathFiles.length + currentPathFolders.length}
 											onClick={(e) => {
 												e.stopPropagation();
@@ -949,7 +1130,10 @@ const FileList: React.FC<FileListProps> = ({
 											}}
 										/>
 									</TableHead>
-									<TableHead>
+									<TableHead
+										scope="col"
+										aria-sort={sortColumn === "path" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+									>
 										<SortOption
 											option="path"
 											name="Name"
@@ -959,7 +1143,10 @@ const FileList: React.FC<FileListProps> = ({
 											setSortOrder={setSortOrder}
 										/>
 									</TableHead>
-									<TableHead>
+									<TableHead
+										scope="col"
+										aria-sort={sortColumn === "size" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+									>
 										<SortOption
 											option="size"
 											name="Size"
@@ -969,7 +1156,12 @@ const FileList: React.FC<FileListProps> = ({
 											setSortOrder={setSortOrder}
 										/>
 									</TableHead>
-									<TableHead>
+									<TableHead
+										scope="col"
+										aria-sort={
+											sortColumn === "created_at" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"
+										}
+									>
 										<SortOption
 											option="created_at"
 											name="Created At"
@@ -979,7 +1171,7 @@ const FileList: React.FC<FileListProps> = ({
 											setSortOrder={setSortOrder}
 										/>
 									</TableHead>
-									<TableHead className="text-right">Actions</TableHead>
+									<TableHead scope="col" className="w-12" />
 								</TableRow>
 							</TableHeader>
 							<TableBody>
@@ -1009,6 +1201,7 @@ const FileList: React.FC<FileListProps> = ({
 														})
 												: undefined
 										}
+										onCopy={actions.includes("copy") ? () => handleCopy(folder.path, true) : undefined}
 										onRestore={actions.includes("restore") ? () => handleRestoreFile(folder.path) : undefined}
 									/>
 								))}
@@ -1039,7 +1232,7 @@ const FileList: React.FC<FileListProps> = ({
 										onHardDelete={actions.includes("hardDelete") ? () => handleHardDelete(file.path, false) : undefined}
 										onRestore={actions.includes("restore") ? () => handleRestoreFile(file.path) : undefined}
 										onDuplicate={actions.includes("duplicate") ? () => handleDuplicate(file.path, false) : undefined}
-										onCopy={actions.includes("copy") ? () => handleCopy(file.path) : undefined}
+										onCopy={actions.includes("copy") ? () => handleCopy(file.path, false) : undefined}
 									/>
 								))}
 							</TableBody>
@@ -1052,40 +1245,44 @@ const FileList: React.FC<FileListProps> = ({
 									{selectedItems.size} item{selectedItems.size > 1 ? "s" : ""} selected
 								</span>
 								<div className="flex items-center gap-1 flex-wrap justify-center">
-									<Button
-										variant="ghost"
-										className="text-sm gap-2"
-										disabled={hasSelectedFolders || !!actionLoading}
-										onClick={async () => {
-											for (const pathFile of Array.from(selectedItems)) {
-												const file = files.find((f) => f.path === pathFile);
-												if (file) {
-													await handleDownloadFile(file);
-												}
-											}
-										}}
-									>
-										<Download size={16} />
-										Download
-									</Button>
-									<Button
-										variant="ghost"
-										className="text-sm gap-2"
-										disabled={!!actionLoading}
-										onClick={() => setBulkMoveMode(true)}
-									>
-										{actionLoading === "move" ? <Loader2 size={16} className="animate-spin" /> : <Move size={16} />}
-										Move
-									</Button>
-									<Button
-										variant="ghost"
-										className="text-sm gap-2"
-										disabled={hasSelectedFolders || !!actionLoading}
-										onClick={() => setBulkCopyMode(true)}
-									>
-										{actionLoading === "copy" ? <Loader2 size={16} className="animate-spin" /> : <Copy size={16} />}
-										Copy
-									</Button>
+									{!actions.includes("hardDelete") && (
+										<>
+											<Button
+												variant="ghost"
+												className="text-sm gap-2"
+												disabled={hasSelectedFolders || !!actionLoading}
+												onClick={async () => {
+													for (const pathFile of Array.from(selectedItems)) {
+														const file = files.find((f) => f.path === pathFile);
+														if (file) {
+															await handleDownloadFile(file);
+														}
+													}
+												}}
+											>
+												<Download size={16} />
+												Download
+											</Button>
+											<Button
+												variant="ghost"
+												className="text-sm gap-2"
+												disabled={!!actionLoading}
+												onClick={() => setBulkMoveMode(true)}
+											>
+												{actionLoading === "move" ? <Loader2 size={16} className="animate-spin" /> : <Move size={16} />}
+												Move
+											</Button>
+											<Button
+												variant="ghost"
+												className="text-sm gap-2"
+												disabled={!!actionLoading}
+												onClick={() => setBulkCopyMode(true)}
+											>
+												{actionLoading === "copy" ? <Loader2 size={16} className="animate-spin" /> : <Copy size={16} />}
+												Copy
+											</Button>
+										</>
+									)}
 									<Button
 										variant="ghost"
 										className="text-sm gap-2 text-destructive hover:text-destructive"

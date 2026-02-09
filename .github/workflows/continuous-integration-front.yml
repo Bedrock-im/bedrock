@@ -27,6 +27,23 @@ jobs:
       - name: Run ESLint
         run: yarn lint
 
+  test-front:
+    name: "Test: Front"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: yarn
+          cache-dependency-path: "yarn.lock"
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Run Tests
+        run: yarn workspace front test
+
   build-front:
     name: "Build: Front"
     runs-on: ubuntu-latest

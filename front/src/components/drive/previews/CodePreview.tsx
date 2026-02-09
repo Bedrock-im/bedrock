@@ -14,7 +14,7 @@ interface CodePreviewProps {
 	onSave?: (newFile: File) => Promise<void>;
 }
 
-export default function CodePreview({ fileUrl, filename, category, onSave }: Readonly<CodePreviewProps>) {
+export default function CodePreview({ fileUrl, filename, onSave }: Readonly<CodePreviewProps>) {
 	const [content, setContent] = useState<string>("");
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -108,9 +108,6 @@ export default function CodePreview({ fileUrl, filename, category, onSave }: Rea
 		);
 	}
 
-	const isCodeFile = category === "code";
-	const extension = filename.split(".").pop()?.toLowerCase() || "";
-
 	return (
 		<div className="flex flex-col gap-4 w-full h-full max-w-4xl mx-auto">
 			<div className="flex items-center justify-between p-4 border rounded-lg bg-card shadow-sm">
@@ -147,22 +144,13 @@ export default function CodePreview({ fileUrl, filename, category, onSave }: Rea
 			</div>
 
 			<div className="flex-1 min-h-[500px] border rounded-lg shadow-sm bg-card overflow-hidden">
-				{viewMode === "preview" ? (
-					<pre
-						className={`bg-slate-950 text-slate-50 p-4 rounded-lg text-sm font-mono whitespace-pre h-full overflow-auto ${
-							isCodeFile ? "language-" + extension : ""
-						}`}
-					>
-						<code className="block">{content}</code>
-					</pre>
-				) : (
-					<Textarea
-						value={content}
-						onChange={(e) => setContent(e.target.value)}
-						className="w-full h-full min-h-[600px] p-6 font-mono text-sm resize-none border-0 focus-visible:ring-0"
-						placeholder="Edit file content..."
-					/>
-				)}
+				<Textarea
+					disabled={viewMode === "preview"}
+					value={content}
+					onChange={(e) => setContent(e.target.value)}
+					className={`w-full h-full min-h-[600px] p-6 font-mono text-sm resize-none border-0 focus-visible:ring-0 ${viewMode === "preview" ? "!cursor-default" : "cursor-auto"}`}
+					placeholder="Edit file content..."
+				/>
 			</div>
 		</div>
 	);

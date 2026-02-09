@@ -1,9 +1,8 @@
 "use client";
-import { BookOpen, Edit, FilePlus2, Plus, Search, Trash2 } from "lucide-react";
+import { BookOpen, Edit, FilePlus2, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import ActionIcon from "@/components/drive/ActionIcon";
 import DeleteDialog from "@/components/drive/DeleteDialog";
 import KnowledgeBaseAskDialog from "@/components/drive/KnowledgeBaseAskDialog";
 import KnowledgeBaseFileSelector from "@/components/drive/KnowledgeBaseFileSelector";
@@ -12,6 +11,13 @@ import { TableSkeleton } from "@/components/drive/TableSkeleton";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
+	ContextMenu,
+	ContextMenuContent,
+	ContextMenuItem,
+	ContextMenuSeparator,
+	ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
@@ -19,6 +25,13 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -193,11 +206,7 @@ export default function KnowledgeBases() {
 					<Separator orientation="horizontal" />
 				</div>
 				{isLoading ? (
-					<TableSkeleton
-						columns={6}
-						rows={4}
-						headers={["Name", "Files", "Size", "Created", "Last edited", "Actions"]}
-					/>
+					<TableSkeleton columns={6} rows={4} headers={["Name", "Files", "Size", "Created", "Last edited", ""]} />
 				) : filteredKnowledgeBases.length === 0 ? (
 					<div className="flex flex-col items-center justify-center py-16 text-center">
 						<div className="size-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
@@ -223,33 +232,90 @@ export default function KnowledgeBases() {
 								<TableHead>Size</TableHead>
 								<TableHead>Created</TableHead>
 								<TableHead>Last edited</TableHead>
-								<TableHead className="text-right">Actions</TableHead>
+								<TableHead className="w-12" />
 							</TableRow>
 						</TableHeader>
 						<TableBody>
 							{filteredKnowledgeBases.map((base) => (
-								<TableRow key={base.name}>
-									<TableCell className="font-medium">{base.name}</TableCell>
-									<TableCell>{base.filePaths.length}</TableCell>
-									<TableCell>
-										{base.filePaths.reduce(
-											(size, filePath) => size + (files.find(({ path }) => filePath == path)?.size ?? 0),
-											0,
-										)}
-									</TableCell>
-									<TableCell>{base.created_at.toLocaleDateString()}</TableCell>
-									<TableCell>{base.updated_at.toLocaleDateString()}</TableCell>
-									<TableCell className="flex justify-end items-center gap-2 mt-1">
-										<ActionIcon Icon={Search} tooltip="Search" onClick={() => handleSearchKBModalOpening(base)} />
-										<ActionIcon
-											Icon={FilePlus2}
-											tooltip="Modify file list"
-											onClick={() => handleModifyFileListToBaseModalOpening(base)}
-										/>
-										<ActionIcon Icon={Edit} tooltip="Rename" onClick={() => handleRenameBaseModalOpening(base)} />
-										<ActionIcon Icon={Trash2} tooltip="Delete" onClick={() => handleDeleteBaseModalOpening(base)} />
-									</TableCell>
-								</TableRow>
+								<ContextMenu key={base.name}>
+									<ContextMenuTrigger asChild>
+										<TableRow className="group cursor-pointer">
+											<TableCell className="font-medium">{base.name}</TableCell>
+											<TableCell>{base.filePaths.length}</TableCell>
+											<TableCell>
+												{base.filePaths.reduce(
+													(size, filePath) => size + (files.find(({ path }) => filePath == path)?.size ?? 0),
+													0,
+												)}
+											</TableCell>
+											<TableCell>{base.created_at.toLocaleDateString()}</TableCell>
+											<TableCell>{base.updated_at.toLocaleDateString()}</TableCell>
+											<TableCell>
+												<div className="flex justify-end">
+													<DropdownMenu>
+														<DropdownMenuTrigger asChild>
+															<Button
+																variant="ghost"
+																size="icon"
+																className="size-8"
+																aria-label={`More actions for ${base.name}`}
+																onClick={(e) => e.stopPropagation()}
+															>
+																<MoreHorizontal className="size-4" aria-hidden="true" />
+															</Button>
+														</DropdownMenuTrigger>
+														<DropdownMenuContent align="end" className="w-48">
+															<DropdownMenuItem onClick={() => handleSearchKBModalOpening(base)}>
+																<Search className="size-4 mr-2" />
+																Search
+															</DropdownMenuItem>
+															<DropdownMenuSeparator />
+															<DropdownMenuItem onClick={() => handleModifyFileListToBaseModalOpening(base)}>
+																<FilePlus2 className="size-4 mr-2" />
+																Modify file list
+															</DropdownMenuItem>
+															<DropdownMenuItem onClick={() => handleRenameBaseModalOpening(base)}>
+																<Edit className="size-4 mr-2" />
+																Rename
+															</DropdownMenuItem>
+															<DropdownMenuSeparator />
+															<DropdownMenuItem
+																onClick={() => handleDeleteBaseModalOpening(base)}
+																className="text-destructive focus:text-destructive"
+															>
+																<Trash2 className="size-4 mr-2" />
+																Delete
+															</DropdownMenuItem>
+														</DropdownMenuContent>
+													</DropdownMenu>
+												</div>
+											</TableCell>
+										</TableRow>
+									</ContextMenuTrigger>
+									<ContextMenuContent className="w-48">
+										<ContextMenuItem onClick={() => handleSearchKBModalOpening(base)}>
+											<Search className="size-4 mr-2" />
+											Search
+										</ContextMenuItem>
+										<ContextMenuSeparator />
+										<ContextMenuItem onClick={() => handleModifyFileListToBaseModalOpening(base)}>
+											<FilePlus2 className="size-4 mr-2" />
+											Modify file list
+										</ContextMenuItem>
+										<ContextMenuItem onClick={() => handleRenameBaseModalOpening(base)}>
+											<Edit className="size-4 mr-2" />
+											Rename
+										</ContextMenuItem>
+										<ContextMenuSeparator />
+										<ContextMenuItem
+											onClick={() => handleDeleteBaseModalOpening(base)}
+											className="text-destructive focus:text-destructive"
+										>
+											<Trash2 className="size-4 mr-2" />
+											Delete
+										</ContextMenuItem>
+									</ContextMenuContent>
+								</ContextMenu>
 							))}
 						</TableBody>
 					</Table>
@@ -300,6 +366,7 @@ export default function KnowledgeBases() {
 							placeholder="Knowledge Base Name"
 							className="w-full"
 							onKeyDown={(e) => e.key === "Enter" && handleCreateKnowledgeBase()}
+							// eslint-disable-next-line jsx-a11y/no-autofocus -- Improves UX in modal dialogs by focusing first input
 							autoFocus
 						/>
 					</div>
