@@ -11,6 +11,7 @@ export default defineConfig({
 		// https://vitepress.dev/reference/default-theme-config
 		nav: [
 			{ text: "Home", link: "/" },
+			{ text: "SDK", link: "/sdk/getting-started" },
 			{ text: "Changelog", link: "/CHANGELOG" },
 		],
 
@@ -26,6 +27,15 @@ export default defineConfig({
 			{
 				text: "Architecture",
 				link: "/architecture",
+			},
+			{
+				text: "SDK",
+				items: [
+					{ text: "Getting Started", link: "/sdk/getting-started" },
+					{ text: "API Reference", link: "/sdk/api-reference" },
+					{ text: "Architecture", link: "/sdk/architecture" },
+					{ text: "Configuration", link: "/sdk/configuration" },
+				],
 			},
 		],
 
