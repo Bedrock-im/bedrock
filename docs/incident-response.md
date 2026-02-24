@@ -162,3 +162,39 @@ Use this table to quickly identify the right runbook for your incident:
 - Consider adding better error messaging for Aleph failures
 
 ---
+
+### Frontend Errors in Production
+
+**Severity:** P2-P3 (High to Medium)
+
+**Trigger:** Users report JavaScript errors; page crashes or becomes unresponsive; specific features throw errors in console; white screen or repeated error dialogs appear.
+
+**Immediate Actions:**
+1. Reproduce the error in your browser with production URL (check browser console for error messages)
+2. Check if the error affects all users or specific workflows/browsers
+3. Assign Technical Lead to investigate code and logs
+4. Post to team Slack with error details and reproduction steps
+
+**Diagnostics:**
+- Check browser console for full error stack trace and timing
+- Check application monitoring/error logs (if available) for error frequency and affected users
+- Check if issue exists in specific browser or device type
+- Review recent frontend code changes: `git log --oneline -20 front/`
+- Check for any failed deployments or partial rollouts
+
+**Mitigation:**
+- If recent code change caused it: Rollback to previous version
+- If it's in a specific feature: Disable that feature temporarily if possible
+- If it's a dependency issue: Check if a library update broke something
+
+**Validation:**
+- Error no longer appears in browser console
+- Affected workflow completes successfully
+- Works across different browsers/devices
+
+**Post-Incident:**
+- Document what the error was and why it happened
+- Add unit or integration test to prevent regression
+- Update error boundary or error handling if needed
+
+---
