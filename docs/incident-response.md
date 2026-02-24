@@ -23,3 +23,58 @@ Bedrock incident response procedures ensure rapid detection, clear communication
 | **P4** | Low | Non-urgent issues; potential improvements; documentation gaps | Next business day | Typo in error message; minor UI glitch; missing edge case handling |
 
 ---
+
+## Determining Severity and Escalation
+
+### Severity Determination Questions
+
+Answer these questions to help determine the incident severity:
+
+1. **Is the service unavailable to users or a significant feature?**
+   - Yes → P1 or P2 (depending on scope)
+   - No → Check next question
+
+2. **Is there a confirmed or suspected security breach or data exposure?**
+   - Yes → P1 immediately
+   - No → Check next question
+
+3. **Is the issue affecting all users or a critical workflow?**
+   - Yes → P2
+   - No → P3 or P4
+
+4. **Do we need to notify users or customers?**
+   - Yes → P1 or P2
+   - No → P3 or P4
+
+### Escalation and Notification
+
+**P1 (Critical):**
+- Notify all team members immediately (team Slack channel + direct message to leads)
+- Incident Lead assigned (senior dev)
+- Technical Lead coordinates fix
+- Security Lead involved if breach-related
+- Aim for communication every 15 minutes during active response
+
+**P2 (High):**
+- Notify team leads and on-call engineer
+- Incident Lead assigned
+- Update team every 30 minutes
+- Security Lead consulted if security-adjacent
+
+**P3 (Medium):**
+- Notify relevant team members in Slack
+- Incident Lead coordinates
+- Update once per hour if active work
+
+**P4 (Low):**
+- Document in issue/ticket
+- No immediate escalation required
+- Address during normal sprint planning
+
+### Incident Roles
+
+**Incident Lead:** Coordinates communication, owns status updates, ensures follow-up
+**Technical Lead:** Executes fixes, runs diagnostics, owns technical decisions
+**Security Lead:** Validates security incidents, determines scope of compromise, advises on containment
+
+---
