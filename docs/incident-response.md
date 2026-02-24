@@ -78,3 +78,17 @@ Answer these questions to help determine the incident severity:
 **Security Lead:** Validates security incidents, determines scope of compromise, advises on containment
 
 ---
+
+## Quick Incident Reference
+
+Use this table to quickly identify the right runbook for your incident:
+
+| Incident Type | Category | Severity | Runbook |
+|---|---|---|---|
+| Service unavailable / 502 errors | Availability | P1 | [Service Downtime](#service-downtime) |
+| Aleph sync/connection failures | Availability | P2-P3 | [Aleph Network Sync Failure](#aleph-network-sync-failure) |
+| Frontend errors in production | Availability | P2-P3 | [Frontend Errors in Production](#frontend-errors-in-production) |
+| Security breach detected | Security | P1 | [Security Breach Response](#security-breach-response) |
+| Encryption key compromised | Security | P1 | [Encryption Key Compromise](#encryption-key-compromise) |
+
+---
