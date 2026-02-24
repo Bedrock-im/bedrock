@@ -198,3 +198,44 @@ Use this table to quickly identify the right runbook for your incident:
 - Update error boundary or error handling if needed
 
 ---
+
+### Security Breach Response
+
+**Severity:** P1 (Critical)
+
+**Trigger:** Unauthorized access detected; suspicious activity in logs; user account compromise suspected; attacker gains access to encryption keys or user data.
+
+**Immediate Actions:**
+1. **Do not shut down the system** — preserve evidence for forensic analysis
+2. Notify Security Lead and all team leads immediately
+3. Isolate affected systems if possible (pause certain operations if safe)
+4. Begin documenting timeline of discovery and what was accessed
+5. Post incident update to team Slack (keep communication private/on-need-to-know basis)
+
+**Diagnostics:**
+- Review authentication logs for unusual login patterns or failed attempts
+- Check access logs for unauthorized API calls or data queries
+- Determine scope: How many users affected? What data was accessed?
+- Review wallet/permission logs: Were unauthorized wallets created or given permissions?
+- Check for backdoors or malicious code in recent commits
+
+**Mitigation:**
+- Reset credentials for all affected users
+- Revoke compromised API keys or tokens
+- Force re-authentication for active sessions
+- If encryption keys were accessed: Trigger key rotation and file re-encryption (security-heavy operation)
+- Block or isolate the attacker's access immediately
+
+**Validation:**
+- Suspicious activity in logs has stopped
+- No new unauthorized access attempts detected
+- Affected users can successfully re-authenticate with new credentials
+- Access controls verified to be working correctly
+
+**Post-Incident:**
+- Conduct thorough incident review and root cause analysis
+- Consider regulatory/legal notifications if user data was exposed
+- Update security controls and monitoring to prevent recurrence
+- Document lessons learned and create follow-up security improvements
+
+---
