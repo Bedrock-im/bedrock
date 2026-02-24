@@ -128,3 +128,37 @@ Use this table to quickly identify the right runbook for your incident:
 - Create follow-up issues if needed (e.g., monitoring improvements, code fixes)
 
 ---
+
+### Aleph Network Sync Failure
+
+**Severity:** P2-P3 (High to Medium)
+
+**Trigger:** File uploads fail with Aleph errors; file metadata cannot be synced; users see "sync failed" messages; encryption keys cannot be stored/retrieved.
+
+**Immediate Actions:**
+1. Confirm the issue is Aleph-specific (try uploading a small test file)
+2. Check Aleph.im status page for any reported outages or network issues
+3. Post to team Slack with current status and investigation lead
+
+**Diagnostics:**
+- Check Aleph network status: Visit https://status.aleph.im or equivalent
+- Review application logs for Aleph SDK errors (look for timeout or connection errors)
+- Test Aleph connectivity: Try a simple read/write operation to Aleph from dev environment
+- Check network connectivity: Verify application can reach Aleph endpoints (ping/curl tests)
+
+**Mitigation:**
+- If Aleph is down: Wait for their infrastructure to recover; inform users of the delay
+- If local Aleph SDK issue: Check if the @aleph-sdk version is compatible (review recent dependency changes)
+- If temporary network hiccup: Retry the operation manually or wait for automatic retry logic
+
+**Validation:**
+- File uploads complete successfully
+- Metadata syncs to Aleph without errors
+- Users can retrieve previously uploaded files and keys
+
+**Post-Incident:**
+- Document the root cause (was it Aleph infrastructure or our code?)
+- If our code caused it, create a bug fix issue
+- Consider adding better error messaging for Aleph failures
+
+---
