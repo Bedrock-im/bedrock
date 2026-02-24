@@ -92,3 +92,39 @@ Use this table to quickly identify the right runbook for your incident:
 | Encryption key compromised | Security | P1 | [Encryption Key Compromise](#encryption-key-compromise) |
 
 ---
+
+## Runbooks
+
+### Service Downtime
+
+**Severity:** P1 (Critical)
+
+**Trigger:** Service returns 502 errors, is completely offline, or users cannot access the application.
+
+**Immediate Actions:**
+1. Confirm the outage is real (check from multiple locations/devices)
+2. Post to team Slack: incident severity, current status, and who is investigating
+3. Assign Incident Lead and Technical Lead
+
+**Diagnostics:**
+- Check deployment status: `git log --oneline -10` (was there a recent deploy?)
+- Check application logs: Review Next.js server logs for errors in the last 5-10 minutes
+- Check Aleph network status: Verify Aleph.im network is operational (check their status page)
+- Check infrastructure: Is the application server running? (`docker ps` or equivalent hosting platform)
+
+**Mitigation:**
+- If recent deploy caused the issue: Rollback to previous stable version
+- If Aleph network down: Post status update, no action needed on our side
+- If application crashed: Restart service and check logs for root cause
+
+**Validation:**
+- Service responds with 200 OK from health check endpoint
+- Users can log in and view files
+- File upload/download operations work
+
+**Post-Incident:**
+- Log the incident details in a team document
+- Schedule brief incident review within 24 hours to discuss root cause and prevention
+- Create follow-up issues if needed (e.g., monitoring improvements, code fixes)
+
+---
