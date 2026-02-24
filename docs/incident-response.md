@@ -239,3 +239,45 @@ Use this table to quickly identify the right runbook for your incident:
 - Document lessons learned and create follow-up security improvements
 
 ---
+
+### Encryption Key Compromise
+
+**Severity:** P1 (Critical)
+
+**Trigger:** Suspicion or confirmation that an encryption key has been exposed, leaked, or accessed by unauthorized parties; a user's subwallet private key is compromised; file encryption keys are found in public repositories or logs.
+
+**Immediate Actions:**
+1. Confirm what key(s) were compromised and the scope of exposure
+2. Notify Security Lead, Technical Lead, and all team members immediately
+3. Determine how many users' data may be affected
+4. Do not delete logs or evidence — preserve for analysis
+5. Post incident status to team Slack (keep details minimal initially)
+
+**Diagnostics:**
+- Identify which key(s) were exposed (file key, subwallet key, master key?)
+- Determine how the key was exposed (log files, code repository, network sniff, etc.)
+- Check if the key has been used to decrypt files (review access logs)
+- Determine which users' data is at risk
+- Check if the compromised key was used for unauthorized file access
+
+**Mitigation:**
+- **Immediate**: Revoke or invalidate the compromised key(s) in the system
+- **Short-term**: Trigger re-encryption of all files encrypted with the compromised key
+- **For file keys**: Rotate keys and re-encrypt files; distribute new keys to authorized users
+- **For subwallet keys**: Users must reset their authentication and generate new subwallets
+- **For master keys**: This requires system-wide key rotation — coordinate with entire team
+
+**Validation:**
+- Compromised key can no longer decrypt any files
+- All affected files have been re-encrypted with new keys
+- Users can access their files with new keys
+- No unauthorized access detected post-rotation
+
+**Post-Incident:**
+- Conduct full security audit of key management practices
+- Review where keys are stored and transmitted (check for logs, hardcoded values, etc.)
+- Implement improvements to key storage and handling
+- Update documentation on how to handle sensitive keys securely
+- Consider legal/regulatory notification if user data confidentiality is at risk
+
+---
