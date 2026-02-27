@@ -1,6 +1,7 @@
 "use client";
 
 import { FileService, PublicFileMeta } from "bedrock-ts-sdk";
+import { useParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -10,24 +11,19 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
-interface PublicPageProps {
-	params: {
-		id: string;
-	};
-}
-
-export default function Public(props: PublicPageProps) {
+export default function Public() {
+	const { id } = useParams<{ id: string }>();
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [file, setFile] = useState<PublicFileMeta | null>(null);
 
 	useEffect(() => {
 		(async () => {
-			const fetchedFile = await FileService.fetchPublicFileMeta(props.params.id);
+			const fetchedFile = await FileService.fetchPublicFileMeta(id);
 			setIsLoading(false);
 			setFile(fetchedFile);
 		})();
-	}, [props.params.id]);
+	}, [id]);
 
 	const handleDownload = useCallback(async () => {
 		if (!file) return;
